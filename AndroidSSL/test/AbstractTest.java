@@ -16,6 +16,9 @@ import soot.SceneTransformer;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Transform;
+import soot.tagkit.AnnotationTag;
+import soot.tagkit.Tag;
+import soot.tagkit.VisibilityAnnotationTag;
 
 import com.google.common.base.Joiner;
 
@@ -42,6 +45,15 @@ public class AbstractTest extends TestCase {
 					if(m.hasTag(VulnerableMethodTag.class.getName())) {
 						actual.add(m.getDeclaringClass().getName());
 					}
+					if(m.hasTag("VisibilityAnnotationTag")) {
+						VisibilityAnnotationTag tag = (VisibilityAnnotationTag) m.getTag("VisibilityAnnotationTag");
+						for(AnnotationTag annTag: tag.getAnnotations()) {
+							if(annTag.getType().equals("LDefinitelyVulnerable;")) {
+								expected.add(m.getDeclaringClass().getName());
+								break;
+							}
+						}
+					}
 				}
 			}
 
@@ -52,17 +64,13 @@ public class AbstractTest extends TestCase {
 	protected final void tearDown() throws Exception {
 		G.reset();
 		super.tearDown();
-		Assert.assertEquals(expected, actual);
 	}
-	
-	protected void expectAsVulnerable(String ... expected) {
-		this.expected.addAll(Arrays.asList(expected));
-	}
-	
+
 	protected void run(String ... files) {
 		String args = "-f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp -cp . "+Joiner.on(" ").join(Arrays.asList(files));
 		String[] argsArray = args.split(" ");
 		Main.main(argsArray);		
+		Assert.assertEquals(expected, actual);
 	}
 
 }

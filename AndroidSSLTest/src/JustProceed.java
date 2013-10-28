@@ -6,6 +6,7 @@ import android.webkit.WebViewClient;
 
 public class JustProceed extends WebViewClient {
 	
+	@DefinitelyVulnerable
 	public void onReceivedSslError (WebView view, SslErrorHandler handler, SslError error) {
 		handler.proceed();
 	}

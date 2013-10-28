@@ -21,6 +21,7 @@ public class VirtualDispatchAllProceed extends WebViewClient {
 		}
 	}
 
+	@DefinitelyVulnerable
 	public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
 		A a = System.currentTimeMillis()>0 ? new SubDoesProceed() : new SubDoesProceed2();
 		a.doProceed(handler);
