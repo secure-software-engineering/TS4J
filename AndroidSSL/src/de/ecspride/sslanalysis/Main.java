@@ -18,7 +18,7 @@ import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 
 public class Main {
 
-	private static final String SUBSIG = "void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)";
+	public static final String SUBSIG = "void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)";
 
 	public static void main(String[] args) {
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.sslanalysis", new SceneTransformer() {
@@ -41,8 +41,12 @@ public class Main {
 	}
 
 	private static void doAnalysis(JimpleBasedInterproceduralCFG icfg, SootMethod m) {
+		SSLAnalysisProblem problem = new SSLAnalysisProblem(icfg,m);
 		IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
-				new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(new SSLAnalysisProblem(icfg,m));
+				new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(problem);
 		solver.solve();
+		if(problem.isMethodVulnerable()) {
+			m.addTag(new VulnerableMethodTag());
+		}
 	}
 }
