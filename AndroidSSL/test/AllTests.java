@@ -14,6 +14,11 @@ public class AllTests extends AbstractTest {
 	}
 	
 	@Test
+	public void testFields() {
+		run("Fields");
+	}
+	
+	@Test
 	public void testIfThenElse() {
 		run("IfThenElse");
 	}
