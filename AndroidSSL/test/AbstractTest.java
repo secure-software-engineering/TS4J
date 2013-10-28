@@ -17,7 +17,6 @@ import soot.SootClass;
 import soot.SootMethod;
 import soot.Transform;
 import soot.tagkit.AnnotationTag;
-import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;
 
 import com.google.common.base.Joiner;
