@@ -18,7 +18,7 @@ import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 
 public class Main {
 
-	private static final String SUBSIG = "void onReceivedSslError(WebView,SslErrorHandler,SslError)";
+	private static final String SUBSIG = "void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)";
 
 	public static void main(String[] args) {
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.sslanalysis", new SceneTransformer() {
@@ -26,6 +26,7 @@ public class Main {
 			protected void internalTransform(String phaseName, Map<String, String> options) {
 				JimpleBasedInterproceduralCFG icfg = new JimpleBasedInterproceduralCFG();
 				for(SootClass c: Scene.v().getApplicationClasses()) {
+					if(!Scene.v().getFastHierarchy().isSubclass(c, Scene.v().getSootClass("android.webkit.WebViewClient"))) continue;
 					if(!c.declaresMethod(SUBSIG)) continue;
 
 					SootMethod m = c.getMethod(SUBSIG);
