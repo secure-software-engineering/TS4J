@@ -4,6 +4,11 @@ import org.junit.Test;
 public class AllTests extends AbstractTest {
 
 	@Test
+	public void testAliasing() {
+		run("Aliasing");
+	}
+	
+	@Test
 	public void testExceptions() {
 		run("ExceptionHandling");
 	}
