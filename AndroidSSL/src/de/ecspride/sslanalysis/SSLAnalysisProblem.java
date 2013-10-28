@@ -37,5 +37,19 @@ public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local
 	protected Local createZeroValue() {
 		return new JimpleLocal("ZERO", NullType.v());
 	}
+	
+	@Override
+	public boolean followReturnsPastSeeds() {
+		return true;
+	}
 
+	@Override
+	public boolean autoAddZero() {
+		return false;
+	}
+	
+	@Override
+	public boolean computeValues() {
+		return false;
+	}
 }

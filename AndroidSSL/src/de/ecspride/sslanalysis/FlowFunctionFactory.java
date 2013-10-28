@@ -3,11 +3,13 @@ package de.ecspride.sslanalysis;
 import heros.FlowFunction;
 import heros.FlowFunctions;
 import heros.InterproceduralCFG;
+import heros.flowfunc.Compose;
 import heros.flowfunc.Gen;
 import heros.flowfunc.Identity;
 import heros.flowfunc.Kill;
 import heros.flowfunc.KillAll;
 import heros.flowfunc.Transfer;
+import heros.flowfunc.Union;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,6 +23,7 @@ import soot.Value;
 import soot.jimple.AssignStmt;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.IdentityStmt;
+import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
 import soot.jimple.ParameterRef;
 import soot.jimple.ReturnStmt;
@@ -45,8 +48,8 @@ public class FlowFunctionFactory implements FlowFunctions<Unit, Local, SootMetho
 				Value rightOp = identityStmt.getRightOp();
 				if(rightOp instanceof ParameterRef) {
 					ParameterRef parameterRef = (ParameterRef) rightOp;
-					if(parameterRef.getIndex()==2) {
-						return new Gen<Local>((Local) identityStmt.getLeftOp(),zero);
+					if(parameterRef.getIndex()==1) {
+						return Compose.<Local>compose(new Gen<Local>((Local) identityStmt.getLeftOp(),zero),new Kill<Local>(zero));
 					}
 				}
 			}
@@ -88,34 +91,89 @@ public class FlowFunctionFactory implements FlowFunctions<Unit, Local, SootMetho
 	}
 
 	public FlowFunction<Local> getReturnFlowFunction(Unit callSite, SootMethod callee, Unit exitStmt, Unit retSite) {
-		if (exitStmt instanceof ReturnStmt) {								
-			ReturnStmt returnStmt = (ReturnStmt) exitStmt;
-			Value op = returnStmt.getOp();
-			if(op instanceof Local) {
-				if(callSite instanceof DefinitionStmt) {
-					DefinitionStmt defnStmt = (DefinitionStmt) callSite;
-					Value leftOp = defnStmt.getLeftOp();
-					if(leftOp instanceof Local) {
-						final Local tgtLocal = (Local) leftOp;
-						final Local retLocal = (Local) op;
-						return new FlowFunction<Local>() {
+		if(icfg.getMethodOf(exitStmt).equals(sslErrorHandler)) {
+			System.err.println("NOT VULNERABLE");
+			return KillAll.v();
+		} else {
+			Stmt stmt = (Stmt) callSite;
+			InvokeExpr ie = stmt.getInvokeExpr();
+			final List<Value> callArgs = ie.getArgs();
+			final List<Local> paramLocals = new ArrayList<Local>();
+			for(int i=0;i<callee.getParameterCount();i++) {
+				paramLocals.add(callee.getActiveBody().getParameterLocal(i));
+			}
 
-							public Set<Local> computeTargets(Local source) {
-								if(source==retLocal)
-									return Collections.singleton(tgtLocal);
-								return Collections.emptySet();
-							}
-							
-						};
+			FlowFunction<Local> retranslateArguments = new FlowFunction<Local>() {
+
+				public Set<Local> computeTargets(Local source) {
+					int paramIndex = paramLocals.indexOf(source);
+					if(paramIndex>-1) {
+						Value arg = callArgs.get(paramIndex);
+						if(arg instanceof Local) {
+							Local argLocal = (Local) arg;
+							return Collections.singleton(argLocal);
+						}
+					}
+					return Collections.emptySet();
+				}
+			};
+
+			FlowFunction<Local> handleRetValue = KillAll.v();
+			if (exitStmt instanceof ReturnStmt) {								
+				ReturnStmt returnStmt = (ReturnStmt) exitStmt;
+				Value op = returnStmt.getOp();
+				if(op instanceof Local) {
+					if(callSite instanceof DefinitionStmt) {
+						DefinitionStmt defnStmt = (DefinitionStmt) callSite;
+						Value leftOp = defnStmt.getLeftOp();
+						if(leftOp instanceof Local) {
+							final Local tgtLocal = (Local) leftOp;
+							final Local retLocal = (Local) op;
+							handleRetValue = new FlowFunction<Local>() {
+	
+								public Set<Local> computeTargets(Local source) {
+									if(source==retLocal)
+										return Collections.singleton(tgtLocal);
+									return Collections.emptySet();
+								}
+								
+							};
+						}
 					}
 				}
 			}
+			return Union.<Local>union(retranslateArguments,handleRetValue);
 		} 
-		return KillAll.v();
 	}
 
 	public FlowFunction<Local> getCallToReturnFlowFunction(Unit call, Unit returnSite) {
-		return Identity.v();
+		Stmt stmt = (Stmt) call;
+		InvokeExpr ie = stmt.getInvokeExpr();
+		if(ie.getMethodRef().getSubSignature().toString().equals("void proceed()")) {
+			if(ie instanceof InstanceInvokeExpr) {
+				InstanceInvokeExpr iie = (InstanceInvokeExpr) ie;
+				final Value base = iie.getBase();
+				return new FlowFunction<Local>() {
+					public Set<Local> computeTargets(Local source) {
+						if(base.equals(source)) {
+							return Collections.emptySet(); //kill
+						}
+						return Collections.singleton(source); //keep
+					}
+				};
+			}
+		}
+		final List<Value> callArgs = ie.getArgs();
+		return new FlowFunction<Local>() {
+
+			public Set<Local> computeTargets(Local source) {
+				int argIndex = callArgs.indexOf(source);
+				if(argIndex>-1) {
+					return Collections.emptySet(); //kill
+				}
+				return Collections.singleton(source);
+			}
+		};
 	}
 
 }
