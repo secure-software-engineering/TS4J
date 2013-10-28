@@ -41,6 +41,7 @@ public class FlowFunctionFactory implements FlowFunctions<Unit, Local, SootMetho
 		this.zero = zero;
 	}
 
+	@SuppressWarnings("unchecked")
 	public FlowFunction<Local> getNormalFlowFunction(Unit curr, Unit succ) {
 		if(curr instanceof IdentityStmt) {
 			if(icfg.getMethodOf(curr).equals(sslErrorHandler)) {
@@ -90,6 +91,7 @@ public class FlowFunctionFactory implements FlowFunctions<Unit, Local, SootMetho
 		};
 	}
 
+	@SuppressWarnings("unchecked")
 	public FlowFunction<Local> getReturnFlowFunction(Unit callSite, SootMethod callee, Unit exitStmt, Unit retSite) {
 		if(icfg.getMethodOf(exitStmt).equals(sslErrorHandler)) {
 			System.err.println("NOT VULNERABLE");
