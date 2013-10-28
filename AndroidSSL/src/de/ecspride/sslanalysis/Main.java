@@ -5,6 +5,7 @@ import heros.solver.IFDSSolver;
 
 import java.util.Map;
 
+import soot.Body;
 import soot.Local;
 import soot.PackManager;
 import soot.Scene;
@@ -15,6 +16,8 @@ import soot.Transform;
 import soot.Unit;
 import soot.jimple.toolkits.ide.JimpleIFDSSolver;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
+import soot.toolkits.graph.BriefUnitGraph;
+import soot.toolkits.graph.DirectedGraph;
 
 public class Main {
 
@@ -24,7 +27,14 @@ public class Main {
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.sslanalysis", new SceneTransformer() {
 			@Override
 			protected void internalTransform(String phaseName, Map<String, String> options) {
-				JimpleBasedInterproceduralCFG icfg = new JimpleBasedInterproceduralCFG();
+				JimpleBasedInterproceduralCFG icfg = new JimpleBasedInterproceduralCFG() {
+					@Override
+					protected synchronized DirectedGraph<Unit> makeGraph(Body body) {
+						//we use brief unit graphs such that we warn in situations where
+						//the code only might be safe due to some exceptional flows
+						return new BriefUnitGraph(body);
+					}
+				};
 				for(SootClass c: Scene.v().getApplicationClasses()) {
 					if(!Scene.v().getFastHierarchy().isSubclass(c, Scene.v().getSootClass("android.webkit.WebViewClient"))) continue;
 					if(!c.declaresMethod(SUBSIG)) continue;
