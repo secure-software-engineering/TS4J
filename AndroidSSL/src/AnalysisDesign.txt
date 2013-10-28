@@ -1,0 +1,3 @@
+- Start at beginning of methods onReceivedSslError (in subclasses of WebViewClient).
+- Propagate taint for second parameter (the handler). A tainted value is one which proceed() has not yet been called on.
+- See if a tainted value can transitively reach the end of the onReceivedSslError method. If yes, dismiss the method. If no, warn about the method.
