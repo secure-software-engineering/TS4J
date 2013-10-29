@@ -29,6 +29,11 @@ public class AllTests extends AbstractTest {
 	}
 
 	@Test
+	public void testReturnValue() {
+		run("ReturnValue");
+	}
+	
+	@Test
 	public void testSingleCallDoNothing() {
 		run("SingleCallDoNothing");
 	}
