@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!--
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="Sample Category"
+            id="de.fraunhofer.sit.crvalidator.commands.category">
+      </category>
+      <command
+            name="Sample Command"
+            categoryId="de.fraunhofer.sit.crvalidator.commands.category"
+            id="de.fraunhofer.sit.crvalidator.commands.sampleCommand">
+      </command>
+      <command
+            description="Initialize CRValidator"
+            id="de.fraunhofer.sit.crvalidator.plugin.commands.init"
+            name="Init">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            commandId="de.fraunhofer.sit.crvalidator.commands.sampleCommand"
+            class="de.fraunhofer.sit.crvalidator.plugin.handlers.SampleHandler">
+      </handler>
+      <handler
+            class="de.fraunhofer.sit.crvalidator.plugin.handlers.InitHandler"
+            commandId="de.fraunhofer.sit.crvalidator.plugin.commands.init">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="de.fraunhofer.sit.crvalidator.commands.sampleCommand"
+            contextId="org.eclipse.ui.contexts.window"
+            sequence="M1+6"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               label="mainMenu"
+               mnemonic="M"
+               id="de.fraunhofer.sit.crvalidator.menus.mainMenu">
+            <command
+                  commandId="de.fraunhofer.sit.crvalidator.commands.sampleCommand"
+                  mnemonic="S"
+                  id="de.fraunhofer.sit.crvalidator.menus.sampleCommand">
+            </command>
+         </menu>
+      </menuContribution>
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="de.fraunhofer.sit.crvalidator.toolbars.mainToolbar">
+            <command
+                  commandId="de.fraunhofer.sit.crvalidator.plugin.commands.init"
+                  label="InitValidator"
+                  style="push"
+                  tooltip="Start Conformance Rule Validator">
+            </command>
+         </toolbar>
+      </menuContribution>
+   </extension>
+-->
+   <extension
+         id="de.fraunhofer.sit.crvalidator.plugin.markers.exceptionmarker"
+         name="CRV Exception Marker"
+         point="org.eclipse.core.resources.markers">
+      <super
+            type="org.eclipse.core.resources.problemmarker">
+      </super>
+   </extension>
+   <extension
+         id="de.fraunhofer.sit.crvalidator.plugin.markers.violationmarker"
+         name="CRV Violation Marker"
+         point="org.eclipse.core.resources.markers">
+      <super
+            type="org.eclipse.core.resources.textmarker">
+      </super>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors.annotationTypes">
+      <type
+            markerType="de.fraunhofer.sit.crvalidator.plugin.markers.violationmarker"
+            name="de.fraunhofer.sit.crvalidator.plugin.markers.violationmarker">
+      </type>
+      <type
+            markerType="de.fraunhofer.sit.crvalidator.plugin.markers.exceptionmarker"
+            name="de.fraunhofer.sit.crvalidator.plugin.markers.exceptionmarker">
+      </type>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors.markerAnnotationSpecification">
+      <specification
+            annotationType="de.fraunhofer.sit.crvalidator.plugin.markers.violationmarker"
+            colorPreferenceKey="de.fraunhofer.sit.crvalidator.plugin.markers.slice.color"
+            colorPreferenceValue="20,215,15"
+            contributesToHeader="false"
+            highlightPreferenceKey="de.fraunhofer.sit.crvalidator.plugin.markers.slice.highlight"
+            highlightPreferenceValue="true"
+            includeOnPreferencePage="true"
+            label="CRV Violation Slice Marker"
+            overviewRulerPreferenceKey="de.fraunhofer.sit.crvalidator.plugin.markers.slice.overview"
+            overviewRulerPreferenceValue="true"
+            presentationLayer="0"
+            textPreferenceKey="de.fraunhofer.sit.crvalidator.plugin.markers.slice.text"
+            textPreferenceValue="false"
+            textStylePreferenceKey="de.fraunhofer.sit.crvalidator.plugin.markers.slice.textstyle"
+            textStylePreferenceValue="BOX"
+            verticalRulerPreferenceKey="de.fraunhofer.sit.crvalidator.plugin.markers.slice.ruler"
+            verticalRulerPreferenceValue="true">
+      </specification>
+   </extension>
+   <extension
+         point="org.eclipse.ui.startup">
+      <startup
+            class="de.fraunhofer.sit.crvalidator.plugin.StartUp">
+      </startup>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            class="de.fraunhofer.sit.crvalidator.plugin.views.CRVMarkerView"
+            id="de.fraunhofer.sit.crvalidator.plugin.crvmarkerview"
+            name="CRV Markers"
+            restorable="true">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.ide.markerSupport">
+      <markerContentGenerator
+            defaultMarkerGrouping="org.eclipse.ui.ide.severity"
+            id="de.fraunhofer.sit.crvalidator.plugin.markerContentGenerator"
+            name="CRV Marker Generator">
+         <markerTypeReference
+               id="de.fraunhofer.sit.crvalidator.plugin.markers.violationmarker">
+         </markerTypeReference>
+         <markerTypeReference
+               id="de.fraunhofer.sit.crvalidator.plugin.markers.exceptionmarker">
+         </markerTypeReference>
+         <markerFieldReference
+               id="org.eclipse.ui.ide.severityAndDescriptionField">
+         </markerFieldReference>
+         <markerFieldReference
+               id="de.fraunhofer.sit.crvalidator.plugin.views.markerFieldRelation">
+         </markerFieldReference>
+         <markerFieldReference
+               id="de.fraunhofer.sit.crvalidator.plugin.views.markerFieldViolation">
+         </markerFieldReference>
+         <markerFieldReference
+               id="org.eclipse.ui.ide.resourceField">
+         </markerFieldReference>
+         <markerFieldReference
+               id="org.eclipse.ui.ide.pathField">
+         </markerFieldReference>
+         <markerFieldReference
+               id="org.eclipse.ui.ide.locationField">
+         </markerFieldReference>
+         <markerFieldReference
+               id="org.eclipse.ui.ide.markerType">
+         </markerFieldReference>
+      </markerContentGenerator>
+      <markerField
+            class="de.fraunhofer.sit.crvalidator.plugin.views.MarkerFieldViolation"
+            id="de.fraunhofer.sit.crvalidator.plugin.views.markerFieldViolation"
+            name="Violation">
+      </markerField>
+      <markerField
+            class="de.fraunhofer.sit.crvalidator.plugin.views.MarkerFieldRelation"
+            id="de.fraunhofer.sit.crvalidator.plugin.views.markerFieldRelation"
+            name="Relation">
+      </markerField>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="de.fraunhofer.sit.crvalidator.plugin.toolbar"
+               label="CRV Toolbar">
+            <command
+                  commandId="de.fraunhofer.sit.crvalidator.plugin.commands.scanproject"
+                  label="CRV Rescan"
+                  style="push"
+                  tooltip="Start CRV scan of selected project">
+            </command>
+         </toolbar>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            id="de.fraunhofer.sit.crvalidator.plugin.commands.scanproject"
+            name="Scan project">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="de.fraunhofer.sit.crvalidator.plugin.handlers.ScanProjectHandler"
+            commandId="de.fraunhofer.sit.crvalidator.plugin.commands.scanproject">
+      </handler>
+   </extension>
+
+</plugin>
