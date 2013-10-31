@@ -6,7 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,12 +17,9 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
@@ -122,21 +118,6 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 		String[] args = ("-f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp -cp "+sootClasspath+" "+Joiner.on(" ").join(applicationClasses)).split(" ");
 		System.err.println(Joiner.on(" ").join(args));
 		Main.main(args);
-	}
-
-	private Collection<IPath> getOutputDirectories(IJavaProject javaProject) {
-		Collection<IPath> binDirs = new HashSet<IPath>();
-		try {
-			IPath defaultBinDir = javaProject.getOutputLocation();
-			binDirs.add(defaultBinDir);
-			for (IClasspathEntry classPathEntry : javaProject.getResolvedClasspath(true)) {
-				IPath binDir = classPathEntry.getOutputLocation();
-				if(binDir!=null) binDirs.add(binDir);
-			}
-		} catch (JavaModelException e) {
-			e.printStackTrace();
-		}
-		return binDirs;
 	}
 
 	private boolean isAndroidProject(IProject p) {
