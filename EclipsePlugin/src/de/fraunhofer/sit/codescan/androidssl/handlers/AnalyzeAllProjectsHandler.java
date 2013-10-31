@@ -15,8 +15,10 @@ import java.util.Set;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -55,6 +57,8 @@ import de.ecspride.sslanalysis.VulnerableMethodTag;
  */
 public class AnalyzeAllProjectsHandler extends AbstractHandler {
 	
+	private static final String MARKER_TYPE = "de.fraunhofer.sit.codescan.androidssl.findingmarker";
+
 	public static final String ANDROID_NATURE_ID = "com.android.ide.eclipse.adt.AndroidNature";
 	
 	protected Set<IMethod> callBacksFound = new HashSet<IMethod>();
@@ -108,16 +112,26 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 			projectToFoundMethods.put(javaProject, topLevelTypesToAnalyze);
 		}
 		
+		deleteMarkers();
+
 		for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
 			IJavaProject project = entry.getKey();
 			Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
-			callAnalysis(topLevelTypesToAnalyze, getSootClasspath(project));
+			callAnalysis(project, topLevelTypesToAnalyze, getSootClasspath(project));
 		}
 		
 		return null;
 	}
 
-	private void callAnalysis(Set<ITypeRoot> topLevelTypesToAnalyze, String sootClasspath) {
+	private void deleteMarkers() {
+		try {
+			ResourcesPlugin.getWorkspace().getRoot().deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_INFINITE);
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void callAnalysis(final IJavaProject project, Set<ITypeRoot> topLevelTypesToAnalyze, String sootClasspath) {
 		final Set<String> applicationClasses = new HashSet<String>();
 		for (ITypeRoot typeRoot : topLevelTypesToAnalyze) {
 			IType type = typeRoot.findPrimaryType();
@@ -133,7 +147,21 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 					SootClass c = Scene.v().getSootClass(appClass);
 					SootMethod m = c.getMethod(Main.SUBSIG);
 					if(m.hasTag(VulnerableMethodTag.class.getName())) {
-						System.err.println(m);
+						try {
+							IType erronousClass = project.findType(c.getName());
+							IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
+							IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
+							//TODO add description, set line number etc.
+							marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
+							marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
+							marker.setAttribute(IMarker.LINE_NUMBER, 1);
+							marker.setAttribute(IMarker.USER_EDITABLE, false);
+							marker.setAttribute(IMarker.MESSAGE, "foo");
+						} catch (JavaModelException e) {
+							e.printStackTrace();
+						} catch (CoreException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
