@@ -138,7 +138,7 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 			String qualifiedName = type.getFullyQualifiedName();
 			applicationClasses.add(qualifiedName);
 		}
-		String[] args = ("-f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp -cp "+sootClasspath+" "+Joiner.on(" ").join(applicationClasses)).split(" ");
+		String[] args = ("-keep-line-number -f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp -cp "+sootClasspath+" "+Joiner.on(" ").join(applicationClasses)).split(" ");
 		
 		G.reset();
 		PackManager.v().getPack("wjap").add(new Transform("wjap.errorreporter",  new SceneTransformer() {
@@ -154,7 +154,7 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 							//TODO add description, set line number etc.
 							marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
 							marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
-							marker.setAttribute(IMarker.LINE_NUMBER, 1);
+							marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
 							marker.setAttribute(IMarker.USER_EDITABLE, false);
 							marker.setAttribute(IMarker.MESSAGE, "foo");
 						} catch (JavaModelException e) {
