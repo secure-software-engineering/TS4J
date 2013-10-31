@@ -57,6 +57,8 @@ import de.ecspride.sslanalysis.VulnerableMethodTag;
  */
 public class AnalyzeAllProjectsHandler extends AbstractHandler {
 	
+	private static final String MESSAGE = "Method onReceivedSslError is calling proceed() on its handle, although it should really be validating the SSL certificate!";
+
 	private static final String MARKER_TYPE = "de.fraunhofer.sit.codescan.androidssl.findingmarker";
 
 	public static final String ANDROID_NATURE_ID = "com.android.ide.eclipse.adt.AndroidNature";
@@ -156,7 +158,7 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 							marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
 							marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
 							marker.setAttribute(IMarker.USER_EDITABLE, false);
-							marker.setAttribute(IMarker.MESSAGE, "foo");
+							marker.setAttribute(IMarker.MESSAGE, MESSAGE);
 						} catch (JavaModelException e) {
 							e.printStackTrace();
 						} catch (CoreException e) {
