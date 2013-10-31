@@ -35,9 +35,18 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 
+import soot.G;
+import soot.PackManager;
+import soot.Scene;
+import soot.SceneTransformer;
+import soot.SootClass;
+import soot.SootMethod;
+import soot.Transform;
+
 import com.google.common.base.Joiner;
 
 import de.ecspride.sslanalysis.Main;
+import de.ecspride.sslanalysis.VulnerableMethodTag;
 
 /**
  * Our sample handler extends AbstractHandler, an IHandler base class.
@@ -109,14 +118,26 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 	}
 
 	private void callAnalysis(Set<ITypeRoot> topLevelTypesToAnalyze, String sootClasspath) {
-		Set<String> applicationClasses = new HashSet<String>();
+		final Set<String> applicationClasses = new HashSet<String>();
 		for (ITypeRoot typeRoot : topLevelTypesToAnalyze) {
 			IType type = typeRoot.findPrimaryType();
 			String qualifiedName = type.getFullyQualifiedName();
 			applicationClasses.add(qualifiedName);
 		}
 		String[] args = ("-f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp -cp "+sootClasspath+" "+Joiner.on(" ").join(applicationClasses)).split(" ");
-		System.err.println(Joiner.on(" ").join(args));
+		
+		G.reset();
+		PackManager.v().getPack("wjap").add(new Transform("wjap.errorreporter",  new SceneTransformer() {
+			protected void internalTransform(String arg0, Map<String, String> arg1) {
+				for (String appClass : applicationClasses) {
+					SootClass c = Scene.v().getSootClass(appClass);
+					SootMethod m = c.getMethod(Main.SUBSIG);
+					if(m.hasTag(VulnerableMethodTag.class.getName())) {
+						System.err.println(m);
+					}
+				}
+			}
+		}));		
 		Main.main(args);
 	}
 

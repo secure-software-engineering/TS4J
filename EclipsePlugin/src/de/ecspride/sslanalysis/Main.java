@@ -6,7 +6,6 @@ import heros.solver.IFDSSolver;
 import java.util.Map;
 
 import soot.Body;
-import soot.G;
 import soot.Local;
 import soot.PackManager;
 import soot.Scene;
@@ -25,7 +24,6 @@ public class Main {
 	public static final String SUBSIG = "void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)";
 
 	public static void main(String[] args) {
-		G.reset();
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.sslanalysis", new SceneTransformer() {
 			@Override
 			protected void internalTransform(String phaseName, Map<String, String> options) {
