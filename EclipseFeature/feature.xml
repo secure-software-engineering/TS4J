@@ -3,7 +3,8 @@
       id="de.fraunhofer.sit.codescan"
       label="Fraunhofer SIT Codescan Plugin"
       version="1.0.0.qualifier"
-      provider-name="Fraunhofer SIT">
+      provider-name="Fraunhofer SIT"
+      nl="en">
 
    <description>
       Analyzes Java code for vulnerabilities.
