@@ -22,6 +22,10 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -74,7 +78,7 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 	 * the command has been executed, so extract extract the needed information
 	 * from the application context.
 	 */
-	public Object execute(ExecutionEvent event) throws ExecutionException {
+	public Object execute(final ExecutionEvent event) throws ExecutionException {
 		
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 
@@ -88,48 +92,56 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 		IJavaProject[] androidProjectArray = androidProjects.toArray(new IJavaProject[0]);		
 		
 		searchAndAnalyze(androidProjectArray);
-		
+
 		return null;
 	}
 
-	public static void searchAndAnalyze(IJavaElement[] javaElements) {		
-		IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElements);
-		SearchEngine searchEngine = new SearchEngine();
-		SearchPattern pattern = SearchPattern.createPattern("onReceivedSslError", IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
-		final Set<IMethod> callBacksFound = new HashSet<IMethod>();
-		SearchRequestor requestor = new SearchRequestor() {
-			public void acceptSearchMatch(SearchMatch match) throws CoreException {
-				IMethod found = (IMethod) match.getElement();
-				callBacksFound.add(found);
+	public static void searchAndAnalyze(final IJavaElement[] javaElements) {
+		Job job = new Job("Vulnerability analysis") {
+			
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElements);
+				SearchEngine searchEngine = new SearchEngine();
+				SearchPattern pattern = SearchPattern.createPattern("onReceivedSslError", IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
+				final Set<IMethod> callBacksFound = new HashSet<IMethod>();
+				SearchRequestor requestor = new SearchRequestor() {
+					public void acceptSearchMatch(SearchMatch match) throws CoreException {
+						IMethod found = (IMethod) match.getElement();
+						callBacksFound.add(found);
+					}
+				};
+				try {
+					searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
+				} catch (CoreException e) {
+					e.printStackTrace();
+				}
+				
+				Map<IJavaProject,Set<ITypeRoot>> projectToFoundMethods = new HashMap<IJavaProject, Set<ITypeRoot>>();
+				for(IMethod m : callBacksFound) {
+					IJavaProject javaProject = m.getJavaProject();
+					ITypeRoot topLevelType = m.getTypeRoot();
+					Set<ITypeRoot> topLevelTypesToAnalyze = projectToFoundMethods.get(javaProject);
+					if(topLevelTypesToAnalyze==null) topLevelTypesToAnalyze = new HashSet<ITypeRoot>();
+					topLevelTypesToAnalyze.add(topLevelType);
+					projectToFoundMethods.put(javaProject, topLevelTypesToAnalyze);
+				}
+				
+				deleteMarkers(javaElements);
+		
+				for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
+					IJavaProject project = entry.getKey();
+					Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
+					callAnalysis(project, topLevelTypesToAnalyze, getSootClasspath(project));
+				}
+				return Status.OK_STATUS;
 			}
 		};
-		try {
-			searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
-		} catch (CoreException e) {
-			e.printStackTrace();
-		}
-		
-		Map<IJavaProject,Set<ITypeRoot>> projectToFoundMethods = new HashMap<IJavaProject, Set<ITypeRoot>>();
-		for(IMethod m : callBacksFound) {
-			IJavaProject javaProject = m.getJavaProject();
-			ITypeRoot topLevelType = m.getTypeRoot();
-			Set<ITypeRoot> topLevelTypesToAnalyze = projectToFoundMethods.get(javaProject);
-			if(topLevelTypesToAnalyze==null) topLevelTypesToAnalyze = new HashSet<ITypeRoot>();
-			topLevelTypesToAnalyze.add(topLevelType);
-			projectToFoundMethods.put(javaProject, topLevelTypesToAnalyze);
-		}
-		
-		deleteMarkers(javaElements);
-
-		for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
-			IJavaProject project = entry.getKey();
-			Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
-			callAnalysis(project, topLevelTypesToAnalyze, getSootClasspath(project));
-		}
+		job.schedule();
 	}
 
 	private static void deleteMarkers(IJavaElement[] javaElements) {
-		for (IJavaElement je : javaElements) {
+		for (final IJavaElement je : javaElements) {
 			try {
 				je.getResource().deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_INFINITE);
 			} catch (CoreException e) {
