@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <description name="Fraunhofer SIT Codescan Update Site">
+      This is the update site for Fraunhofer SIT Codescan.
+   </description>
+   <feature url="features/de.fraunhofer.sit.codescan_1.0.0.201311011708.jar" id="de.fraunhofer.sit.codescan" version="1.0.0.201311011708" nl="en"/>
+</site>
