@@ -3,7 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Code Scanner for Android SSL Vulnerabilities
 Bundle-SymbolicName: de.fraunhofer.sit.codescan.androidssl;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-Activator: de.fraunhofer.sit.codescan.androidssl.Activator
 Bundle-Vendor: Fraunhofer SIT
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
