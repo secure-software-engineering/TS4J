@@ -13,7 +13,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.search.SearchEngine;
 
 import de.fraunhofer.sit.codescan.androidssl.handlers.AnalyzeAllProjectsHandler;
 
@@ -70,7 +69,7 @@ public class AfterBuildListener implements IResourceChangeListener {
 			if(changedJavaElements.isEmpty()) return;
 			
 			IJavaElement[] changeArray = changedJavaElements.toArray(new IJavaElement[0]);
-			AnalyzeAllProjectsHandler.searchAndAnalyze(SearchEngine.createJavaSearchScope(changeArray));
+			AnalyzeAllProjectsHandler.searchAndAnalyze(changeArray);
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}

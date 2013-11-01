@@ -23,6 +23,7 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
@@ -84,16 +85,15 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 				androidProjects.add(javaProject);
 			}
 		}
-		IJavaProject[] androidProjectArray = androidProjects.toArray(new IJavaProject[0]);
+		IJavaProject[] androidProjectArray = androidProjects.toArray(new IJavaProject[0]);		
 		
-		IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(androidProjectArray);
-		
-		searchAndAnalyze(searchScope);
+		searchAndAnalyze(androidProjectArray);
 		
 		return null;
 	}
 
-	public static void searchAndAnalyze(IJavaSearchScope searchScope) {		
+	public static void searchAndAnalyze(IJavaElement[] javaElements) {		
+		IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElements);
 		SearchEngine searchEngine = new SearchEngine();
 		SearchPattern pattern = SearchPattern.createPattern("onReceivedSslError", IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
 		final Set<IMethod> callBacksFound = new HashSet<IMethod>();
@@ -119,7 +119,7 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 			projectToFoundMethods.put(javaProject, topLevelTypesToAnalyze);
 		}
 		
-		deleteMarkers();
+		deleteMarkers(javaElements);
 
 		for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
 			IJavaProject project = entry.getKey();
@@ -128,11 +128,13 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 		}
 	}
 
-	private static void deleteMarkers() {
-		try {
-			ResourcesPlugin.getWorkspace().getRoot().deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_INFINITE);
-		} catch (CoreException e) {
-			e.printStackTrace();
+	private static void deleteMarkers(IJavaElement[] javaElements) {
+		for (IJavaElement je : javaElements) {
+			try {
+				je.getResource().deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_INFINITE);
+			} catch (CoreException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
