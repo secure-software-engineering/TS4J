@@ -14,7 +14,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaCore;
 
-import de.fraunhofer.sit.codescan.androidssl.handlers.AnalyzeAllProjectsHandler;
+import de.ecspride.sslanalysis.AnalysisDispatcher;
 
 /**
  * Attached to the eclipse framework to react on POST_CHANGE (build on a project has been finished) events
@@ -49,7 +49,7 @@ public class AfterBuildListener implements IResourceChangeListener {
 						IJavaElement javaElement = JavaCore.create(res);
 						if(javaElement!=null) {
 							if(res instanceof IProject) {
-								if(!AnalyzeAllProjectsHandler.isAndroidProject((IProject) res)) {
+								if(!AnalysisDispatcher.isAndroidProject((IProject) res)) {
 									//don't care about non-Android projects
 									return false;
 								}
@@ -69,7 +69,7 @@ public class AfterBuildListener implements IResourceChangeListener {
 			if(changedJavaElements.isEmpty()) return;
 			
 			IJavaElement[] changeArray = changedJavaElements.toArray(new IJavaElement[0]);
-			AnalyzeAllProjectsHandler.searchAndAnalyze(changeArray);
+			AnalysisDispatcher.searchAndAnalyze(changeArray);
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}

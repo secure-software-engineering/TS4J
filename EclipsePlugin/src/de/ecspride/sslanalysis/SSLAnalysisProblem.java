@@ -34,6 +34,11 @@ import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.internal.JimpleLocal;
 
+/**
+ * Implements a must-analysis to check whether sslErrorHandler is in all cases calling proceed() on its handler argument.
+ * {@link #isMethodVulnerable()} can be called to collect the result.
+ * See AnalysisDesign.txt for details.
+ */
 public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> {
 	
 	private final SootMethod sslErrorHandlerMethod;

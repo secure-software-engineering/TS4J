@@ -7,6 +7,9 @@ import org.eclipse.ui.IStartup;
 
 import de.fraunhofer.sit.codescan.androidssl.listeners.AfterBuildListener;
 
+/**
+ * At startup, this handler registers a listener that will be informed after a build, whenever resources were changed.
+ */
 public class StartupHandler implements IStartup {
 
 	public void earlyStartup() {

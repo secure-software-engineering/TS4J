@@ -3,6 +3,9 @@ package de.ecspride.sslanalysis;
 import soot.tagkit.AttributeValueException;
 import soot.tagkit.Tag;
 
+/**
+ * A tag indicating that a method is vulnerable.
+ */
 public class VulnerableMethodTag implements Tag {
 
 	public String getName() {

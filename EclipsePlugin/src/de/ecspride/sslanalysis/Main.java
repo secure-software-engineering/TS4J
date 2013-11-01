@@ -23,6 +23,9 @@ public class Main {
 
 	public static final String SUBSIG = "void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)";
 
+	/**
+	 * Runs the actual analysis with Soot's arguments.
+	 */
 	public static void main(String[] args) {
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.sslanalysis", new SceneTransformer() {
 			@Override
@@ -50,6 +53,10 @@ public class Main {
 		soot.Main.main(args);
 	}
 
+	/**
+	 * Conducts the analysis with the given method as start point.
+	 * Adds a {@link VulnerableMethodTag} to the method if it is found to be vulnerable.
+	 */
 	private static void doAnalysis(JimpleBasedInterproceduralCFG icfg, SootMethod m) {
 		SSLAnalysisProblem problem = new SSLAnalysisProblem(icfg,m);
 		IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
