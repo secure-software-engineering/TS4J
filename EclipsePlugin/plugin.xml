@@ -54,5 +54,11 @@
             type="org.eclipse.core.resources.problemmarker">
       </super>
    </extension>
+   <extension
+         point="org.eclipse.ui.startup">
+      <startup
+            class="de.fraunhofer.sit.codescan.androidssl.handlers.StartupHandler">
+      </startup>
+   </extension>
 
 </plugin>

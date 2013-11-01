@@ -63,8 +63,6 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 
 	public static final String ANDROID_NATURE_ID = "com.android.ide.eclipse.adt.AndroidNature";
 	
-	protected Set<IMethod> callBacksFound = new HashSet<IMethod>();
-	
 	/**
 	 * The constructor.
 	 */
@@ -88,10 +86,17 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 		}
 		IJavaProject[] androidProjectArray = androidProjects.toArray(new IJavaProject[0]);
 		
-		SearchEngine searchEngine = new SearchEngine();
 		IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(androidProjectArray);
 		
+		searchAndAnalyze(searchScope);
+		
+		return null;
+	}
+
+	public static void searchAndAnalyze(IJavaSearchScope searchScope) {		
+		SearchEngine searchEngine = new SearchEngine();
 		SearchPattern pattern = SearchPattern.createPattern("onReceivedSslError", IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
+		final Set<IMethod> callBacksFound = new HashSet<IMethod>();
 		SearchRequestor requestor = new SearchRequestor() {
 			public void acceptSearchMatch(SearchMatch match) throws CoreException {
 				IMethod found = (IMethod) match.getElement();
@@ -121,11 +126,9 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 			Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
 			callAnalysis(project, topLevelTypesToAnalyze, getSootClasspath(project));
 		}
-		
-		return null;
 	}
 
-	private void deleteMarkers() {
+	private static void deleteMarkers() {
 		try {
 			ResourcesPlugin.getWorkspace().getRoot().deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_INFINITE);
 		} catch (CoreException e) {
@@ -133,7 +136,7 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 		}
 	}
 
-	private void callAnalysis(final IJavaProject project, Set<ITypeRoot> topLevelTypesToAnalyze, String sootClasspath) {
+	private static void callAnalysis(final IJavaProject project, Set<ITypeRoot> topLevelTypesToAnalyze, String sootClasspath) {
 		final Set<String> applicationClasses = new HashSet<String>();
 		for (ITypeRoot typeRoot : topLevelTypesToAnalyze) {
 			IType type = typeRoot.findPrimaryType();
@@ -171,7 +174,7 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
 		Main.main(args);
 	}
 
-	private boolean isAndroidProject(IProject p) {
+	public static boolean isAndroidProject(IProject p) {
 		try {				
 			IProjectDescription description = p.getDescription();
 			String[] natures = description.getNatureIds();
@@ -218,7 +221,7 @@ public class AnalyzeAllProjectsHandler extends AbstractHandler {
         }
     }
 
-    public String getSootClasspath(IJavaProject javaProject) {
+    public static String getSootClasspath(IJavaProject javaProject) {
         return urlsToString(projectClassPath(javaProject));
     }
 
