@@ -15,6 +15,7 @@ import heros.template.DefaultIFDSTabulationProblem;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,8 @@ import soot.jimple.ParameterRef;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.internal.JimpleLocal;
+import soot.jimple.toolkits.pointer.LocalMustAliasAnalysis;
+import soot.toolkits.graph.ExceptionalUnitGraph;
 
 /**
  * Implements a must-analysis to check whether sslErrorHandler is in all cases calling proceed() on its handler argument.
@@ -41,15 +44,21 @@ import soot.jimple.internal.JimpleLocal;
  */
 public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> {
 	
+	private static final String SUBSIG_PROCEED = "void proceed()";
+	private static final boolean USE_MUST_ALIAS_ANALYSIS = true;
+
 	private final SootMethod sslErrorHandlerMethod;
 	
-	private boolean methodNotVulnerable = false; 
+	private final Map<SootMethod,LocalMustAliasAnalysis> methodToMustAlias; 
 
+	private boolean methodNotVulnerable = false; 
+	
 	public SSLAnalysisProblem(InterproceduralCFG<Unit, SootMethod> icfg, SootMethod sslErrorHandler) {
 		super(icfg);
 		this.sslErrorHandlerMethod = sslErrorHandler;
+		this.methodToMustAlias = new HashMap<SootMethod, LocalMustAliasAnalysis>();
 	}
-
+	
 	public Map<Unit, Set<Local>> initialSeeds() {
 		return DefaultSeeds.make(Collections.singleton(sslErrorHandlerMethod.getActiveBody().getUnits().getFirst()), zeroValue());
 	}
@@ -198,15 +207,16 @@ public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local
 		public FlowFunction<Local> getCallToReturnFlowFunction(Unit call, Unit returnSite) {
 			if(methodNotVulnerable) return KillAll.v(); //quit
 
-			Stmt stmt = (Stmt) call;
+			final Stmt stmt = (Stmt) call;
 			InvokeExpr ie = stmt.getInvokeExpr();
-			if(ie.getMethodRef().getSubSignature().toString().equals("void proceed()")) {
+			if(isProceedCall(ie)) {
 				if(ie instanceof InstanceInvokeExpr) {
 					InstanceInvokeExpr iie = (InstanceInvokeExpr) ie;
-					final Value base = iie.getBase();
+					final Local base = (Local) iie.getBase();
 					return new FlowFunction<Local>() {
 						public Set<Local> computeTargets(Local source) {
-							if(base.equals(source)) {
+							boolean mustAlias = mustAlias(stmt, base, source);
+							if(mustAlias) {
 								return Collections.emptySet(); //kill
 							}
 							return Collections.singleton(source); //keep
@@ -226,9 +236,33 @@ public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local
 				}
 			};
 		}
+
+		private boolean isProceedCall(InvokeExpr ie) {
+			return ie.getMethodRef().getSubSignature().toString().equals(SUBSIG_PROCEED);
+		}
 	}
 
 	public boolean isMethodVulnerable() {
 		return !methodNotVulnerable;
 	}
+
+	private LocalMustAliasAnalysis getOrCreateMustAliasAnalysis(SootMethod m) {
+		LocalMustAliasAnalysis analysis = methodToMustAlias.get(m);
+		if(analysis==null) {
+			analysis = new LocalMustAliasAnalysis(new ExceptionalUnitGraph(m.getActiveBody()));
+			methodToMustAlias.put(m, analysis);
+		}
+		return analysis;
+	}
+	
+	private boolean mustAlias(Stmt stmt, Local l1, Local l2) {
+		if(USE_MUST_ALIAS_ANALYSIS) {
+			LocalMustAliasAnalysis mustAliasAnalysis = getOrCreateMustAliasAnalysis(interproceduralCFG().getMethodOf(stmt));
+			return mustAliasAnalysis.mustAlias(l1, stmt, l2, stmt);
+		} else {
+			return l1.equals(l2);
+		}
+	}
+
 }
+
