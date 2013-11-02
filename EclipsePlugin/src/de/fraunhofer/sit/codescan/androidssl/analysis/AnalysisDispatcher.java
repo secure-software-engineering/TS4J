@@ -1,4 +1,4 @@
-package de.ecspride.sslanalysis;
+package de.fraunhofer.sit.codescan.androidssl.analysis;
 
 import java.io.File;
 import java.net.MalformedURLException;

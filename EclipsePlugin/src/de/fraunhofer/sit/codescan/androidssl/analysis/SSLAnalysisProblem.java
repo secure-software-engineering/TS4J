@@ -1,4 +1,4 @@
-package de.ecspride.sslanalysis;
+package de.fraunhofer.sit.codescan.androidssl.analysis;
 
 import heros.DefaultSeeds;
 import heros.FlowFunction;

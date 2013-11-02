@@ -14,7 +14,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaCore;
 
-import de.ecspride.sslanalysis.AnalysisDispatcher;
+import de.fraunhofer.sit.codescan.androidssl.analysis.AnalysisDispatcher;
 
 /**
  * Attached to the eclipse framework to react on POST_CHANGE (build on a project has been finished) events

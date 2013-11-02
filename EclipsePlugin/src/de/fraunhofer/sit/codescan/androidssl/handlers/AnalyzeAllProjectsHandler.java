@@ -12,7 +12,7 @@ import org.eclipse.jdt.core.JavaCore;
 
 
 
-import de.ecspride.sslanalysis.AnalysisDispatcher;
+import de.fraunhofer.sit.codescan.androidssl.analysis.AnalysisDispatcher;
 
 /**
  * A handler which is called when the button to analyze all projects is clicked.
