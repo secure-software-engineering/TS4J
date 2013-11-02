@@ -256,11 +256,12 @@ public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local
 	}
 	
 	private boolean mustAlias(Stmt stmt, Local l1, Local l2) {
+		if(l1.equals(l2)) return true;
 		if(USE_MUST_ALIAS_ANALYSIS) {
 			LocalMustAliasAnalysis mustAliasAnalysis = getOrCreateMustAliasAnalysis(interproceduralCFG().getMethodOf(stmt));
 			return mustAliasAnalysis.mustAlias(l1, stmt, l2, stmt);
 		} else {
-			return l1.equals(l2);
+			return false;
 		}
 	}
 
