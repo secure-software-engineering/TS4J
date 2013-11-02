@@ -47,7 +47,7 @@ public class AbstractTest extends TestCase {
 					if(m.hasTag("VisibilityAnnotationTag")) {
 						VisibilityAnnotationTag tag = (VisibilityAnnotationTag) m.getTag("VisibilityAnnotationTag");
 						for(AnnotationTag annTag: tag.getAnnotations()) {
-							if(annTag.getType().equals("LDefinitelyVulnerable;")) {
+							if(annTag.getType().equals("Lannotation/DefinitelyVulnerable;")) {
 								expected.add(m.getDeclaringClass().getName());
 								break;
 							}

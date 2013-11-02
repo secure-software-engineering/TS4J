@@ -5,51 +5,51 @@ public class AllTests extends AbstractTest {
 
 	@Test
 	public void testAliasing() {
-		run("Aliasing");
+		run("test.Aliasing");
 	}
 	
 	@Test
 	public void testExceptions() {
-		run("ExceptionHandling");
+		run("test.ExceptionHandling");
 	}
 	
 	@Test
 	public void testFields() {
-		run("Fields");
+		run("test.Fields");
 	}
 	
 	@Test
 	public void testIfThenElse() {
-		run("IfThenElse");
+		run("test.IfThenElse");
 	}
 
 	@Test
 	public void testJustProceed() {
-		run("JustProceed");
+		run("test.JustProceed");
 	}
 
 	@Test
 	public void testReturnValue() {
-		run("ReturnValue");
+		run("test.ReturnValue");
 	}
 	
 	@Test
 	public void testSingleCallDoNothing() {
-		run("SingleCallDoNothing");
+		run("test.SingleCallDoNothing");
 	}
 
 	@Test
 	public void testSingleCallDoProceed() {
-		run("SingleCallDoProceed");
+		run("test.SingleCallDoProceed");
 	}
 
 	@Test
 	public void testVirtualDispatch() {
-		run("VirtualDispatch");
+		run("test.VirtualDispatch");
 	}
 
 	@Test
 	public void testVirtualDispatchAllProceed() {
-		run("VirtualDispatchAllProceed");
+		run("test.VirtualDispatchAllProceed");
 	}
 }

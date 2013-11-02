@@ -1,7 +1,9 @@
+package test;
 import android.net.http.SslError;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import annotation.DefinitelyVulnerable;
 
 public class SingleCallDoProceed extends WebViewClient {
 	

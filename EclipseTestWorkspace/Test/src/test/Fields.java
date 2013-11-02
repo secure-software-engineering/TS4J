@@ -1,14 +1,20 @@
+package test;
 import android.net.http.SslError;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import annotation.FalseNegative;
 
 
-public class JustProceed extends WebViewClient {
+public class Fields extends WebViewClient {
 	
-	@DefinitelyVulnerable
+	private SslErrorHandler field;
+
+	//not currently recognized as we do not track fields
+	@FalseNegative
 	public void onReceivedSslError (WebView view, SslErrorHandler handler, SslError error) {
-		handler.proceed();
+		field = handler;
+		field.proceed();
 	}
 
 }
