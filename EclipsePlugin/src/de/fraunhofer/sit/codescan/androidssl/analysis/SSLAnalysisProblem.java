@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.fraunhofer.sit.codescan.androidssl.Constants;
+
 import soot.Local;
 import soot.NullType;
 import soot.SootMethod;
@@ -44,9 +46,6 @@ import soot.toolkits.graph.ExceptionalUnitGraph;
  */
 public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> {
 	
-	private static final String SUBSIG_PROCEED = "void proceed()";
-	private static final boolean USE_MUST_ALIAS_ANALYSIS = true;
-
 	private final SootMethod sslErrorHandlerMethod;
 	
 	private final Map<SootMethod,LocalMustAliasAnalysis> methodToMustAlias; 
@@ -238,7 +237,7 @@ public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local
 		}
 
 		private boolean isProceedCall(InvokeExpr ie) {
-			return ie.getMethodRef().getSubSignature().toString().equals(SUBSIG_PROCEED);
+			return ie.getMethodRef().getSubSignature().toString().equals(Constants.SUBSIG_PROCEED);
 		}
 	}
 
@@ -257,7 +256,7 @@ public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local
 	
 	private boolean mustAlias(Stmt stmt, Local l1, Local l2) {
 		if(l1.equals(l2)) return true;
-		if(USE_MUST_ALIAS_ANALYSIS) {
+		if(Constants.USE_MUST_ALIAS_ANALYSIS) {
 			LocalMustAliasAnalysis mustAliasAnalysis = getOrCreateMustAliasAnalysis(interproceduralCFG().getMethodOf(stmt));
 			return mustAliasAnalysis.mustAlias(l1, stmt, l2, stmt);
 		} else {
