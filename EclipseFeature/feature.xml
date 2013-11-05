@@ -34,8 +34,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&
    </requires>
 
    <plugin
-         id="de.fraunhofer.sit.codescan.androidssl"
-         nl="en"
+         id="de.fraunhofer.sit.codescan.framework"
          download-size="0"
          install-size="0"
          version="0.0.0"
