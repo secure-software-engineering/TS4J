@@ -58,7 +58,7 @@ public class Main {
 	 * Adds a {@link VulnerableMethodTag} to the method if it is found to be vulnerable.
 	 */
 	private static void doAnalysis(JimpleBasedInterproceduralCFG icfg, SootMethod m) {
-		SSLAnalysisProblem problem = new SSLAnalysisProblem(icfg,m);
+		DefaultAnalysisProblem problem = new SSLAnalysisProblem(icfg,m);
 		IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
 				new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(problem);
 		solver.solve();

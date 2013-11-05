@@ -11,19 +11,14 @@ import heros.flowfunc.Kill;
 import heros.flowfunc.KillAll;
 import heros.flowfunc.Transfer;
 import heros.flowfunc.Union;
-import heros.template.DefaultIFDSTabulationProblem;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.fraunhofer.sit.codescan.androidssl.Constants;
-
 import soot.Local;
-import soot.NullType;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
@@ -35,27 +30,20 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.ParameterRef;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
-import soot.jimple.internal.JimpleLocal;
-import soot.jimple.toolkits.pointer.LocalMustAliasAnalysis;
-import soot.toolkits.graph.ExceptionalUnitGraph;
+import de.fraunhofer.sit.codescan.androidssl.Constants;
 
 /**
  * Implements a must-analysis to check whether sslErrorHandler is in all cases calling proceed() on its handler argument.
  * {@link #isMethodVulnerable()} can be called to collect the result.
  * See AnalysisDesign.txt for details.
  */
-public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> {
+public class SSLAnalysisProblem extends DefaultAnalysisProblem {
 	
 	private final SootMethod sslErrorHandlerMethod;
-	
-	private final Map<SootMethod,LocalMustAliasAnalysis> methodToMustAlias; 
-
-	private boolean methodNotVulnerable = false; 
 	
 	public SSLAnalysisProblem(InterproceduralCFG<Unit, SootMethod> icfg, SootMethod sslErrorHandler) {
 		super(icfg);
 		this.sslErrorHandlerMethod = sslErrorHandler;
-		this.methodToMustAlias = new HashMap<SootMethod, LocalMustAliasAnalysis>();
 	}
 	
 	public Map<Unit, Set<Local>> initialSeeds() {
@@ -67,26 +55,6 @@ public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local
 		return new FlowFunctionFactory();
 	}
 
-	@Override
-	protected Local createZeroValue() {
-		return new JimpleLocal("ZERO", NullType.v());
-	}
-	
-	@Override
-	public boolean followReturnsPastSeeds() {
-		return true;
-	}
-
-	@Override
-	public boolean autoAddZero() {
-		return false;
-	}
-	
-	@Override
-	public boolean computeValues() {
-		return false;
-	}
-	
 	private class FlowFunctionFactory implements FlowFunctions<Unit, Local, SootMethod> {
 
 		@SuppressWarnings("unchecked")
@@ -238,29 +206,6 @@ public class SSLAnalysisProblem extends DefaultIFDSTabulationProblem<Unit, Local
 
 		private boolean isProceedCall(InvokeExpr ie) {
 			return ie.getMethodRef().getSubSignature().toString().equals(Constants.SUBSIG_PROCEED);
-		}
-	}
-
-	public boolean isMethodVulnerable() {
-		return !methodNotVulnerable;
-	}
-
-	private LocalMustAliasAnalysis getOrCreateMustAliasAnalysis(SootMethod m) {
-		LocalMustAliasAnalysis analysis = methodToMustAlias.get(m);
-		if(analysis==null) {
-			analysis = new LocalMustAliasAnalysis(new ExceptionalUnitGraph(m.getActiveBody()));
-			methodToMustAlias.put(m, analysis);
-		}
-		return analysis;
-	}
-	
-	private boolean mustAlias(Stmt stmt, Local l1, Local l2) {
-		if(l1.equals(l2)) return true;
-		if(Constants.USE_MUST_ALIAS_ANALYSIS) {
-			LocalMustAliasAnalysis mustAliasAnalysis = getOrCreateMustAliasAnalysis(interproceduralCFG().getMethodOf(stmt));
-			return mustAliasAnalysis.mustAlias(l1, stmt, l2, stmt);
-		} else {
-			return false;
 		}
 	}
 
