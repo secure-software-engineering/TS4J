@@ -1,4 +1,4 @@
-package de.fraunhofer.sit.codescan.androidssl.analysis;
+package de.fraunhofer.sit.codescan.framework.internal.analysis;
 
 import soot.tagkit.AttributeValueException;
 import soot.tagkit.Tag;

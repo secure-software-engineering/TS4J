@@ -1,4 +1,11 @@
-package de.fraunhofer.sit.codescan.androidssl.analysis;
+package de.fraunhofer.sit.codescan.framework.internal.analysis;
+
+
+import static de.fraunhofer.sit.codescan.framework.internal.Constants.MARKER_TYPE;
+import static de.fraunhofer.sit.codescan.framework.internal.Constants.SOOT_ARGS;
+import static de.fraunhofer.sit.codescan.framework.internal.Extensions.getContributorsToExtensionPoint;
+import heros.InterproceduralCFG;
+import heros.solver.IFDSSolver;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -19,6 +26,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -38,15 +46,26 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 
+import soot.Body;
 import soot.G;
+import soot.Local;
 import soot.PackManager;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Transform;
+import soot.Unit;
+import soot.jimple.toolkits.ide.JimpleIFDSSolver;
+import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
+import soot.toolkits.graph.BriefUnitGraph;
+import soot.toolkits.graph.DirectedGraph;
 
 import com.google.common.base.Joiner;
+
+import de.fraunhofer.sit.codescan.framework.AnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.internal.Constants;
+import de.fraunhofer.sit.codescan.framework.internal.Extensions;
 
 /**
  * This class implements the main binding between Eclipse and Soot. Its method {@link #searchAndAnalyze(IJavaElement[])} searches
@@ -54,19 +73,10 @@ import com.google.common.base.Joiner;
  */
 public class AnalysisDispatcher {
 	
-	private static final String SOOT_ARGS = "-keep-line-number -f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp";
-
-	private static final String MESSAGE = "Method onReceivedSslError is calling proceed() on its handle, although it should really be validating the SSL certificate!";
-
-	private static final String MARKER_TYPE = "de.fraunhofer.sit.codescan.androidssl.findingmarker";
-
-	public static final String ANDROID_NATURE_ID = "com.android.ide.eclipse.adt.AndroidNature";
-
-
 	/**
 	 * Searches the given javaElements for relevant code and then passes this code to the analysis.
 	 * The method will also remove vulnerability markers for the given javaElements and add new markers
-	 * where vulnerabilities are found.  
+	 * where vulnerabilities are found.
 	 */
 	public static void searchAndAnalyze(final IJavaElement[] javaElements) {
 		Job job = new Job("Vulnerability analysis") {
@@ -74,7 +84,7 @@ public class AnalysisDispatcher {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				//initialize and execute the search for relevant methods
-				IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElements);
+				IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElements,IJavaSearchScope.SOURCES);
 				SearchEngine searchEngine = new SearchEngine();
 				SearchPattern pattern = SearchPattern.createPattern("onReceivedSslError", IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
 				final Set<IMethod> callBacksFound = new HashSet<IMethod>();
@@ -125,7 +135,7 @@ public class AnalysisDispatcher {
 			String[] natures = description.getNatureIds();
 			boolean found = false;
 			for (String nature : natures) {
-				if(nature.equals(ANDROID_NATURE_ID)) {
+				if(nature.equals(Constants.ANDROID_NATURE_ID)) {
 					found = true;
 				}
 			}
@@ -139,7 +149,7 @@ public class AnalysisDispatcher {
 	private static void deleteMarkers(IJavaElement[] javaElements) {
 		for (final IJavaElement je : javaElements) {
 			try {
-				je.getResource().deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_INFINITE);
+				je.getResource().deleteMarkers(Constants.MARKER_TYPE, false, IResource.DEPTH_INFINITE);
 			} catch (CoreException e) {
 				e.printStackTrace();
 			}
@@ -159,33 +169,77 @@ public class AnalysisDispatcher {
 		
 		//reset Soot and register callback that will create vulnerability markers
 		G.reset();
-		PackManager.v().getPack("wjap").add(new Transform("wjap.errorreporter",  new SceneTransformer() {
+		
+		//register analysis plugins within Soot
+		PackManager.v().getPack("wjap").add(new Transform("wjap.errorreporter", new SceneTransformer() {			
 			protected void internalTransform(String arg0, Map<String, String> arg1) {
-				for (String appClass : applicationClasses) {
-					SootClass c = Scene.v().getSootClass(appClass);
-					SootMethod m = c.getMethod(Main.SUBSIG);
-					if(m.hasTag(VulnerableMethodTag.class.getName())) {
-						try {
-							IType erronousClass = project.findType(c.getName());
-							IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
-							IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
-							marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
-							marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
-							marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
-							marker.setAttribute(IMarker.USER_EDITABLE, false);
-							marker.setAttribute(IMarker.MESSAGE, MESSAGE);
-						} catch (JavaModelException e) {
-							e.printStackTrace();
-						} catch (CoreException e) {
-							e.printStackTrace();
+				for(final IConfigurationElement extension : getContributorsToExtensionPoint()) {
+					for (String appClass : applicationClasses) {
+						SootClass c = Scene.v().getSootClass(appClass);
+						SootMethod m = c.getMethod(extension.getAttribute("subsignature"));
+						if(m.hasTag(VulnerableMethodTag.class.getName())) {
+							try {
+								IType erronousClass = project.findType(c.getName());
+								IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
+								IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
+								marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
+								marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
+								marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
+								marker.setAttribute(IMarker.USER_EDITABLE, false);
+								marker.setAttribute(IMarker.MESSAGE, extension.getAttribute("errormessage"));
+							} catch (JavaModelException e) {
+								e.printStackTrace();
+							} catch (CoreException e) {
+								e.printStackTrace();
+							}
 						}
 					}
 				}
 			}
 		}));		
+
+		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new SceneTransformer() {
+			@Override
+			protected void internalTransform(String phaseName, Map<String, String> options) {
+				//create single ICFG and MustAlias objects used for all the analyses
+				final JimpleBasedInterproceduralCFG icfg = new JimpleBasedInterproceduralCFG() {
+					@Override
+					protected synchronized DirectedGraph<Unit> makeGraph(Body body) {
+						//we use brief unit graphs such that we warn in situations where
+						//the code only might be safe due to some exceptional flows
+						return new BriefUnitGraph(body);
+					}
+				};
+				final MustAlias mustAliasManager = new MustAlias(icfg);
+
+				for(final IConfigurationElement extension : getContributorsToExtensionPoint()) {
+					String superTypeName = extension.getAttribute("supertype");
+					for(SootClass c: Scene.v().getApplicationClasses()) {
+						//filter by super-class name (if given) and method signature
+						if(superTypeName!=null &&
+						   !Scene.v().getFastHierarchy().isSubclass(c, Scene.v().getSootClass(superTypeName))) continue;
+						String subSig = extension.getAttribute("subsignature");
+						if(!c.declaresMethod(subSig)) continue;
+						
+						SootMethod m = c.getMethod(subSig);
+						if(!m.hasActiveBody()) continue;
+						
+						
+						AnalysisPlugin plugin = Extensions.createPluginObject(extension);
+						IFDSAdapter ifdsProblem = new IFDSAdapter(icfg, mustAliasManager, plugin, m);
+						IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
+								new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(ifdsProblem);
+						solver.solve();
+						if(ifdsProblem.isMethodVulnerable()) {
+							m.addTag(new VulnerableMethodTag());
+						}
+					}
+				}
+			}				
+		}));		
 		
-		//execute analysis
-		Main.main(args);
+		//execute analyses
+		soot.Main.main(args);		
 	}
 
 	private static URL[] projectClassPath(IJavaProject javaProject) {

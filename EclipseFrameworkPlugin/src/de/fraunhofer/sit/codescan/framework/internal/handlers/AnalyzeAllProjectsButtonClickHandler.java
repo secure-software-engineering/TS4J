@@ -1,4 +1,4 @@
-package de.fraunhofer.sit.codescan.androidssl.handlers;
+package de.fraunhofer.sit.codescan.framework.internal.handlers;
 
 import java.util.ArrayList;
 
@@ -12,17 +12,13 @@ import org.eclipse.jdt.core.JavaCore;
 
 
 
-import de.fraunhofer.sit.codescan.androidssl.analysis.AnalysisDispatcher;
+import de.fraunhofer.sit.codescan.framework.internal.analysis.AnalysisDispatcher;
 
 /**
  * A handler which is called when the button to analyze all projects is clicked.
  */
-public class AnalyzeAllProjectsHandler extends AbstractHandler {
+public class AnalyzeAllProjectsButtonClickHandler extends AbstractHandler {
 	
-	/**
-	 * the command has been executed, so extract extract the needed information
-	 * from the application context.
-	 */
 	public Object execute(final ExecutionEvent event) throws ExecutionException {
 		
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();

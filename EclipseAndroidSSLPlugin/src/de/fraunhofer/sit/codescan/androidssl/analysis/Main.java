@@ -5,6 +5,9 @@ import heros.solver.IFDSSolver;
 
 import java.util.Map;
 
+import de.fraunhofer.sit.codescan.framework.internal.analysis.DefaultAnalysisProblem;
+import de.fraunhofer.sit.codescan.framework.internal.analysis.VulnerableMethodTag;
+
 import soot.Body;
 import soot.Local;
 import soot.PackManager;

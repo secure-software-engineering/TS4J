@@ -30,7 +30,8 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.ParameterRef;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
-import de.fraunhofer.sit.codescan.androidssl.Constants;
+import de.fraunhofer.sit.codescan.framework.internal.Constants;
+import de.fraunhofer.sit.codescan.framework.internal.analysis.IFDSAdapter;
 
 /**
  * Implements a must-analysis to check whether sslErrorHandler is in all cases calling proceed() on its handler argument.

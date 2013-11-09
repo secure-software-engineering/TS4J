@@ -1,5 +1,3 @@
-import static de.fraunhofer.sit.codescan.androidssl.analysis.Main.SUBSIG;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,8 +20,9 @@ import soot.tagkit.VisibilityAnnotationTag;
 import com.google.common.base.Joiner;
 
 import de.fraunhofer.sit.codescan.androidssl.analysis.Main;
-import de.fraunhofer.sit.codescan.androidssl.analysis.VulnerableMethodTag;
+import de.fraunhofer.sit.codescan.framework.internal.analysis.VulnerableMethodTag;
 
+import static de.fraunhofer.sit.codescan.androidssl.analysis.Main.SUBSIG;
 
 public class AbstractTest extends TestCase {
 
