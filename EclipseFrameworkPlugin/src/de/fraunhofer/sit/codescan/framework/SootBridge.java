@@ -22,8 +22,16 @@ import soot.toolkits.graph.DirectedGraph;
 import de.fraunhofer.sit.codescan.framework.internal.analysis.IFDSAdapter;
 import de.fraunhofer.sit.codescan.framework.internal.analysis.MustAlias;
 
+/**
+ * Registers an analysis pack with Soot, which can then be executed by calling {@link soot.Main#main(String[])}.
+ * This is currently used internally within the plugin but also by the test harness.
+ */
 public class SootBridge {
 
+	/**
+	 * @param classesToStartAnalysisAt Those classes will be given as argument classes to Soot.
+	 * @param configs A number of {@link AnalysisConfiguration}s which define how to conduct the analysis.
+	 */
 	public static void registerAnalysisPack(final Set<String> classesToStartAnalysisAt, final AnalysisConfiguration... configs) {
 		//register analyses
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new SceneTransformer() {
