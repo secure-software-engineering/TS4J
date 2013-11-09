@@ -9,29 +9,6 @@ import de.fraunhofer.sit.codescan.framework.AnalysisPlugin;
 
 public class Extensions {
 
-//	/**
-//	 * Returns the set of all registered analysis plugins. 
-//	 */
-//	public static Set<AnalysisPlugin> getContributorsToExtensionPoint() {
-//		try {
-//			IExtensionRegistry reg = Platform.getExtensionRegistry();
-//			IExtensionPoint ep = reg.getExtensionPoint(Constants.EXTENSION_POINT_ID);
-//			IExtension[] extensions = ep.getExtensions();
-//			Set<AnalysisPlugin> contributors = new HashSet<AnalysisPlugin>();
-//			for (int i = 0; i < extensions.length; i++) {
-//				IExtension ext = extensions[i];
-//				IConfigurationElement[] ce = ext.getConfigurationElements();
-//				for (int j = 0; j < ce.length; j++) {
-//						contributors.add((AnalysisPlugin) ce[j].createExecutableExtension("class"));
-//				}
-//			}
-//			return contributors;
-//		} catch (CoreException e) {
-//			e.printStackTrace();
-//			return Collections.emptySet();
-//		}
-//	}
-//	
 	/**
 	 * Returns the set of all registered analysis plugins. 
 	 */

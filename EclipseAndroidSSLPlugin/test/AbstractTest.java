@@ -19,13 +19,16 @@ import soot.tagkit.VisibilityAnnotationTag;
 
 import com.google.common.base.Joiner;
 
-import de.fraunhofer.sit.codescan.androidssl.analysis.Main;
-import de.fraunhofer.sit.codescan.framework.internal.analysis.VulnerableMethodTag;
-
-import static de.fraunhofer.sit.codescan.androidssl.analysis.Main.SUBSIG;
+import de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
+import de.fraunhofer.sit.codescan.framework.AnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.SootBridge;
+import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
 
 public class AbstractTest extends TestCase {
 
+	protected static final String SUPER_CLASS = "android.webkit.WebViewClient";
+	protected static final String SUB_SIG = "void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)";
 	protected Set<String> actual, expected;
 	
 	protected final void setUp() throws Exception {
@@ -35,10 +38,10 @@ public class AbstractTest extends TestCase {
 			@Override
 			protected void internalTransform(String phaseName, Map<String, String> options) {
 				for(SootClass c: Scene.v().getApplicationClasses()) {
-					if(!Scene.v().getFastHierarchy().isSubclass(c, Scene.v().getSootClass("android.webkit.WebViewClient"))) continue;
-					if(!c.declaresMethod(SUBSIG)) continue;
+					if(!Scene.v().getFastHierarchy().isSubclass(c, Scene.v().getSootClass(SUPER_CLASS))) continue;
+					if(!c.declaresMethod(SUB_SIG)) continue;
 
-					SootMethod m = c.getMethod(SUBSIG);
+					SootMethod m = c.getMethod(SUB_SIG);
 
 					if(m.hasTag(VulnerableMethodTag.class.getName())) {
 						actual.add(m.getDeclaringClass().getName());
@@ -64,10 +67,21 @@ public class AbstractTest extends TestCase {
 		super.tearDown();
 	}
 
-	protected void run(String ... files) {
+	protected void run(String... files) {
 		String args = "-f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp -cp . "+Joiner.on(" ").join(Arrays.asList(files));
 		String[] argsArray = args.split(" ");
-		Main.main(argsArray);		
+		SootBridge.registerAnalysisPack(new HashSet<String>(Arrays.asList(files)),new AnalysisConfiguration() {
+			public String getMethodSubSignature() {
+				return SUB_SIG;
+			}
+			public String getSuperClassName() {
+				return SUPER_CLASS;
+			}
+			public AnalysisPlugin getAnalysisPlugin() {
+				return new SSLAnalysisPlugin();
+			}
+		});
+		soot.Main.main(argsArray);		
 		Assert.assertEquals(expected, actual);
 	}
 

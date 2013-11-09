@@ -1,4 +1,4 @@
-package de.fraunhofer.sit.codescan.framework.internal.analysis;
+package de.fraunhofer.sit.codescan.framework;
 
 import soot.tagkit.AttributeValueException;
 import soot.tagkit.Tag;
@@ -6,7 +6,7 @@ import soot.tagkit.Tag;
 /**
  * A tag indicating that a method is vulnerable.
  */
-public class VulnerableMethodTag implements Tag {
+public final class VulnerableMethodTag implements Tag {
 
 	public String getName() {
 		return VulnerableMethodTag.class.getName();

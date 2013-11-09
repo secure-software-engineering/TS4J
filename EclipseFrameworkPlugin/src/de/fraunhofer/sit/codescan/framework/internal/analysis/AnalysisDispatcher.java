@@ -1,11 +1,10 @@
 package de.fraunhofer.sit.codescan.framework.internal.analysis;
 
 
+import static de.fraunhofer.sit.codescan.framework.SootBridge.registerAnalysisPack;
 import static de.fraunhofer.sit.codescan.framework.internal.Constants.MARKER_TYPE;
 import static de.fraunhofer.sit.codescan.framework.internal.Constants.SOOT_ARGS;
 import static de.fraunhofer.sit.codescan.framework.internal.Extensions.getContributorsToExtensionPoint;
-import heros.InterproceduralCFG;
-import heros.solver.IFDSSolver;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -46,24 +45,19 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 
-import soot.Body;
 import soot.G;
-import soot.Local;
 import soot.PackManager;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Transform;
-import soot.Unit;
-import soot.jimple.toolkits.ide.JimpleIFDSSolver;
-import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
-import soot.toolkits.graph.BriefUnitGraph;
-import soot.toolkits.graph.DirectedGraph;
 
 import com.google.common.base.Joiner;
 
+import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
 import de.fraunhofer.sit.codescan.framework.AnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
 import de.fraunhofer.sit.codescan.framework.internal.Constants;
 import de.fraunhofer.sit.codescan.framework.internal.Extensions;
 
@@ -118,7 +112,15 @@ public class AnalysisDispatcher {
 				for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
 					IJavaProject project = entry.getKey();
 					Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
-					callAnalysis(project, topLevelTypesToAnalyze);
+					Set<String> classesToAnalyze = typesToClassNames(topLevelTypesToAnalyze);
+					//perform analysis
+					G.reset();
+					registerMarkerCreator(project, classesToAnalyze);
+					IConfigurationElement[] extensions = Extensions.getContributorsToExtensionPoint();
+					AnalysisConfiguration[] configs = createAnalysisConfigurations(extensions);
+					registerAnalysisPack(classesToAnalyze, configs);
+					String[] args = (SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classesToAnalyze)).split(" ");
+					soot.Main.main(args);
 				}
 				return Status.OK_STATUS;
 			}
@@ -156,25 +158,12 @@ public class AnalysisDispatcher {
 		}
 	}
 
-	private static void callAnalysis(final IJavaProject project, Set<ITypeRoot> topLevelTypesToAnalyze) {
-		//Build Soot arguments
-		String sootClasspath = getSootClasspath(project);
-		final Set<String> applicationClasses = new HashSet<String>();
-		for (ITypeRoot typeRoot : topLevelTypesToAnalyze) {
-			IType type = typeRoot.findPrimaryType();
-			String qualifiedName = type.getFullyQualifiedName();
-			applicationClasses.add(qualifiedName);
-		}
-		String[] args = (SOOT_ARGS+" -cp "+sootClasspath+" "+Joiner.on(" ").join(applicationClasses)).split(" ");
-		
-		//reset Soot and register callback that will create vulnerability markers
-		G.reset();
-		
-		//register analysis plugins within Soot
+	private static void registerMarkerCreator(final IJavaProject project, final Set<String> classesToStartAnalysisAt) {
+		//register marker creation
 		PackManager.v().getPack("wjap").add(new Transform("wjap.errorreporter", new SceneTransformer() {			
 			protected void internalTransform(String arg0, Map<String, String> arg1) {
 				for(final IConfigurationElement extension : getContributorsToExtensionPoint()) {
-					for (String appClass : applicationClasses) {
+					for (String appClass : classesToStartAnalysisAt) {
 						SootClass c = Scene.v().getSootClass(appClass);
 						SootMethod m = c.getMethod(extension.getAttribute("subsignature"));
 						if(m.hasTag(VulnerableMethodTag.class.getName())) {
@@ -197,49 +186,16 @@ public class AnalysisDispatcher {
 				}
 			}
 		}));		
-
-		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new SceneTransformer() {
-			@Override
-			protected void internalTransform(String phaseName, Map<String, String> options) {
-				//create single ICFG and MustAlias objects used for all the analyses
-				final JimpleBasedInterproceduralCFG icfg = new JimpleBasedInterproceduralCFG() {
-					@Override
-					protected synchronized DirectedGraph<Unit> makeGraph(Body body) {
-						//we use brief unit graphs such that we warn in situations where
-						//the code only might be safe due to some exceptional flows
-						return new BriefUnitGraph(body);
-					}
-				};
-				final MustAlias mustAliasManager = new MustAlias(icfg);
-
-				for(final IConfigurationElement extension : getContributorsToExtensionPoint()) {
-					String superTypeName = extension.getAttribute("supertype");
-					for(SootClass c: Scene.v().getApplicationClasses()) {
-						//filter by super-class name (if given) and method signature
-						if(superTypeName!=null &&
-						   !Scene.v().getFastHierarchy().isSubclass(c, Scene.v().getSootClass(superTypeName))) continue;
-						String subSig = extension.getAttribute("subsignature");
-						if(!c.declaresMethod(subSig)) continue;
-						
-						SootMethod m = c.getMethod(subSig);
-						if(!m.hasActiveBody()) continue;
-						
-						
-						AnalysisPlugin plugin = Extensions.createPluginObject(extension);
-						IFDSAdapter ifdsProblem = new IFDSAdapter(icfg, mustAliasManager, plugin, m);
-						IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
-								new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(ifdsProblem);
-						solver.solve();
-						if(ifdsProblem.isMethodVulnerable()) {
-							m.addTag(new VulnerableMethodTag());
-						}
-					}
-				}
-			}				
-		}));		
-		
-		//execute analyses
-		soot.Main.main(args);		
+	}
+	
+	private static Set<String> typesToClassNames(Set<ITypeRoot> topLevelTypesToAnalyze) {
+		Set<String> applicationClasses = new HashSet<String>();
+		for (ITypeRoot typeRoot : topLevelTypesToAnalyze) {
+			IType type = typeRoot.findPrimaryType();
+			String qualifiedName = type.getFullyQualifiedName();
+			applicationClasses.add(qualifiedName);
+		}
+		return applicationClasses;
 	}
 
 	private static URL[] projectClassPath(IJavaProject javaProject) {
@@ -284,6 +240,25 @@ public class AnalysisDispatcher {
 	    }
 	    
 	    return cp.toString();
+	}
+
+	private static AnalysisConfiguration[] createAnalysisConfigurations(IConfigurationElement[] extensions) {
+		AnalysisConfiguration[] configs = new AnalysisConfiguration[extensions.length];
+		int i=0;
+		for (final IConfigurationElement extension : extensions) {
+			configs[i++] = new AnalysisConfiguration() {
+				public String getSuperClassName() {
+					return extension.getAttribute("superclass");
+				}
+				public String getMethodSubSignature() {
+					return extension.getAttribute("subsignature");
+				}
+				public AnalysisPlugin getAnalysisPlugin() {
+					return Extensions.createPluginObject(extension);
+				}
+			};
+		}
+		return configs;
 	}
 
 }
