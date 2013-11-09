@@ -13,6 +13,9 @@ import soot.jimple.toolkits.pointer.LocalMustAliasAnalysis;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import de.fraunhofer.sit.codescan.framework.internal.Constants;
 
+/**
+ * This class is used to cache must-alias analyses.
+ */
 public class MustAlias {
 	
 	private final Map<SootMethod,LocalMustAliasAnalysis> methodToMustAlias;
