@@ -26,7 +26,10 @@ public class MustAlias {
 	public boolean mustAlias(Stmt stmt, Local l1, Stmt stmt2, Local l2) {
 		if(l1.equals(l2)) return true;
 		if(Constants.USE_MUST_ALIAS_ANALYSIS) {
-			LocalMustAliasAnalysis mustAliasAnalysis = getOrCreateMustAliasAnalysis(icfg.getMethodOf(stmt));
+			SootMethod methodOf = icfg.getMethodOf(stmt);
+			SootMethod methodOf2 = icfg.getMethodOf(stmt2);
+			if(!methodOf.equals(methodOf2)) return false;
+			LocalMustAliasAnalysis mustAliasAnalysis = getOrCreateMustAliasAnalysis(methodOf);
 			return mustAliasAnalysis.mustAlias(l1, stmt, l2, stmt2);
 		} else {
 			return false;
