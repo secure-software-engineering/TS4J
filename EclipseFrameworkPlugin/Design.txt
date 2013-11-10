@@ -1,0 +1,44 @@
+Plugins can register a number of different client analyses with the framework.
+
+Each plugin can define a filter to determine start points for the analysis.
+A filter can search for certain method declarations or method references.
+	In the future we might want to allow plugins to combine multiple filters.
+A project can state a particular project nature to restrict matches, for instance,
+	only to Android projects.
+When the user issues an incremental build, the framework runs a code search
+over all added or modified .java files. For each analysis, the search returns a
+number of fully qualified class names of classes in which the search matched:
+	Map: AnalysisConfiguration -> Set<ClassName> 
+
+Design decision:
+For efficiency, we want to all analyses in a single Soot process per project.
+	We must distinguish multiple projects because they can have quite distinct
+	classpaths with different code versions.
+For each project, however, Soot should only include in its run the analyses
+for which matches were actually found by the code search. The respective analyses
+should further be notified about those matches, such that they can restrict
+their analyses to the respective code.
+
+In result, we have a loop as follows:
+
+for all classes <cls> added or modified determine the set <projs> of their projects
+for each project <p> in <projs>
+	search <p> for relevant code, producing a mapping <analysis,methodsToAnalyze>
+	let <allClasses> be the union of all declaring classes of such <methodsToAnalyze>
+	the framework removed from <cls> all error markers associated with <analysis>
+	configure Soot such that <allClasses> are application classes
+	configure the right project classpath
+	soot registers transformers for the different analyses
+		a body transformer for intra-procedural analyses
+		scene transformer for inter-procedural analyses
+	if an intra-procedural analysis is present then Soot is configured to run in
+		whole-program mode; it also builds an ICFG
+		the call graph is built using CHA and all-reachable:true
+	inter-procedural analyses can be configured to run in backwards mode, in which
+		case they get a singleton backwards-ICFG
+
+analyses communicate vulnerabilities to the plugin via VulnerableMethodTag instances
+	the tag information should be sufficient to determine the error message,
+	the error location and probably also the marker type/icon
+	also the tag (and error marker) must have information to determine the analysis
+		that generated the tag such that appropriate tags can be removed on re-analysis
