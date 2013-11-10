@@ -44,6 +44,10 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 
 import soot.G;
 import soot.PackManager;
@@ -109,18 +113,27 @@ public class AnalysisDispatcher {
 				deleteMarkers(javaElements);
 		
 				//call the analysis
-				for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
-					IJavaProject project = entry.getKey();
-					Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
-					Set<String> classesToAnalyze = typesToClassNames(topLevelTypesToAnalyze);
-					//perform analysis
-					G.reset();
-					registerMarkerCreator(project, classesToAnalyze);
-					IConfigurationElement[] extensions = Extensions.getContributorsToExtensionPoint();
-					AnalysisConfiguration[] configs = createAnalysisConfigurations(extensions);
-					registerAnalysisPack(classesToAnalyze, configs);
-					String[] args = (SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classesToAnalyze)).split(" ");
-					soot.Main.main(args);
+				IConfigurationElement[] extensions = Extensions.getContributorsToExtensionPoint();
+				if(extensions.length==0) {
+					Display.getDefault().asyncExec(new Runnable() {
+				        public void run() {
+				        	final Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();  					  
+				            MessageDialog.openWarning(shell,"No analyses found","There are no analysis plugins installed. Install a plugin to conduct analyses.");
+				        }
+				    });
+				} else {
+					for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
+						IJavaProject project = entry.getKey();
+						Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
+						Set<String> classesToAnalyze = typesToClassNames(topLevelTypesToAnalyze);
+						//perform analysis
+						G.reset();
+						registerMarkerCreator(project, classesToAnalyze);
+						AnalysisConfiguration[] configs = createAnalysisConfigurations(extensions);
+						registerAnalysisPack(classesToAnalyze, configs);
+						String[] args = (SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classesToAnalyze)).split(" ");
+						soot.Main.main(args);
+					}
 				}
 				return Status.OK_STATUS;
 			}
