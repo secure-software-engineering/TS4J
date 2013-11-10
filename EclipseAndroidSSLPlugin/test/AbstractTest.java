@@ -20,7 +20,7 @@ import soot.tagkit.VisibilityAnnotationTag;
 import com.google.common.base.Joiner;
 
 import de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.IAnalysisConfiguration;
+import de.fraunhofer.sit.codescan.framework.IAnalysisPack;
 import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.SootBridge;
@@ -73,7 +73,7 @@ public class AbstractTest extends TestCase {
 		String[] argsArray = args.split(" ");
 		SootBridge.registerAnalysisPack(
 			new HashSet<String>(Arrays.asList(files)),
-			new IAnalysisConfiguration() {
+			new IAnalysisPack() {
 				public String getMethodSubSignature() {
 					return SUB_SIG;
 				}

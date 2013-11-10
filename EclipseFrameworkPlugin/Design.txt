@@ -7,8 +7,8 @@ A project can state a particular project nature to restrict matches, for instanc
 	only to Android projects.
 When the user issues an incremental build, the framework runs a code search
 over all added or modified .java files. For each analysis, the search returns a
-number of fully qualified class names of classes in which the search matched:
-	Map: AnalysisConfiguration -> Set<ClassName> 
+a set of methods that were matched by the filters of that analysis:
+	Map: AnalysisConfiguration -> Set<Method> 
 
 Design decision:
 For efficiency, we want to all analyses in a single Soot process per project.

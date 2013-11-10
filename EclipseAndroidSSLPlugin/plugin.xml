@@ -11,10 +11,13 @@
             <filter>
                <bySuperType
                      superType="android.webkit.WebViewClient">
+	               <byMethodDecl
+	                     subsignature="void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)">
+                   <byMethodCall
+                         subsignature="void proceed()">
+                   </byMethodCall>
+	               </byMethodDecl>
                </bySuperType>
-               <byMethodDecl
-                     subsignature="void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)">
-               </byMethodDecl>
             </filter>
          </ifdsAnalysis>
       </analysisPack>

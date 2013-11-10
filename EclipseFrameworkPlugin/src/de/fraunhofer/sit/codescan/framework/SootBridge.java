@@ -32,9 +32,9 @@ public class SootBridge {
 
 	/**
 	 * @param classesToStartAnalysisAt Those classes will be given as argument classes to Soot.
-	 * @param configs A number of {@link IAnalysisConfiguration}s which define how to conduct the analysis.
+	 * @param configs A number of {@link IAnalysisPack}s which define how to conduct the analysis.
 	 */
-	public static void registerAnalysisPack(final Set<String> classesToStartAnalysisAt, final IAnalysisConfiguration... configs) {
+	public static void registerAnalysisPack(final Set<String> classesToStartAnalysisAt, final IAnalysisPack... configs) {
 		//register analyses
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new SceneTransformer() {
 			@Override
@@ -50,7 +50,7 @@ public class SootBridge {
 				};
 				final MustAlias mustAliasManager = new MustAlias(icfg);
 	
-				for(IAnalysisConfiguration config : configs) {
+				for(IAnalysisPack config : configs) {
 					String superTypeName = config.getSuperClassName();
 					for(SootClass c: Scene.v().getApplicationClasses()) {
 						//filter by super-class name (if given) and method signature

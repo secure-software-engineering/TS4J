@@ -1,10 +1,6 @@
 package de.fraunhofer.sit.codescan.framework.internal.analysis;
 
 
-import static de.fraunhofer.sit.codescan.framework.SootBridge.registerAnalysisPack;
-import static de.fraunhofer.sit.codescan.framework.internal.Constants.MARKER_TYPE;
-import static de.fraunhofer.sit.codescan.framework.internal.Constants.SOOT_ARGS;
-
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -18,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
@@ -30,6 +25,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -44,27 +40,12 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
 
-import soot.G;
-import soot.PackManager;
-import soot.Scene;
-import soot.SceneTransformer;
-import soot.SootClass;
-import soot.SootMethod;
-import soot.Transform;
-
-import com.google.common.base.Joiner;
-
-import de.fraunhofer.sit.codescan.framework.IAnalysisConfiguration;
-import de.fraunhofer.sit.codescan.framework.IAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.IAnalysisPlugin.IFilter;
-import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
+import soot.toolkits.scalar.Pair;
+import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
+import de.fraunhofer.sit.codescan.framework.IAnalysisPack;
+import de.fraunhofer.sit.codescan.framework.IFDSAnalysisConfiguration;
+import de.fraunhofer.sit.codescan.framework.MethodBasedAnalysisConfiguration;
 import de.fraunhofer.sit.codescan.framework.internal.Constants;
 import de.fraunhofer.sit.codescan.framework.internal.Extensions;
 
@@ -87,24 +68,89 @@ public class AnalysisDispatcher {
 				IConfigurationElement[] extensions = Extensions.getContributorsToExtensionPoint();
 				if(extensions.length==0) return Status.OK_STATUS;
 				
+				Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods = searchRelevantClasses(javaElements,extensions);
+				
+				//re-map found methods
+				Map<IJavaProject, Map<AnalysisConfiguration, Set<IMethod>>> projectToAnalysisAndMethods = reMapFindings(analysisToRelevantMethods);
+
+				System.err.println();
+				
+				//				
+//				//delete markers on the java elements
+//				deleteMarkers(javaElements);
+//		
+//				//call the analysis
+//				if(extensions.length==0) {
+//					Display.getDefault().asyncExec(new Runnable() {
+//				        public void run() {
+//				        	final Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();  					  
+//				            MessageDialog.openWarning(shell,"No analyses found","There are no analysis plugins installed. Install a plugin to conduct analyses.");
+//				        }
+//				    });
+//				} else {
+//					for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
+//						IJavaProject project = entry.getKey();
+//						Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
+//						Set<String> classesToAnalyze = typesToClassNames(topLevelTypesToAnalyze);
+//						//perform analysis
+//						G.reset();
+////						registerMarkerCreator(project, classesToAnalyze, analysisPacks);
+////						registerAnalysisPack(classesToAnalyze, analysisPacks);
+//						String[] args = (SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classesToAnalyze)).split(" ");
+//						soot.Main.main(args);
+//					}
+//				}
+				return Status.OK_STATUS;
+			}
+
+			private Map<IJavaProject, Map<AnalysisConfiguration, Set<IMethod>>> reMapFindings(
+					Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
+				Map<IJavaProject,Map<AnalysisConfiguration, Set<IMethod>>> projectToAnalysisAndMethods = 
+						new HashMap<IJavaProject,Map<AnalysisConfiguration, Set<IMethod>>>();
+				
+				for(Map.Entry<AnalysisConfiguration, Set<IMethod>> entry: analysisToRelevantMethods.entrySet()) {
+					AnalysisConfiguration analysis = entry.getKey();
+					Set<IMethod> methods = entry.getValue();
+					for(IMethod m: methods) {
+						IJavaProject project = m.getJavaProject();
+						Map<AnalysisConfiguration, Set<IMethod>> analysisToMethods = projectToAnalysisAndMethods.get(project);
+						if(analysisToMethods==null) {
+							analysisToMethods = new HashMap<AnalysisConfiguration, Set<IMethod>>();
+							projectToAnalysisAndMethods.put(project,analysisToMethods);
+						}
+						Set<IMethod> ms = analysisToMethods.get(analysis);
+						if(ms==null) {
+							ms = new HashSet<IMethod>();
+							analysisToMethods.put(analysis,ms);
+						}
+						ms.add(m);
+					}
+				}
+				return projectToAnalysisAndMethods;
+			}
+
+			private Map<AnalysisConfiguration,Set<IMethod>> searchRelevantClasses(final IJavaElement[] javaElements,
+					IConfigurationElement[] extensions) {
 				//initialize and execute the search for relevant methods
 				SearchEngine searchEngine = new SearchEngine();
-				IAnalysisConfiguration[] configs = createAnalysisConfigurations(extensions);
-				Set<IMethod> callBacksFound = new HashSet<IMethod>();
-				for (IAnalysisConfiguration config : configs) {
+				Set<IAnalysisPack> analysisPacks = createAnalysisConfigurations(extensions);
+				Map<AnalysisConfiguration,Set<IMethod>> result = new HashMap<AnalysisConfiguration, Set<IMethod>>();
+				for (IAnalysisPack pack : analysisPacks) {
 					IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElements,IJavaSearchScope.SOURCES);
-					Set<IAnalysisPlugin> allPlugins = new HashSet<IAnalysisPlugin>();
-					allPlugins.addAll(Arrays.asList(config.getIFDSAnalysisPlugins()));
-					allPlugins.addAll(Arrays.asList(config.getMethodBasedAnalysisPlugins()));
-					for (IAnalysisPlugin plugin : allPlugins) {
-						IFilter[] filters = plugin.getFilters();
-						for (IFilter filter : filters) {
+					Set<AnalysisConfiguration> allConfigs = new HashSet<AnalysisConfiguration>();
+					allConfigs.addAll(Arrays.asList(pack.getIFDSAnalysisConfigs()));
+					allConfigs.addAll(Arrays.asList(pack.getMethodBasedAnalysisConfigs()));
+					for (AnalysisConfiguration config : allConfigs) {
+						IConfigurationElement[] filters = config.getFilters();
+						NextFilter:
+						for (IConfigurationElement filter : filters) {
 							IJavaElement[] filteredJavaElements = javaElements;
-							String superClassName = filter.getSuperClassName();
-							{
+							IConfigurationElement[] superTypeFilters = filter.getChildren("bySuperType");
+							for (IConfigurationElement superTypeFilter : superTypeFilters) {
+								String superClassName = superTypeFilter.getAttribute("superType");
+								final Set<IType> subTypesFound = new HashSet<IType>();
 								if(superClassName!=null && !superClassName.isEmpty()) {
 									SearchPattern pattern = SearchPattern.createPattern(superClassName, IJavaSearchConstants.CLASS, IJavaSearchConstants.IMPLEMENTORS, SearchPattern.R_EXACT_MATCH);
-									final Set<IType> subTypesFound = new HashSet<IType>();
 									SearchRequestor requestor = new SearchRequestor() {
 										public void acceptSearchMatch(SearchMatch match) throws CoreException {
 											IType found = (IType) match.getElement();
@@ -119,88 +165,93 @@ public class AnalysisDispatcher {
 									filteredJavaElements = subTypesFound.toArray(new IJavaElement[subTypesFound.size()]);
 									searchScope = SearchEngine.createJavaSearchScope(filteredJavaElements,IJavaSearchScope.SOURCES);
 								}
-							}
-							String declSubSignature = filter.getDeclSubSignature();
-							{
-								if(declSubSignature!=null && !declSubSignature.isEmpty()) {
-									SearchPattern pattern = SearchPattern.createPattern(declSubSignature, IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
-									final Set<IMethod> declsFound = new HashSet<IMethod>();
-									SearchRequestor requestor = new SearchRequestor() {
-										public void acceptSearchMatch(SearchMatch match) throws CoreException {
-											IMethod found = (IMethod) match.getElement();
-											declsFound.add(found);
+
+								IConfigurationElement[] methodDeclFilters = superTypeFilter.getChildren("byMethodDecl");
+								if(methodDeclFilters.length==0) {
+									//no further filters; add all non-abstract, non-native methods in all found classes
+									Set<IMethod> methodsFound = getOrCreate(config, result);
+									for(IType t: subTypesFound) {
+										try {
+											for(IMethod m: t.getMethods()) {
+												if(!Flags.isAbstract(m.getFlags()) && !Flags.isNative(m.getFlags())) {
+													methodsFound.add(m);
+												}
+											}
+										} catch (JavaModelException e) {
+											e.printStackTrace();
 										}
-									};
-									try {
-										searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
-									} catch (CoreException e) {
-										e.printStackTrace();
 									}
-									filteredJavaElements = declsFound.toArray(new IJavaElement[declsFound.size()]);
-									searchScope = SearchEngine.createJavaSearchScope(filteredJavaElements,IJavaSearchScope.SOURCES);
-								}
-							}
-							String callSubSignature = filter.getCallSubSignature();
-							{
-								if(callSubSignature!=null && !callSubSignature.isEmpty()) {
-									SearchPattern pattern = SearchPattern.createPattern(callSubSignature, IJavaSearchConstants.METHOD, IJavaSearchConstants.REFERENCES, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
+								} 
+								for (IConfigurationElement methodDeclFilter: methodDeclFilters) {
+									String declSubSignature = methodDeclFilter.getAttribute("subsignature");
 									final Set<IMethod> declsFound = new HashSet<IMethod>();
-									SearchRequestor requestor = new SearchRequestor() {
-										public void acceptSearchMatch(SearchMatch match) throws CoreException {
-											System.err.println();
-//											IMethod found = (IJavaElement) match.getElement();
-//											declsFound.add(found);
+									if(declSubSignature!=null && !declSubSignature.isEmpty()) {
+										declSubSignature = toEclipseSearchPattern(declSubSignature);
+										SearchPattern pattern = SearchPattern.createPattern(declSubSignature, IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
+										SearchRequestor requestor = new SearchRequestor() {
+											public void acceptSearchMatch(SearchMatch match) throws CoreException {
+												IMethod found = (IMethod) match.getElement();
+												declsFound.add(found);
+											}
+										};
+										try {
+											searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
+										} catch (CoreException e) {
+											e.printStackTrace();
 										}
-									};
-									try {
-										searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
-									} catch (CoreException e) {
-										e.printStackTrace();
+										filteredJavaElements = declsFound.toArray(new IJavaElement[declsFound.size()]);
+										searchScope = SearchEngine.createJavaSearchScope(filteredJavaElements,IJavaSearchScope.SOURCES);
 									}
-//									filteredJavaElements = declsFound.toArray(new IJavaElement[declsFound.size()]);
-//									searchScope = SearchEngine.createJavaSearchScope(filteredJavaElements,IJavaSearchScope.SOURCES);
+									
+									IConfigurationElement[] methodCallFilters = methodDeclFilter.getChildren("byMethodCall");
+									if(methodCallFilters.length==0) {
+										//matched classes not filtered further
+										Set<IMethod> methodsFound = getOrCreate(config, result);
+										methodsFound.addAll(declsFound);
+									}	
+									
+									for (IConfigurationElement methodCallFilter: methodCallFilters) {
+										String callSubSignature = methodCallFilter.getAttribute("subsignature");
+										if(callSubSignature!=null && !callSubSignature.isEmpty()) {
+											callSubSignature = toEclipseSearchPattern(callSubSignature);
+											SearchPattern pattern = SearchPattern.createPattern(callSubSignature, IJavaSearchConstants.METHOD, IJavaSearchConstants.REFERENCES, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
+											final Set<IMethod> containersFound = new HashSet<IMethod>();
+											SearchRequestor requestor = new SearchRequestor() {
+												public void acceptSearchMatch(SearchMatch match) throws CoreException {
+													IMethod found = (IMethod) match.getElement();
+													containersFound.add(found);
+												}
+											};
+											try {
+												searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
+											} catch (CoreException e) {
+												e.printStackTrace();
+											}
+											Set<IMethod> methodsFound = getOrCreate(config, result);
+											methodsFound.addAll(containersFound);
+										}
+									}
 								}
 							}
 						}
 					}
 				}
-				
-				//re-map found methods
-				Map<IJavaProject,Set<ITypeRoot>> projectToFoundMethods = new HashMap<IJavaProject, Set<ITypeRoot>>();
-				for(IMethod m : callBacksFound) {
-					IJavaProject javaProject = m.getJavaProject();
-					ITypeRoot topLevelType = m.getTypeRoot();
-					Set<ITypeRoot> topLevelTypesToAnalyze = projectToFoundMethods.get(javaProject);
-					if(topLevelTypesToAnalyze==null) topLevelTypesToAnalyze = new HashSet<ITypeRoot>();
-					topLevelTypesToAnalyze.add(topLevelType);
-					projectToFoundMethods.put(javaProject, topLevelTypesToAnalyze);
+				return result;
+			}
+
+			private Set<IMethod> getOrCreate(AnalysisConfiguration config,Map<AnalysisConfiguration, Set<IMethod>> result) {
+				Set<IMethod> methodsFound = result.get(config);
+				if(methodsFound==null) {
+					methodsFound = new HashSet<IMethod>();
+					result.put(config, methodsFound);
 				}
-				
-				//delete markers on the java elements
-				deleteMarkers(javaElements);
-		
-				//call the analysis
-				if(extensions.length==0) {
-					Display.getDefault().asyncExec(new Runnable() {
-				        public void run() {
-				        	final Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();  					  
-				            MessageDialog.openWarning(shell,"No analyses found","There are no analysis plugins installed. Install a plugin to conduct analyses.");
-				        }
-				    });
-				} else {
-					for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
-						IJavaProject project = entry.getKey();
-						Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
-						Set<String> classesToAnalyze = typesToClassNames(topLevelTypesToAnalyze);
-						//perform analysis
-						G.reset();
-						registerMarkerCreator(project, classesToAnalyze, configs);
-						registerAnalysisPack(classesToAnalyze, configs);
-						String[] args = (SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classesToAnalyze)).split(" ");
-						soot.Main.main(args);
-					}
-				}
-				return Status.OK_STATUS;
+				return methodsFound;
+			}
+
+			private String toEclipseSearchPattern(String subSignature) {
+				String returnType = subSignature.substring(0,subSignature.indexOf(" "));
+				String nameAndArguments = subSignature.substring(subSignature.indexOf(" ")+1);
+				return nameAndArguments + " " + returnType;
 			}
 		};
 		job.schedule();
@@ -236,7 +287,7 @@ public class AnalysisDispatcher {
 		}
 	}
 
-	private static void registerMarkerCreator(final IJavaProject project, final Set<String> classesToStartAnalysisAt, final IAnalysisConfiguration[] configs) {
+	private static void registerMarkerCreator(final IJavaProject project, final Set<String> classesToStartAnalysisAt, final IAnalysisPack[] configs) {
 		//register marker creation
 //		PackManager.v().getPack("wjap").add(new Transform("wjap.errorreporter", new SceneTransformer() {			
 //			protected void internalTransform(String arg0, Map<String, String> arg1) {
@@ -331,20 +382,29 @@ public class AnalysisDispatcher {
 	    return cp.toString();
 	}
 
-	private static Set<IAnalysisConfiguration> createAnalysisConfigurations(IConfigurationElement[] extensions) {
-		Set<IAnalysisConfiguration> configs = new HashSet<IAnalysisConfiguration>();
-		for (final IConfigurationElement extension : extensions) {
-			IConfigurationElement[] packs = extension.getChildren("analysisPack");
-			for (final IConfigurationElement pack : packs) {
-				configs.add(new IAnalysisConfiguration() {
-					public IIFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
-						return Extensions.createIFDSAnalysisPluginObjects(pack);
+	private static Set<IAnalysisPack> createAnalysisConfigurations(IConfigurationElement[] packs) {
+		Set<IAnalysisPack> configs = new HashSet<IAnalysisPack>();
+		for (final IConfigurationElement pack : packs) {
+			configs.add(new IAnalysisPack() {
+				public IFDSAnalysisConfiguration[] getIFDSAnalysisConfigs() {
+					IConfigurationElement[] analyses = pack.getChildren("ifdsAnalysis");
+					IFDSAnalysisConfiguration[] res = new IFDSAnalysisConfiguration[analyses.length];
+					int i=0;
+					for (IConfigurationElement analysisInfo : analyses) {
+						res[i++] = new IFDSAnalysisConfiguration(analysisInfo);
 					}
-					public IMethodBasedAnalysisPlugin[] getMethodBasedAnalysisPlugins() {
-						return Extensions.createMethodBasedAnalysisPluginObjects(pack);
+					return res;
+				}
+				public MethodBasedAnalysisConfiguration[] getMethodBasedAnalysisConfigs() {
+					IConfigurationElement[] analyses = pack.getChildren("methodBasedAnalysis");
+					MethodBasedAnalysisConfiguration[] res = new MethodBasedAnalysisConfiguration[analyses.length];
+					int i=0;
+					for (IConfigurationElement analysisInfo : analyses) {
+						res[i++] = new MethodBasedAnalysisConfiguration(analysisInfo);
 					}
-				});
-			}
+					return res;
+				}
+			});
 		}
 		return configs;
 	}
