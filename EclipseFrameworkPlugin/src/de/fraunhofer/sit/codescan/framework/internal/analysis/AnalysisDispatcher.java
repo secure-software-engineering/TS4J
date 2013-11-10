@@ -11,6 +11,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -58,9 +59,11 @@ import soot.Transform;
 
 import com.google.common.base.Joiner;
 
-import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
-import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.MethodBasedAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IAnalysisConfiguration;
+import de.fraunhofer.sit.codescan.framework.IAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IAnalysisPlugin.IFilter;
+import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
 import de.fraunhofer.sit.codescan.framework.internal.Constants;
 import de.fraunhofer.sit.codescan.framework.internal.Extensions;
@@ -81,23 +84,87 @@ public class AnalysisDispatcher {
 			
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
+				IConfigurationElement[] extensions = Extensions.getContributorsToExtensionPoint();
+				if(extensions.length==0) return Status.OK_STATUS;
+				
 				//initialize and execute the search for relevant methods
-				IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElements,IJavaSearchScope.SOURCES);
 				SearchEngine searchEngine = new SearchEngine();
-				SearchPattern pattern = SearchPattern.createPattern("onReceivedSslError", IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
-				final Set<IMethod> callBacksFound = new HashSet<IMethod>();
-				SearchRequestor requestor = new SearchRequestor() {
-					public void acceptSearchMatch(SearchMatch match) throws CoreException {
-						IMethod found = (IMethod) match.getElement();
-						callBacksFound.add(found);
+				IAnalysisConfiguration[] configs = createAnalysisConfigurations(extensions);
+				Set<IMethod> callBacksFound = new HashSet<IMethod>();
+				for (IAnalysisConfiguration config : configs) {
+					IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElements,IJavaSearchScope.SOURCES);
+					Set<IAnalysisPlugin> allPlugins = new HashSet<IAnalysisPlugin>();
+					allPlugins.addAll(Arrays.asList(config.getIFDSAnalysisPlugins()));
+					allPlugins.addAll(Arrays.asList(config.getMethodBasedAnalysisPlugins()));
+					for (IAnalysisPlugin plugin : allPlugins) {
+						IFilter[] filters = plugin.getFilters();
+						for (IFilter filter : filters) {
+							IJavaElement[] filteredJavaElements = javaElements;
+							String superClassName = filter.getSuperClassName();
+							{
+								if(superClassName!=null && !superClassName.isEmpty()) {
+									SearchPattern pattern = SearchPattern.createPattern(superClassName, IJavaSearchConstants.CLASS, IJavaSearchConstants.IMPLEMENTORS, SearchPattern.R_EXACT_MATCH);
+									final Set<IType> subTypesFound = new HashSet<IType>();
+									SearchRequestor requestor = new SearchRequestor() {
+										public void acceptSearchMatch(SearchMatch match) throws CoreException {
+											IType found = (IType) match.getElement();
+											subTypesFound.add(found);
+										}
+									};
+									try {
+										searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
+									} catch (CoreException e) {
+										e.printStackTrace();
+									}
+									filteredJavaElements = subTypesFound.toArray(new IJavaElement[subTypesFound.size()]);
+									searchScope = SearchEngine.createJavaSearchScope(filteredJavaElements,IJavaSearchScope.SOURCES);
+								}
+							}
+							String declSubSignature = filter.getDeclSubSignature();
+							{
+								if(declSubSignature!=null && !declSubSignature.isEmpty()) {
+									SearchPattern pattern = SearchPattern.createPattern(declSubSignature, IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
+									final Set<IMethod> declsFound = new HashSet<IMethod>();
+									SearchRequestor requestor = new SearchRequestor() {
+										public void acceptSearchMatch(SearchMatch match) throws CoreException {
+											IMethod found = (IMethod) match.getElement();
+											declsFound.add(found);
+										}
+									};
+									try {
+										searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
+									} catch (CoreException e) {
+										e.printStackTrace();
+									}
+									filteredJavaElements = declsFound.toArray(new IJavaElement[declsFound.size()]);
+									searchScope = SearchEngine.createJavaSearchScope(filteredJavaElements,IJavaSearchScope.SOURCES);
+								}
+							}
+							String callSubSignature = filter.getCallSubSignature();
+							{
+								if(callSubSignature!=null && !callSubSignature.isEmpty()) {
+									SearchPattern pattern = SearchPattern.createPattern(callSubSignature, IJavaSearchConstants.METHOD, IJavaSearchConstants.REFERENCES, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
+									final Set<IMethod> declsFound = new HashSet<IMethod>();
+									SearchRequestor requestor = new SearchRequestor() {
+										public void acceptSearchMatch(SearchMatch match) throws CoreException {
+											System.err.println();
+//											IMethod found = (IJavaElement) match.getElement();
+//											declsFound.add(found);
+										}
+									};
+									try {
+										searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
+									} catch (CoreException e) {
+										e.printStackTrace();
+									}
+//									filteredJavaElements = declsFound.toArray(new IJavaElement[declsFound.size()]);
+//									searchScope = SearchEngine.createJavaSearchScope(filteredJavaElements,IJavaSearchScope.SOURCES);
+								}
+							}
+						}
 					}
-				};
-				try {
-					searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
-				} catch (CoreException e) {
-					e.printStackTrace();
 				}
-
+				
 				//re-map found methods
 				Map<IJavaProject,Set<ITypeRoot>> projectToFoundMethods = new HashMap<IJavaProject, Set<ITypeRoot>>();
 				for(IMethod m : callBacksFound) {
@@ -113,7 +180,6 @@ public class AnalysisDispatcher {
 				deleteMarkers(javaElements);
 		
 				//call the analysis
-				IConfigurationElement[] extensions = Extensions.getContributorsToExtensionPoint();
 				if(extensions.length==0) {
 					Display.getDefault().asyncExec(new Runnable() {
 				        public void run() {
@@ -128,7 +194,6 @@ public class AnalysisDispatcher {
 						Set<String> classesToAnalyze = typesToClassNames(topLevelTypesToAnalyze);
 						//perform analysis
 						G.reset();
-						AnalysisConfiguration[] configs = createAnalysisConfigurations(extensions);
 						registerMarkerCreator(project, classesToAnalyze, configs);
 						registerAnalysisPack(classesToAnalyze, configs);
 						String[] args = (SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classesToAnalyze)).split(" ");
@@ -171,45 +236,45 @@ public class AnalysisDispatcher {
 		}
 	}
 
-	private static void registerMarkerCreator(final IJavaProject project, final Set<String> classesToStartAnalysisAt, final AnalysisConfiguration[] configs) {
+	private static void registerMarkerCreator(final IJavaProject project, final Set<String> classesToStartAnalysisAt, final IAnalysisConfiguration[] configs) {
 		//register marker creation
-		PackManager.v().getPack("wjap").add(new Transform("wjap.errorreporter", new SceneTransformer() {			
-			protected void internalTransform(String arg0, Map<String, String> arg1) {
-				for(AnalysisConfiguration config : configs) {
-					for (String appClass : classesToStartAnalysisAt) {
-						SootClass c = Scene.v().getSootClass(appClass);
-						Set<SootMethod> methodsToConsider = new HashSet<SootMethod>();
-						String subSig = config.getMethodSubSignature();
-						if(subSig!=null && !subSig.isEmpty()) {
-							methodsToConsider.add(c.getMethod(subSig));
-						} else {
-							methodsToConsider.addAll(c.getMethods());
-						}							
-						for (SootMethod m : methodsToConsider) {
-							if(m.hasTag(VulnerableMethodTag.class.getName())) {
-								VulnerableMethodTag tag = (VulnerableMethodTag) m.getTag(VulnerableMethodTag.class.getName());
-								if(tag.getAnalysisConfig().equals(config)) {
-									try {
-										IType erronousClass = project.findType(c.getName());
-										IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
-										IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
-										marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
-										marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
-										marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
-										marker.setAttribute(IMarker.USER_EDITABLE, false);
-										marker.setAttribute(IMarker.MESSAGE, config.getErrorMessage());
-									} catch (JavaModelException e) {
-										e.printStackTrace();
-									} catch (CoreException e) {
-										e.printStackTrace();
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}));		
+//		PackManager.v().getPack("wjap").add(new Transform("wjap.errorreporter", new SceneTransformer() {			
+//			protected void internalTransform(String arg0, Map<String, String> arg1) {
+//				for(IAnalysisConfiguration config : configs) {
+//					for (String appClass : classesToStartAnalysisAt) {
+//						SootClass c = Scene.v().getSootClass(appClass);
+//						Set<SootMethod> methodsToConsider = new HashSet<SootMethod>();
+//						String subSig = config.getMethodSubSignature();
+//						if(subSig!=null && !subSig.isEmpty()) {
+//							methodsToConsider.add(c.getMethod(subSig));
+//						} else {
+//							methodsToConsider.addAll(c.getMethods());
+//						}							
+//						for (SootMethod m : methodsToConsider) {
+//							if(m.hasTag(VulnerableMethodTag.class.getName())) {
+//								VulnerableMethodTag tag = (VulnerableMethodTag) m.getTag(VulnerableMethodTag.class.getName());
+//								if(tag.getAnalysisConfig().equals(config)) {
+//									try {
+//										IType erronousClass = project.findType(c.getName());
+//										IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
+//										IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
+//										marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
+//										marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
+//										marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
+//										marker.setAttribute(IMarker.USER_EDITABLE, false);
+//										marker.setAttribute(IMarker.MESSAGE, config.getErrorMessage());
+//									} catch (JavaModelException e) {
+//										e.printStackTrace();
+//									} catch (CoreException e) {
+//										e.printStackTrace();
+//									}
+//								}
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}));		
 	}
 	
 	private static Set<String> typesToClassNames(Set<ITypeRoot> topLevelTypesToAnalyze) {
@@ -266,27 +331,20 @@ public class AnalysisDispatcher {
 	    return cp.toString();
 	}
 
-	private static AnalysisConfiguration[] createAnalysisConfigurations(IConfigurationElement[] extensions) {
-		AnalysisConfiguration[] configs = new AnalysisConfiguration[extensions.length];
-		int i=0;
+	private static Set<IAnalysisConfiguration> createAnalysisConfigurations(IConfigurationElement[] extensions) {
+		Set<IAnalysisConfiguration> configs = new HashSet<IAnalysisConfiguration>();
 		for (final IConfigurationElement extension : extensions) {
-			configs[i++] = new AnalysisConfiguration() {
-				public String getSuperClassName() {
-					return extension.getAttribute("superclass");
-				}
-				public String getMethodSubSignature() {
-					return extension.getAttribute("subsignature");
-				}
-				public String getErrorMessage() {
-					return extension.getAttribute("errormessage");
-				}
-				public IFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
-					return Extensions.createIFDSAnalysisPluginObjects(extension);
-				}
-				public MethodBasedAnalysisPlugin[] getMethodBasedAnalysisPlugins() {
-					return Extensions.createMethodBasedAnalysisPluginObjects(extension);
-				}
-			};
+			IConfigurationElement[] packs = extension.getChildren("analysisPack");
+			for (final IConfigurationElement pack : packs) {
+				configs.add(new IAnalysisConfiguration() {
+					public IIFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
+						return Extensions.createIFDSAnalysisPluginObjects(pack);
+					}
+					public IMethodBasedAnalysisPlugin[] getMethodBasedAnalysisPlugins() {
+						return Extensions.createMethodBasedAnalysisPluginObjects(pack);
+					}
+				});
+			}
 		}
 		return configs;
 	}

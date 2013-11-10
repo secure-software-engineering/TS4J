@@ -18,7 +18,7 @@
       </annotation>
       <complexType>
          <sequence>
-            <element ref="analysis" minOccurs="1" maxOccurs="unbounded"/>
+            <element ref="analysisPack"/>
          </sequence>
          <attribute name="point" type="string" use="required">
             <annotation>
@@ -47,7 +47,103 @@
       </complexType>
    </element>
 
-   <element name="analysis">
+   <element name="ifdsAnalysis">
+      <complexType>
+         <sequence minOccurs="0" maxOccurs="unbounded">
+            <element ref="filter"/>
+         </sequence>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":de.fraunhofer.sit.codescan.framework.IIFDSAnalysisPlugin"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="methodBasedAnalysis">
+      <complexType>
+         <sequence minOccurs="0" maxOccurs="unbounded">
+            <element ref="filter"/>
+         </sequence>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="filter">
+      <complexType>
+         <choice>
+            <element ref="bySuperType" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="byMethodDecl" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="byMethodCall" minOccurs="0" maxOccurs="unbounded"/>
+         </choice>
+      </complexType>
+   </element>
+
+   <element name="byMethodCall">
+      <complexType>
+         <attribute name="subsignature" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="byMethodDecl">
+      <complexType>
+         <attribute name="subsignature" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="bySuperType">
+      <complexType>
+         <attribute name="superType" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="analysisPack">
       <complexType>
          <choice>
             <element ref="ifdsAnalysis" minOccurs="1" maxOccurs="unbounded"/>
@@ -58,57 +154,6 @@
                <documentation>
                   
                </documentation>
-            </annotation>
-         </attribute>
-         <attribute name="subsignature" type="string">
-            <annotation>
-               <documentation>
-                  
-               </documentation>
-            </annotation>
-         </attribute>
-         <attribute name="errormessage" type="string" use="required">
-            <annotation>
-               <documentation>
-                  
-               </documentation>
-            </annotation>
-         </attribute>
-         <attribute name="supertype" type="string">
-            <annotation>
-               <documentation>
-                  
-               </documentation>
-            </annotation>
-         </attribute>
-      </complexType>
-   </element>
-
-   <element name="ifdsAnalysis">
-      <complexType>
-         <attribute name="class" type="string" use="required">
-            <annotation>
-               <documentation>
-                  
-               </documentation>
-               <appinfo>
-                  <meta.attribute kind="java" basedOn=":de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin"/>
-               </appinfo>
-            </annotation>
-         </attribute>
-      </complexType>
-   </element>
-
-   <element name="methodBasedAnalysis">
-      <complexType>
-         <attribute name="class" type="string" use="required">
-            <annotation>
-               <documentation>
-                  
-               </documentation>
-               <appinfo>
-                  <meta.attribute kind="java" basedOn=":de.fraunhofer.sit.codescan.framework.MethodBasedAnalysisPlugin"/>
-               </appinfo>
             </annotation>
          </attribute>
       </complexType>

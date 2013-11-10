@@ -2,7 +2,7 @@ package de.fraunhofer.sit.codescan.framework;
 
 import soot.SootMethod;
 
-public interface MethodBasedAnalysisPlugin {
+public interface IMethodBasedAnalysisPlugin extends IAnalysisPlugin {
 	
 	/**
 	 * Analyzes the given method in isolation. The method is assumed to be vulnerable by default.

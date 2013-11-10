@@ -8,7 +8,7 @@ import soot.Unit;
 /**
  * An analysis plugin creates a flow-function factory which is given access to an {@link IFDSAnalysisManager}.
  */
-public interface IFDSAnalysisPlugin  {
+public interface IIFDSAnalysisPlugin extends IAnalysisPlugin {
 
 	/**
 	 * Creates a novel flow-function factory.

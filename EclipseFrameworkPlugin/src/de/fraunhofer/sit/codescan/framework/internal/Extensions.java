@@ -5,8 +5,8 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 
-import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.MethodBasedAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin;
 
 public class Extensions {
 
@@ -19,13 +19,13 @@ public class Extensions {
 	    return elements;
 	}
 	
-	public static IFDSAnalysisPlugin[] createIFDSAnalysisPluginObjects(IConfigurationElement extension) {
+	public static IIFDSAnalysisPlugin[] createIFDSAnalysisPluginObjects(IConfigurationElement extension) {
 		try {
 			IConfigurationElement[] children = extension.getChildren("ifdsAnalysis");
-			IFDSAnalysisPlugin[] res = new IFDSAnalysisPlugin[children.length];
+			IIFDSAnalysisPlugin[] res = new IIFDSAnalysisPlugin[children.length];
 			int i=0;
 			for (IConfigurationElement analysisConfig : children) {
-				res[i++] = (IFDSAnalysisPlugin) analysisConfig.createExecutableExtension("class"); 
+				res[i++] = (IIFDSAnalysisPlugin) analysisConfig.createExecutableExtension("class"); 
 			}
 			return res;
 		} catch (CoreException e) {
@@ -34,13 +34,13 @@ public class Extensions {
 		}
 	}
 
-	public static MethodBasedAnalysisPlugin[] createMethodBasedAnalysisPluginObjects(IConfigurationElement extension) {
+	public static IMethodBasedAnalysisPlugin[] createMethodBasedAnalysisPluginObjects(IConfigurationElement extension) {
 		try {
 			IConfigurationElement[] children = extension.getChildren("methodBasedAnalysis");
-			MethodBasedAnalysisPlugin[] res = new MethodBasedAnalysisPlugin[children.length];
+			IMethodBasedAnalysisPlugin[] res = new IMethodBasedAnalysisPlugin[children.length];
 			int i=0;
 			for (IConfigurationElement analysisConfig : children) {
-				res[i++] = (MethodBasedAnalysisPlugin) analysisConfig.createExecutableExtension("class"); 
+				res[i++] = (IMethodBasedAnalysisPlugin) analysisConfig.createExecutableExtension("class"); 
 			}
 			return res;
 		} catch (CoreException e) {

@@ -28,9 +28,9 @@ import soot.jimple.ParameterRef;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import de.fraunhofer.sit.codescan.framework.IFDSAnalysisManager;
-import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisPlugin;
 
-public class SSLAnalysisPlugin implements IFDSAnalysisPlugin {
+public class SSLAnalysisPlugin implements IIFDSAnalysisPlugin {
 
 	private class FlowFunctionFactory implements FlowFunctions<Unit, Local, SootMethod> {
 	

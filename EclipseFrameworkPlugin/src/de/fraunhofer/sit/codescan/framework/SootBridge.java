@@ -32,9 +32,9 @@ public class SootBridge {
 
 	/**
 	 * @param classesToStartAnalysisAt Those classes will be given as argument classes to Soot.
-	 * @param configs A number of {@link AnalysisConfiguration}s which define how to conduct the analysis.
+	 * @param configs A number of {@link IAnalysisConfiguration}s which define how to conduct the analysis.
 	 */
-	public static void registerAnalysisPack(final Set<String> classesToStartAnalysisAt, final AnalysisConfiguration... configs) {
+	public static void registerAnalysisPack(final Set<String> classesToStartAnalysisAt, final IAnalysisConfiguration... configs) {
 		//register analyses
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new SceneTransformer() {
 			@Override
@@ -50,7 +50,7 @@ public class SootBridge {
 				};
 				final MustAlias mustAliasManager = new MustAlias(icfg);
 	
-				for(AnalysisConfiguration config : configs) {
+				for(IAnalysisConfiguration config : configs) {
 					String superTypeName = config.getSuperClassName();
 					for(SootClass c: Scene.v().getApplicationClasses()) {
 						//filter by super-class name (if given) and method signature
@@ -67,8 +67,8 @@ public class SootBridge {
 						for (SootMethod m : methodsToConsider) {
 							if(!m.hasActiveBody()) continue;
 
-							IFDSAnalysisPlugin[] ifdsPlugins = config.getIFDSAnalysisPlugins();
-							for (IFDSAnalysisPlugin plugin : ifdsPlugins) {
+							IIFDSAnalysisPlugin[] ifdsPlugins = config.getIFDSAnalysisPlugins();
+							for (IIFDSAnalysisPlugin plugin : ifdsPlugins) {
 								IFDSAdapter ifdsProblem = new IFDSAdapter(icfg, mustAliasManager, plugin, m);
 								IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
 										new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(ifdsProblem);
@@ -78,10 +78,10 @@ public class SootBridge {
 								}
 							}
 							
-							MethodBasedAnalysisPlugin[] methodPlugins = config.getMethodBasedAnalysisPlugins();
+							IMethodBasedAnalysisPlugin[] methodPlugins = config.getMethodBasedAnalysisPlugins();
 							if(methodPlugins.length>0) {
 								final boolean[] vulnerable = new boolean[] { true };
-								for (MethodBasedAnalysisPlugin plugin : methodPlugins) {
+								for (IMethodBasedAnalysisPlugin plugin : methodPlugins) {
 									plugin.analyzeMethod(m, new MethodBasedAnalysisManager() {
 										
 										public boolean mustAlias(Stmt stmt, Local l1, Stmt stmt2, Local l2) {

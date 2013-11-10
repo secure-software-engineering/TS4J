@@ -20,9 +20,9 @@ import soot.tagkit.VisibilityAnnotationTag;
 import com.google.common.base.Joiner;
 
 import de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
-import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.MethodBasedAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IAnalysisConfiguration;
+import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.SootBridge;
 import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
 
@@ -73,19 +73,19 @@ public class AbstractTest extends TestCase {
 		String[] argsArray = args.split(" ");
 		SootBridge.registerAnalysisPack(
 			new HashSet<String>(Arrays.asList(files)),
-			new AnalysisConfiguration() {
+			new IAnalysisConfiguration() {
 				public String getMethodSubSignature() {
 					return SUB_SIG;
 				}
 				public String getSuperClassName() {
 					return SUPER_CLASS;
 				}
-				public IFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
-					return new IFDSAnalysisPlugin[]{ new SSLAnalysisPlugin() };
+				public IIFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
+					return new IIFDSAnalysisPlugin[]{ new SSLAnalysisPlugin() };
 				}
 				@Override
-				public MethodBasedAnalysisPlugin[] getMethodBasedAnalysisPlugins() {
-					return new MethodBasedAnalysisPlugin[0];
+				public IMethodBasedAnalysisPlugin[] getMethodBasedAnalysisPlugins() {
+					return new IMethodBasedAnalysisPlugin[0];
 				}
 				@Override
 				public String getErrorMessage() {										
