@@ -1,0 +1,4 @@
+- Allow analyses to attach information about line numbers.
+
+- Allow analyses to filter also by call statements, not just by declarations.
+	- Make filters extensible. 
