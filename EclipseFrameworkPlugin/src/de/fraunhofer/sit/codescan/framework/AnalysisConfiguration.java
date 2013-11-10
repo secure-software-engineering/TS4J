@@ -17,9 +17,19 @@ public interface AnalysisConfiguration {
 	 * which are subtypes of the class returned by this method.
 	 */
 	String getSuperClassName();
+	
+	/**
+	 * The error message to report.
+	 */
+	String getErrorMessage();
 		
 	/**
-	 * Returns the analysis plugin that actually conducts the analysis.
+	 * Returns the IFDS analysis plugin that actually conducts the analysis.
 	 */
 	IFDSAnalysisPlugin[] getIFDSAnalysisPlugins();
+	
+	/**
+	 * Returns the method-based analysis plugin that actually conducts the analysis.
+	 */
+	MethodBasedAnalysisPlugin[] getMethodBasedAnalysisPlugins();
 }

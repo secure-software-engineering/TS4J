@@ -15,7 +15,7 @@ import soot.SootMethod;
 import soot.Unit;
 import soot.jimple.Stmt;
 import soot.jimple.internal.JimpleLocal;
-import de.fraunhofer.sit.codescan.framework.AnalysisManager;
+import de.fraunhofer.sit.codescan.framework.IFDSAnalysisManager;
 import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
 
 /**
@@ -24,7 +24,7 @@ import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
  * If a method is found to be not vulnerable, the analysis should call {@link #markMethodAsBenign()}.
  */
 public class IFDSAdapter extends DefaultIFDSTabulationProblem<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> 
-implements AnalysisManager {
+implements IFDSAnalysisManager {
 
 	protected boolean methodNotVulnerable = false;
 	private final MustAlias mustAliasManager;

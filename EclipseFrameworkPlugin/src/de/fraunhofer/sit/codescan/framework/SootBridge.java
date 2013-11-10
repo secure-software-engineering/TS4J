@@ -3,6 +3,7 @@ package de.fraunhofer.sit.codescan.framework;
 import heros.InterproceduralCFG;
 import heros.solver.IFDSSolver;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import soot.SootClass;
 import soot.SootMethod;
 import soot.Transform;
 import soot.Unit;
+import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.JimpleIFDSSolver;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import soot.toolkits.graph.BriefUnitGraph;
@@ -55,20 +57,46 @@ public class SootBridge {
 						if(superTypeName!=null && !superTypeName.isEmpty() &&
 						   !Scene.v().getFastHierarchy().isSubclass(c, Scene.v().getSootClass(superTypeName))) continue;
 						String subSig = config.getMethodSubSignature();
-						if(subSig!=null && !subSig.isEmpty() && !c.declaresMethod(subSig)) continue;
-						
-						SootMethod m = c.getMethod(subSig);
-						if(!m.hasActiveBody()) continue;
-						
-						
-						IFDSAnalysisPlugin[] plugins = config.getIFDSAnalysisPlugins();
-						for (IFDSAnalysisPlugin plugin : plugins) {
-							IFDSAdapter ifdsProblem = new IFDSAdapter(icfg, mustAliasManager, plugin, m);
-							IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
-									new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(ifdsProblem);
-							solver.solve();
-							if(ifdsProblem.isMethodVulnerable()) {
-								m.addTag(new VulnerableMethodTag());
+						Set<SootMethod> methodsToConsider = new HashSet<SootMethod>();
+						if(subSig!=null && !subSig.isEmpty()) {
+							if(c.declaresMethod(subSig))
+								methodsToConsider.add(c.getMethod(subSig));
+						} else {
+							methodsToConsider.addAll(c.getMethods());
+						}							
+						for (SootMethod m : methodsToConsider) {
+							if(!m.hasActiveBody()) continue;
+
+							IFDSAnalysisPlugin[] ifdsPlugins = config.getIFDSAnalysisPlugins();
+							for (IFDSAnalysisPlugin plugin : ifdsPlugins) {
+								IFDSAdapter ifdsProblem = new IFDSAdapter(icfg, mustAliasManager, plugin, m);
+								IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
+										new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(ifdsProblem);
+								solver.solve();
+								if(ifdsProblem.isMethodVulnerable()) {
+									m.addTag(new VulnerableMethodTag(config));
+								}
+							}
+							
+							MethodBasedAnalysisPlugin[] methodPlugins = config.getMethodBasedAnalysisPlugins();
+							if(methodPlugins.length>0) {
+								final boolean[] vulnerable = new boolean[] { true };
+								for (MethodBasedAnalysisPlugin plugin : methodPlugins) {
+									plugin.analyzeMethod(m, new MethodBasedAnalysisManager() {
+										
+										public boolean mustAlias(Stmt stmt, Local l1, Stmt stmt2, Local l2) {
+											return mustAliasManager.mustAlias(stmt, l1, stmt2, l2);
+										}
+										
+										public void markMethodAsBenign() {
+											vulnerable[0] = false; 
+										}
+									});
+									if(vulnerable[0]) break;
+								}
+								if(vulnerable[0]) {
+									m.addTag(new VulnerableMethodTag(config));
+								}
 							}
 						}
 					}

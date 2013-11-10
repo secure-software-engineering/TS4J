@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
 import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.MethodBasedAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.SootBridge;
 import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
 
@@ -70,17 +71,28 @@ public class AbstractTest extends TestCase {
 	protected void run(String... files) {
 		String args = "-f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp -cp . "+Joiner.on(" ").join(Arrays.asList(files));
 		String[] argsArray = args.split(" ");
-		SootBridge.registerAnalysisPack(new HashSet<String>(Arrays.asList(files)),new AnalysisConfiguration() {
-			public String getMethodSubSignature() {
-				return SUB_SIG;
+		SootBridge.registerAnalysisPack(
+			new HashSet<String>(Arrays.asList(files)),
+			new AnalysisConfiguration() {
+				public String getMethodSubSignature() {
+					return SUB_SIG;
+				}
+				public String getSuperClassName() {
+					return SUPER_CLASS;
+				}
+				public IFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
+					return new IFDSAnalysisPlugin[]{ new SSLAnalysisPlugin() };
+				}
+				@Override
+				public MethodBasedAnalysisPlugin[] getMethodBasedAnalysisPlugins() {
+					return new MethodBasedAnalysisPlugin[0];
+				}
+				@Override
+				public String getErrorMessage() {										
+					return "error";
+				}
 			}
-			public String getSuperClassName() {
-				return SUPER_CLASS;
-			}
-			public IFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
-				return new IFDSAnalysisPlugin[]{ new SSLAnalysisPlugin() };
-			}
-		});
+		);
 		soot.Main.main(argsArray);		
 		Assert.assertEquals(expected, actual);
 	}

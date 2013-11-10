@@ -9,8 +9,7 @@
             subsignature="void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)"
             supertype="android.webkit.WebViewClient">
          <ifdsAnalysis
-               class="de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin"
-               ifdsAnalysisClass="de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin">
+               class="de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin">
          </ifdsAnalysis>
       </analysis>
    </extension>

@@ -27,7 +27,7 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.ParameterRef;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
-import de.fraunhofer.sit.codescan.framework.AnalysisManager;
+import de.fraunhofer.sit.codescan.framework.IFDSAnalysisManager;
 import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
 
 public class SSLAnalysisPlugin implements IFDSAnalysisPlugin {
@@ -35,10 +35,10 @@ public class SSLAnalysisPlugin implements IFDSAnalysisPlugin {
 	private class FlowFunctionFactory implements FlowFunctions<Unit, Local, SootMethod> {
 	
 		private static final String SUBSIG_PROCEED = "void proceed()";
-		private final AnalysisManager MANAGER;
+		private final IFDSAnalysisManager MANAGER;
 		private final Local ZERO_VALUE;
 
-		public FlowFunctionFactory(AnalysisManager manager) {
+		public FlowFunctionFactory(IFDSAnalysisManager manager) {
 			this.MANAGER = manager;
 			this.ZERO_VALUE = manager.zeroValue();
 		}
@@ -196,7 +196,7 @@ public class SSLAnalysisPlugin implements IFDSAnalysisPlugin {
 	}
 
 	@Override
-	public FlowFunctions<Unit, Local, SootMethod> createFlowFunctionsFactory(AnalysisManager manager) {
+	public FlowFunctions<Unit, Local, SootMethod> createFlowFunctionsFactory(IFDSAnalysisManager manager) {
 		return new FlowFunctionFactory(manager); 
 	}
 	

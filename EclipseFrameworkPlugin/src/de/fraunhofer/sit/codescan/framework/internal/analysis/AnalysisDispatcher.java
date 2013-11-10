@@ -4,7 +4,6 @@ package de.fraunhofer.sit.codescan.framework.internal.analysis;
 import static de.fraunhofer.sit.codescan.framework.SootBridge.registerAnalysisPack;
 import static de.fraunhofer.sit.codescan.framework.internal.Constants.MARKER_TYPE;
 import static de.fraunhofer.sit.codescan.framework.internal.Constants.SOOT_ARGS;
-import static de.fraunhofer.sit.codescan.framework.internal.Extensions.getContributorsToExtensionPoint;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -61,6 +60,7 @@ import com.google.common.base.Joiner;
 
 import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
 import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.MethodBasedAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
 import de.fraunhofer.sit.codescan.framework.internal.Constants;
 import de.fraunhofer.sit.codescan.framework.internal.Extensions;
@@ -128,8 +128,8 @@ public class AnalysisDispatcher {
 						Set<String> classesToAnalyze = typesToClassNames(topLevelTypesToAnalyze);
 						//perform analysis
 						G.reset();
-						registerMarkerCreator(project, classesToAnalyze);
 						AnalysisConfiguration[] configs = createAnalysisConfigurations(extensions);
+						registerMarkerCreator(project, classesToAnalyze, configs);
 						registerAnalysisPack(classesToAnalyze, configs);
 						String[] args = (SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classesToAnalyze)).split(" ");
 						soot.Main.main(args);
@@ -171,15 +171,15 @@ public class AnalysisDispatcher {
 		}
 	}
 
-	private static void registerMarkerCreator(final IJavaProject project, final Set<String> classesToStartAnalysisAt) {
+	private static void registerMarkerCreator(final IJavaProject project, final Set<String> classesToStartAnalysisAt, final AnalysisConfiguration[] configs) {
 		//register marker creation
 		PackManager.v().getPack("wjap").add(new Transform("wjap.errorreporter", new SceneTransformer() {			
 			protected void internalTransform(String arg0, Map<String, String> arg1) {
-				for(final IConfigurationElement extension : getContributorsToExtensionPoint()) {
+				for(AnalysisConfiguration config : configs) {
 					for (String appClass : classesToStartAnalysisAt) {
 						SootClass c = Scene.v().getSootClass(appClass);
 						Set<SootMethod> methodsToConsider = new HashSet<SootMethod>();
-						String subSig = extension.getAttribute("subsignature");
+						String subSig = config.getMethodSubSignature();
 						if(subSig!=null && !subSig.isEmpty()) {
 							methodsToConsider.add(c.getMethod(subSig));
 						} else {
@@ -187,19 +187,22 @@ public class AnalysisDispatcher {
 						}							
 						for (SootMethod m : methodsToConsider) {
 							if(m.hasTag(VulnerableMethodTag.class.getName())) {
-								try {
-									IType erronousClass = project.findType(c.getName());
-									IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
-									IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
-									marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
-									marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
-									marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
-									marker.setAttribute(IMarker.USER_EDITABLE, false);
-									marker.setAttribute(IMarker.MESSAGE, extension.getAttribute("errormessage"));
-								} catch (JavaModelException e) {
-									e.printStackTrace();
-								} catch (CoreException e) {
-									e.printStackTrace();
+								VulnerableMethodTag tag = (VulnerableMethodTag) m.getTag(VulnerableMethodTag.class.getName());
+								if(tag.getAnalysisConfig().equals(config)) {
+									try {
+										IType erronousClass = project.findType(c.getName());
+										IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
+										IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
+										marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
+										marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
+										marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
+										marker.setAttribute(IMarker.USER_EDITABLE, false);
+										marker.setAttribute(IMarker.MESSAGE, config.getErrorMessage());
+									} catch (JavaModelException e) {
+										e.printStackTrace();
+									} catch (CoreException e) {
+										e.printStackTrace();
+									}
 								}
 							}
 						}
@@ -274,8 +277,14 @@ public class AnalysisDispatcher {
 				public String getMethodSubSignature() {
 					return extension.getAttribute("subsignature");
 				}
+				public String getErrorMessage() {
+					return extension.getAttribute("errormessage");
+				}
 				public IFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
 					return Extensions.createIFDSAnalysisPluginObjects(extension);
+				}
+				public MethodBasedAnalysisPlugin[] getMethodBasedAnalysisPlugins() {
+					return Extensions.createMethodBasedAnalysisPluginObjects(extension);
 				}
 			};
 		}
