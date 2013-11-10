@@ -27,7 +27,8 @@ public class ECBAnalysis implements MethodBasedAnalysisPlugin {
 						Value firstArgument = ie.getArg(0);
 						if(firstArgument instanceof StringConstant) {
 							StringConstant constant = (StringConstant) firstArgument;
-							if(constant.value.contains("/ECB/")) {
+							if(!constant.value.contains("/") || /*ECB is default*/
+								constant.value.contains("/ECB/")) {
 								//found violation
 								return;
 							}
