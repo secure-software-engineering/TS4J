@@ -4,6 +4,7 @@
       label="Fraunhofer SIT Codescan Plugin"
       version="1.0.0.qualifier"
       provider-name="Fraunhofer SIT"
+      plugin="de.fraunhofer.sit.codescan.framework"
       nl="en">
 
    <description>

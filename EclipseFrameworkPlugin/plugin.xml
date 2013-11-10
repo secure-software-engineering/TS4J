@@ -38,6 +38,7 @@
                id="de.fraunhofer.sit.codescan.androidssl.toolbars.scanToolbar">
             <command
                   commandId="de.fraunhofer.sit.codescan.androidssl.commands.scanAllProjects"
+                  icon="images/scan-all-button.png"
                   label="Scan all projects"
                   tooltip="Scan all Android projects for SSL vulnerabilities">
             </command>
