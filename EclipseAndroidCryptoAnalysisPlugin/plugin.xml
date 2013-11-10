@@ -4,7 +4,7 @@
    <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
       <analysis
-            errormessage="ECB error"
+            errormessage="Encryption via ECB is known to be insecure. Consider using CBC instead."
             id="de.fraunhofer.sit.codescan.androidcrypto.analysis">
          <methodBasedAnalysis
                class="de.fraunhofer.sit.codescan.androidcrypto.ECBAnalysis">
