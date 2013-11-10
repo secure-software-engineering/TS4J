@@ -21,7 +21,7 @@ import com.google.common.base.Joiner;
 
 import de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
-import de.fraunhofer.sit.codescan.framework.AnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.SootBridge;
 import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
 
@@ -77,7 +77,7 @@ public class AbstractTest extends TestCase {
 			public String getSuperClassName() {
 				return SUPER_CLASS;
 			}
-			public AnalysisPlugin getAnalysisPlugin() {
+			public IFDSAnalysisPlugin getAnalysisPlugin() {
 				return new SSLAnalysisPlugin();
 			}
 		});

@@ -16,7 +16,7 @@ import soot.Unit;
 import soot.jimple.Stmt;
 import soot.jimple.internal.JimpleLocal;
 import de.fraunhofer.sit.codescan.framework.AnalysisManager;
-import de.fraunhofer.sit.codescan.framework.AnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
 
 /**
  * Generic super class for implementing IFDS-based code analyses. Operates on {@link Local}s.
@@ -28,10 +28,10 @@ implements AnalysisManager {
 
 	protected boolean methodNotVulnerable = false;
 	private final MustAlias mustAliasManager;
-	private final AnalysisPlugin plugin;
+	private final IFDSAnalysisPlugin plugin;
 	private SootMethod methodToFocusOn;
 
-	public IFDSAdapter(InterproceduralCFG<Unit,SootMethod> icfg, MustAlias mustAliasManager, AnalysisPlugin plugin, SootMethod methodToFocusOn) {
+	public IFDSAdapter(InterproceduralCFG<Unit,SootMethod> icfg, MustAlias mustAliasManager, IFDSAnalysisPlugin plugin, SootMethod methodToFocusOn) {
 		super(icfg);
 		this.mustAliasManager = mustAliasManager;
 		this.plugin = plugin;

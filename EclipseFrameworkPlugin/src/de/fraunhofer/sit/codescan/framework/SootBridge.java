@@ -61,7 +61,7 @@ public class SootBridge {
 						if(!m.hasActiveBody()) continue;
 						
 						
-						AnalysisPlugin plugin = config.getAnalysisPlugin();
+						IFDSAnalysisPlugin plugin = config.getAnalysisPlugin();
 						IFDSAdapter ifdsProblem = new IFDSAdapter(icfg, mustAliasManager, plugin, m);
 						IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
 								new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(ifdsProblem);

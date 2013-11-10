@@ -60,7 +60,7 @@ import soot.Transform;
 import com.google.common.base.Joiner;
 
 import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
-import de.fraunhofer.sit.codescan.framework.AnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
 import de.fraunhofer.sit.codescan.framework.internal.Constants;
 import de.fraunhofer.sit.codescan.framework.internal.Extensions;
@@ -274,7 +274,7 @@ public class AnalysisDispatcher {
 				public String getMethodSubSignature() {
 					return extension.getAttribute("subsignature");
 				}
-				public AnalysisPlugin getAnalysisPlugin() {
+				public IFDSAnalysisPlugin getAnalysisPlugin() {
 					return Extensions.createPluginObject(extension);
 				}
 			};

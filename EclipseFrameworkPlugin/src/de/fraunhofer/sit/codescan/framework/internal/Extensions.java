@@ -5,7 +5,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 
-import de.fraunhofer.sit.codescan.framework.AnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin;
 
 public class Extensions {
 
@@ -18,9 +18,9 @@ public class Extensions {
 	    return elements;
 	}
 	
-	public static AnalysisPlugin createPluginObject(IConfigurationElement extension) {
+	public static IFDSAnalysisPlugin createPluginObject(IConfigurationElement extension) {
 		try {
-			return (AnalysisPlugin) extension.createExecutableExtension("class");
+			return (IFDSAnalysisPlugin) extension.createExecutableExtension("class");
 		} catch (CoreException e) {
 			e.printStackTrace();
 			return null;
