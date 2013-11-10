@@ -52,10 +52,10 @@ public class SootBridge {
 					String superTypeName = config.getSuperClassName();
 					for(SootClass c: Scene.v().getApplicationClasses()) {
 						//filter by super-class name (if given) and method signature
-						if(superTypeName!=null &&
+						if(superTypeName!=null && !superTypeName.isEmpty() &&
 						   !Scene.v().getFastHierarchy().isSubclass(c, Scene.v().getSootClass(superTypeName))) continue;
 						String subSig = config.getMethodSubSignature();
-						if(!c.declaresMethod(subSig)) continue;
+						if(subSig!=null && !subSig.isEmpty() && !c.declaresMethod(subSig)) continue;
 						
 						SootMethod m = c.getMethod(subSig);
 						if(!m.hasActiveBody()) continue;

@@ -178,21 +178,29 @@ public class AnalysisDispatcher {
 				for(final IConfigurationElement extension : getContributorsToExtensionPoint()) {
 					for (String appClass : classesToStartAnalysisAt) {
 						SootClass c = Scene.v().getSootClass(appClass);
-						SootMethod m = c.getMethod(extension.getAttribute("subsignature"));
-						if(m.hasTag(VulnerableMethodTag.class.getName())) {
-							try {
-								IType erronousClass = project.findType(c.getName());
-								IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
-								IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
-								marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
-								marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
-								marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
-								marker.setAttribute(IMarker.USER_EDITABLE, false);
-								marker.setAttribute(IMarker.MESSAGE, extension.getAttribute("errormessage"));
-							} catch (JavaModelException e) {
-								e.printStackTrace();
-							} catch (CoreException e) {
-								e.printStackTrace();
+						Set<SootMethod> methodsToConsider = new HashSet<SootMethod>();
+						String subSig = extension.getAttribute("subsignature");
+						if(subSig!=null && !subSig.isEmpty()) {
+							methodsToConsider.add(c.getMethod(subSig));
+						} else {
+							methodsToConsider.addAll(c.getMethods());
+						}							
+						for (SootMethod m : methodsToConsider) {
+							if(m.hasTag(VulnerableMethodTag.class.getName())) {
+								try {
+									IType erronousClass = project.findType(c.getName());
+									IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
+									IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
+									marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
+									marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
+									marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
+									marker.setAttribute(IMarker.USER_EDITABLE, false);
+									marker.setAttribute(IMarker.MESSAGE, extension.getAttribute("errormessage"));
+								} catch (JavaModelException e) {
+									e.printStackTrace();
+								} catch (CoreException e) {
+									e.printStackTrace();
+								}
 							}
 						}
 					}
