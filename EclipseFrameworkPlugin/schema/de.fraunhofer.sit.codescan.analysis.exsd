@@ -49,16 +49,10 @@
 
    <element name="analysis">
       <complexType>
-         <attribute name="class" type="string" use="required">
-            <annotation>
-               <documentation>
-                  
-               </documentation>
-               <appinfo>
-                  <meta.attribute kind="java" basedOn=":de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin"/>
-               </appinfo>
-            </annotation>
-         </attribute>
+         <choice>
+            <element ref="ifdsAnalysis" minOccurs="1" maxOccurs="unbounded"/>
+            <element ref="methodBasedAnalysis" minOccurs="1" maxOccurs="unbounded"/>
+         </choice>
          <attribute name="id" type="string" use="required">
             <annotation>
                <documentation>
@@ -85,6 +79,36 @@
                <documentation>
                   
                </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="ifdsAnalysis">
+      <complexType>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":de.fraunhofer.sit.codescan.framework.IFDSAnalysisPlugin"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="methodBasedAnalysis">
+      <complexType>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java"/>
+               </appinfo>
             </annotation>
          </attribute>
       </complexType>

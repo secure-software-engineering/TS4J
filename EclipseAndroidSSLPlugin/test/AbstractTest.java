@@ -77,8 +77,8 @@ public class AbstractTest extends TestCase {
 			public String getSuperClassName() {
 				return SUPER_CLASS;
 			}
-			public IFDSAnalysisPlugin getAnalysisPlugin() {
-				return new SSLAnalysisPlugin();
+			public IFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
+				return new IFDSAnalysisPlugin[]{ new SSLAnalysisPlugin() };
 			}
 		});
 		soot.Main.main(argsArray);		

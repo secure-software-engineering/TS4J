@@ -18,9 +18,15 @@ public class Extensions {
 	    return elements;
 	}
 	
-	public static IFDSAnalysisPlugin createPluginObject(IConfigurationElement extension) {
+	public static IFDSAnalysisPlugin[] createIFDSAnalysisPluginObjects(IConfigurationElement extension) {
 		try {
-			return (IFDSAnalysisPlugin) extension.createExecutableExtension("class");
+			IConfigurationElement[] children = extension.getChildren("ifdsAnalysis");
+			IFDSAnalysisPlugin[] res = new IFDSAnalysisPlugin[children.length];
+			int i=0;
+			for (IConfigurationElement analysisConfig : children) {
+				res[i++] = (IFDSAnalysisPlugin) analysisConfig.createExecutableExtension("class"); 
+			}
+			return res;
 		} catch (CoreException e) {
 			e.printStackTrace();
 			return null;

@@ -274,8 +274,8 @@ public class AnalysisDispatcher {
 				public String getMethodSubSignature() {
 					return extension.getAttribute("subsignature");
 				}
-				public IFDSAnalysisPlugin getAnalysisPlugin() {
-					return Extensions.createPluginObject(extension);
+				public IFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
+					return Extensions.createIFDSAnalysisPluginObjects(extension);
 				}
 			};
 		}

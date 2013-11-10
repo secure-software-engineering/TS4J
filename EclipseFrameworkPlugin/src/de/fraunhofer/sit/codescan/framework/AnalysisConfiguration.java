@@ -21,5 +21,5 @@ public interface AnalysisConfiguration {
 	/**
 	 * Returns the analysis plugin that actually conducts the analysis.
 	 */
-	IFDSAnalysisPlugin getAnalysisPlugin();
+	IFDSAnalysisPlugin[] getIFDSAnalysisPlugins();
 }

@@ -4,11 +4,14 @@
    <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
       <analysis
-            class="de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin"
             errormessage="Method is calling proceed() on the handle although it should really be checking the SSL Certificate."
             id="SSLAnalysis"
             subsignature="void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)"
             supertype="android.webkit.WebViewClient">
+         <ifdsAnalysis
+               class="de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin"
+               ifdsAnalysisClass="de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin">
+         </ifdsAnalysis>
       </analysis>
    </extension>
 
