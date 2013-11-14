@@ -87,7 +87,9 @@ public class AnalysisDispatcher {
 	 * where vulnerabilities are found.
 	 */
 	public static void searchAndAnalyze(final IJavaElement[] javaElements) {
-		Job job = new Job("Vulnerability analysis") {
+		String elementNameString = extractElementNames(javaElements);
+		
+		Job job = new Job("Vulnerability analysis ("+elementNameString+")") {
 			
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -150,6 +152,15 @@ public class AnalysisDispatcher {
 		};
 		job.setRule(MUTEX);
 		job.schedule();
+	}
+
+	private static String extractElementNames(final IJavaElement[] javaElements) {
+		String[] elementNames = new String[javaElements.length];
+		for (int i = 0; i < javaElements.length; i++) {
+			elementNames[i] = javaElements[i].getElementName();
+		}
+		String elementNameString = Joiner.on(", ").join(elementNames);
+		return elementNameString;
 	}
 
 	/**
