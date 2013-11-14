@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="de.fraunhofer.sit.codescan"
-      label="Fraunhofer SIT Codescan Plugin"
+      label="%feature.name"
       version="1.0.0.qualifier"
-      provider-name="Fraunhofer SIT"
-      plugin="de.fraunhofer.sit.codescan.framework"
-      nl="en">
+      provider-name="%provider.name"
+      plugin="de.fraunhofer.sit.codescan.framework">
 
    <description>
       Analyzes Java code for vulnerabilities.
@@ -16,7 +15,7 @@
 All rights reserved.
    </copyright>
 
-   <license>
+   <license url="epl-license.html">
       Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
 Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.

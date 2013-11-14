@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-   <extension-point id="analysis" name="Static Analysis Plugin" schema="schema/de.fraunhofer.sit.codescan.analysis.exsd"/>
+   <extension-point id="analysis" name="%extension-point.name" schema="schema/de.fraunhofer.sit.codescan.analysis.exsd"/>
    <extension
          point="org.eclipse.ui.commands">
       <command
             id="de.fraunhofer.sit.codescan.androidssl.commands.scanAllProjects"
-            name="Scan all projects">
+            name="%command.name">
       </command>
    </extension>
    <extension
@@ -22,13 +22,13 @@
             allPopups="false"
             locationURI="menu:org.eclipse.ui.main.menu?after=additions">
          <menu
-               label="Scan"
-               mnemonic="M">
+               label="%menu.label"
+               mnemonic="%menu.mnemonic">
             <command
                   commandId="de.fraunhofer.sit.codescan.androidssl.commands.scanAllProjects"
-                  label="Scan all projects"
-                  mnemonic="S"
-                  tooltip="Scan all Android projects for SSL vulnerabilities">
+                  label="%command.label"
+                  mnemonic="%command.mnemonic"
+                  tooltip="%command.tooltip">
             </command>
          </menu>
       </menuContribution>
@@ -39,15 +39,15 @@
             <command
                   commandId="de.fraunhofer.sit.codescan.androidssl.commands.scanAllProjects"
                   icon="images/scan-all-button.png"
-                  label="Scan all projects"
-                  tooltip="Scan all Android projects for SSL vulnerabilities">
+                  label="%command.label.0"
+                  tooltip="%command.tooltip.0">
             </command>
          </toolbar>
       </menuContribution>
    </extension>
    <extension
          id="de.fraunhofer.sit.codescan.androidssl.findingmarker"
-         name="Vulnerability Finding"
+         name="%marker.name"
          point="org.eclipse.core.resources.markers">
       <persistent
             value="true">
