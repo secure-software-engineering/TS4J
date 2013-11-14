@@ -13,5 +13,11 @@
     	  </path>
     	</signjar>        
     </target>
+	
+	<target name="upload" depends="signJars">
+		<scp todir="bodden:dfkl.04SSE31@sit.sit.fraunhofer.de:/var/www2/eclipse" trust="true">
+    	    <fileset dir="." includes="**/*" excludes="build.xml" />
+		</scp>
+	</target>
 
 </project>
