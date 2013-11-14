@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaElement;
@@ -70,6 +71,15 @@ import de.fraunhofer.sit.codescan.framework.internal.Extensions;
  * certain Java elements for relevant code, then passes that code to Soot for further analysis.
  */
 public class AnalysisDispatcher {
+	
+	private final static ISchedulingRule MUTEX = new ISchedulingRule() {
+		public boolean isConflicting(ISchedulingRule rule) {
+			return rule==this;
+		}
+		public boolean contains(ISchedulingRule rule) {
+			return rule==this;
+		}
+	};
 	
 	/**
 	 * Searches the given javaElements for relevant code and then passes this code to the analysis.
@@ -138,6 +148,7 @@ public class AnalysisDispatcher {
 				return Status.OK_STATUS;
 			}
 		};
+		job.setRule(MUTEX);
 		job.schedule();
 	}
 
