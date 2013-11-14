@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="signJars" default="signJars">
+
+    <target name="signJars" description="sign JAR files">
+    	<signjar
+    	    alias="ericbodden" keystore="${user.home}/.keystore"
+    	    storepass="selfsigned"
+    		keypass="selfsigned"
+    	    lazy="true"    		
+    	    >
+    	  <path>
+    	    <fileset dir="." includes="**/*.jar" />
+    	  </path>
+    	</signjar>        
+    </target>
+
+</project>
