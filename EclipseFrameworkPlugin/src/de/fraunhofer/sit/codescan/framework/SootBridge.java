@@ -62,12 +62,14 @@ public class SootBridge {
 						
 						
 						AnalysisPlugin plugin = config.getAnalysisPlugin();
-						IFDSAdapter ifdsProblem = new IFDSAdapter(icfg, mustAliasManager, plugin, m);
-						IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
-								new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(ifdsProblem);
-						solver.solve();
-						if(ifdsProblem.isMethodVulnerable()) {
-							m.addTag(new VulnerableMethodTag());
+						if(plugin!=null) {
+							IFDSAdapter ifdsProblem = new IFDSAdapter(icfg, mustAliasManager, plugin, m);
+							IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
+									new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(ifdsProblem);
+							solver.solve();
+							if(ifdsProblem.isMethodVulnerable()) {
+								m.addTag(new VulnerableMethodTag());
+							}
 						}
 					}
 				}

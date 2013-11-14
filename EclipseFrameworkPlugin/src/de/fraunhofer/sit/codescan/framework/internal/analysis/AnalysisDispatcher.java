@@ -49,6 +49,8 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import soot.G;
 import soot.PackManager;
@@ -71,6 +73,8 @@ import de.fraunhofer.sit.codescan.framework.internal.Extensions;
  * certain Java elements for relevant code, then passes that code to Soot for further analysis.
  */
 public class AnalysisDispatcher {
+	
+	private final static Logger LOGGER = LoggerFactory.getLogger(AnalysisDispatcher.class);
 	
 	private final static ISchedulingRule MUTEX = new ISchedulingRule() {
 		public boolean isConflicting(ISchedulingRule rule) {
@@ -107,7 +111,7 @@ public class AnalysisDispatcher {
 				try {
 					searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
 				} catch (CoreException e) {
-					e.printStackTrace();
+					LOGGER.debug("Internal error",e);
 				}
 
 				//re-map found methods
@@ -144,6 +148,8 @@ public class AnalysisDispatcher {
 						AnalysisConfiguration[] configs = createAnalysisConfigurations(extensions);
 						registerAnalysisPack(classesToAnalyze, configs);
 						String[] args = (SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classesToAnalyze)).split(" ");
+						
+						LOGGER.trace("RUNNING SOOT: "+Joiner.on(" ").join(args));
 						soot.Main.main(args);
 					}
 				}
@@ -178,6 +184,7 @@ public class AnalysisDispatcher {
 			}
 			return found;
 		} catch (CoreException e) {
+			LOGGER.debug("Internal error",e);
 			//ignore project
 			return false;
 		}
@@ -188,7 +195,7 @@ public class AnalysisDispatcher {
 			try {
 				je.getResource().deleteMarkers(Constants.MARKER_TYPE, false, IResource.DEPTH_INFINITE);
 			} catch (CoreException e) {
-				e.printStackTrace();
+				LOGGER.debug("Internal error",e);
 			}
 		}
 	}
@@ -212,9 +219,9 @@ public class AnalysisDispatcher {
 								marker.setAttribute(IMarker.USER_EDITABLE, false);
 								marker.setAttribute(IMarker.MESSAGE, extension.getAttribute("errormessage"));
 							} catch (JavaModelException e) {
-								e.printStackTrace();
+								LOGGER.debug("Internal error",e);
 							} catch (CoreException e) {
-								e.printStackTrace();
+								LOGGER.debug("Internal error",e);
 							}
 						}
 					}
@@ -252,13 +259,13 @@ public class AnalysisDispatcher {
 	            urls.toArray(array);
 	            return array;
 	    } catch (JavaModelException e) {
-	            e.printStackTrace();
+	            LOGGER.debug("Internal error",e);
 	            return new URL[0];
 	    } catch (MalformedURLException e) {
-	            e.printStackTrace();
+	            LOGGER.debug("Internal error",e);
 	            return new URL[0];
 	    } catch (URISyntaxException e) {
-	            e.printStackTrace();
+	            LOGGER.debug("Internal error",e);
 	            return new URL[0];
 	    }
 	}
