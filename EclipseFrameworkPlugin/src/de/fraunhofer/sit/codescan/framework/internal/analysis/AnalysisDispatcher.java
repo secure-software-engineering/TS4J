@@ -36,7 +36,7 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
@@ -115,14 +115,14 @@ public class AnalysisDispatcher {
 				}
 
 				//re-map found methods
-				Map<IJavaProject,Set<ITypeRoot>> projectToFoundMethods = new HashMap<IJavaProject, Set<ITypeRoot>>();
+				Map<IJavaProject,Set<IType>> projectToFoundMethods = new HashMap<IJavaProject, Set<IType>>();
 				for(IMethod m : callBacksFound) {
 					IJavaProject javaProject = m.getJavaProject();
-					ITypeRoot topLevelType = m.getTypeRoot();
-					Set<ITypeRoot> topLevelTypesToAnalyze = projectToFoundMethods.get(javaProject);
-					if(topLevelTypesToAnalyze==null) topLevelTypesToAnalyze = new HashSet<ITypeRoot>();
-					topLevelTypesToAnalyze.add(topLevelType);
-					projectToFoundMethods.put(javaProject, topLevelTypesToAnalyze);
+					IType type = m.getDeclaringType();
+					Set<IType> typesToAnalyze = projectToFoundMethods.get(javaProject);
+					if(typesToAnalyze==null) typesToAnalyze = new HashSet<IType>();
+					typesToAnalyze.add(type);
+					projectToFoundMethods.put(javaProject, typesToAnalyze);
 				}
 				
 				//delete markers on the java elements
@@ -138,9 +138,9 @@ public class AnalysisDispatcher {
 				        }
 				    });
 				} else {
-					for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
+					for(Map.Entry<IJavaProject, Set<IType>> entry: projectToFoundMethods.entrySet()) {
 						IJavaProject project = entry.getKey();
-						Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
+						Set<IType> topLevelTypesToAnalyze = entry.getValue();
 						Set<String> classesToAnalyze = typesToClassNames(topLevelTypesToAnalyze);
 						//perform analysis
 						G.reset();
@@ -233,10 +233,9 @@ public class AnalysisDispatcher {
 		}));		
 	}
 	
-	private static Set<String> typesToClassNames(Set<ITypeRoot> topLevelTypesToAnalyze) {
+	private static Set<String> typesToClassNames(Set<IType> typesToAnalyze) {
 		Set<String> applicationClasses = new HashSet<String>();
-		for (ITypeRoot typeRoot : topLevelTypesToAnalyze) {
-			IType type = typeRoot.findPrimaryType();
+		for (IType type : typesToAnalyze) {
 			String qualifiedName = type.getFullyQualifiedName();
 			applicationClasses.add(qualifiedName);
 		}
