@@ -207,21 +207,24 @@ public class AnalysisDispatcher {
 				for(final IConfigurationElement extension : getContributorsToExtensionPoint()) {
 					for (String appClass : classesToStartAnalysisAt) {
 						SootClass c = Scene.v().getSootClass(appClass);
-						SootMethod m = c.getMethod(extension.getAttribute("subsignature"));
-						if(m.hasTag(VulnerableMethodTag.class.getName())) {
-							try {
-								IType erronousClass = project.findType(c.getName());
-								IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
-								IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
-								marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
-								marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
-								marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
-								marker.setAttribute(IMarker.USER_EDITABLE, false);
-								marker.setAttribute(IMarker.MESSAGE, extension.getAttribute("errormessage"));
-							} catch (JavaModelException e) {
-								LOGGER.debug("Internal error",e);
-							} catch (CoreException e) {
-								LOGGER.debug("Internal error",e);
+						String subSig = extension.getAttribute("subsignature");
+						if(c.declaresMethod(subSig)) {
+							SootMethod m = c.getMethod(subSig);
+							if(m.hasTag(VulnerableMethodTag.class.getName())) {
+								try {
+									IType erronousClass = project.findType(c.getName());
+									IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
+									IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
+									marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
+									marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
+									marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
+									marker.setAttribute(IMarker.USER_EDITABLE, false);
+									marker.setAttribute(IMarker.MESSAGE, extension.getAttribute("errormessage"));
+								} catch (JavaModelException e) {
+									LOGGER.debug("Internal error",e);
+								} catch (CoreException e) {
+									LOGGER.debug("Internal error",e);
+								}
 							}
 						}
 					}
