@@ -19,26 +19,11 @@
    <extension
          point="org.eclipse.ui.menus">
       <menuContribution
-            allPopups="false"
-            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
-         <menu
-               label="%menu.label"
-               mnemonic="%menu.mnemonic">
-            <command
-                  commandId="de.fraunhofer.sit.codescan.androidssl.commands.scanAllProjects"
-                  label="%command.label"
-                  mnemonic="%command.mnemonic"
-                  tooltip="%command.tooltip">
-            </command>
-         </menu>
-      </menuContribution>
-      <menuContribution
             locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
          <toolbar
                id="de.fraunhofer.sit.codescan.androidssl.toolbars.scanToolbar">
             <command
                   commandId="de.fraunhofer.sit.codescan.androidssl.commands.scanAllProjects"
-                  icon="images/scan-all-button.png"
                   label="%command.label.0"
                   tooltip="%command.tooltip.0">
             </command>
