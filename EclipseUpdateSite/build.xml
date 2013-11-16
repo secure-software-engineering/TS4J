@@ -25,7 +25,9 @@
     	</signjar>        
     </target>
 	
-	<target name="upload" depends="signJars">
+	<target name="upload">
+		<sshexec host="sit.sit.fraunhofer.de" username="bodden" password="dfkl.04SSE31"
+			trust="true" command="cd /var/www2/eclipse; rm -fr *"/>
 		<scp todir="bodden:dfkl.04SSE31@sit.sit.fraunhofer.de:/var/www2/eclipse" trust="true">
     	    <fileset dir="." includes="**/*">
 				<exclude name="build.xml"/>
