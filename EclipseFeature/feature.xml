@@ -2,7 +2,7 @@
 <feature
       id="de.fraunhofer.sit.codescan"
       label="%feature.name"
-      version="1.0.0.qualifier"
+      version="0.9.0.qualifier"
       provider-name="%provider.name"
       plugin="de.fraunhofer.sit.codescan.framework">
 
