@@ -27,7 +27,10 @@
 	
 	<target name="upload" depends="signJars">
 		<scp todir="bodden:dfkl.04SSE31@sit.sit.fraunhofer.de:/var/www2/eclipse" trust="true">
-    	    <fileset dir="." includes="**/*" excludes="build.xml" />
+    	    <fileset dir="." includes="**/*">
+				<exclude name="build.xml"/>
+				<exclude name="signing-certificate.cer"/>
+	    	</fileset>
 		</scp>
 	</target>
 
