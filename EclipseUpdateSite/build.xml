@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="signJars" default="signJars">
+	
+	<target name="clean">
+		<delete includeemptydirs="true">
+			<fileset dir=".">
+			    <include name="features/**"/>
+			    <include name="plugins/**"/>
+			    <include name="artifacts.jar"/>
+			    <include name="content.jar"/>
+			</fileset>
+		</delete>
+	</target>
 
     <target name="signJars" description="sign JAR files">
     	<signjar
