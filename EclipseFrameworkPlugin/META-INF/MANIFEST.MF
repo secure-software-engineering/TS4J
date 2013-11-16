@@ -8,7 +8,6 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.core.resources;bundle-version="3.8.100",
  org.eclipse.jdt.core;bundle-version="3.7.3"
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: slf4j-api-1.7.5.jar,
  slf4j-simple-1.7.5.jar,
@@ -160,3 +159,4 @@ Export-Package: com.google.common.annotations,
  soot.util.dot,
  soot.util.queue,
  soot.xml
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

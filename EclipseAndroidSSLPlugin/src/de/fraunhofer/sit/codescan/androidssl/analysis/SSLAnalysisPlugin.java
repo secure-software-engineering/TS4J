@@ -195,10 +195,8 @@ public class SSLAnalysisPlugin implements AnalysisPlugin {
 		}
 	}
 
-	@Override
 	public FlowFunctions<Unit, Local, SootMethod> createFlowFunctionsFactory(AnalysisManager manager) {
 		return new FlowFunctionFactory(manager); 
 	}
-	
 
 }
