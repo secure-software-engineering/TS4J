@@ -47,5 +47,13 @@
             class="de.fraunhofer.sit.codescan.framework.internal.handlers.StartupHandler">
       </startup>
    </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="de.fraunhofer.sit.codescan.framework.internal.ui.PreferencePage"
+            id="de.fraunhofer.sit.codescan.framework.projectPreferencePage"
+            name="%page.name">
+      </page>
+   </extension>
 
 </plugin>

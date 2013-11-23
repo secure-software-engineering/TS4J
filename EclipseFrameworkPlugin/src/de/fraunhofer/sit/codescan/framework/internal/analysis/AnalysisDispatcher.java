@@ -66,6 +66,8 @@ import de.fraunhofer.sit.codescan.framework.AnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
 import de.fraunhofer.sit.codescan.framework.internal.Constants;
 import de.fraunhofer.sit.codescan.framework.internal.Extensions;
+import de.fraunhofer.sit.codescan.framework.internal.ui.Messages;
+import de.fraunhofer.sit.codescan.framework.internal.ui.PreferencePage;
 
 /**
  * This class implements the main binding between Eclipse and Soot. Its method {@link #searchAndAnalyze(IJavaElement[])} searches
@@ -213,8 +215,14 @@ public class AnalysisDispatcher {
 								try {
 									IType erronousClass = project.findType(c.getName());
 									IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
+									
 									IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
-									marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
+
+									//read severity level from preferences
+									String markerStyle = PreferencePage.getMarkerStyle();
+									int severity = markerStyle.equals(Messages.PreferencePage_IDError) ? IMarker.SEVERITY_ERROR : IMarker.SEVERITY_WARNING;
+									marker.setAttribute(IMarker.SEVERITY,severity);
+									
 									marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
 									marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
 									marker.setAttribute(IMarker.USER_EDITABLE, false);
