@@ -55,5 +55,11 @@
             name="%page.name">
       </page>
    </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="de.fraunhofer.sit.codescan.framework.internal.PreferencesInitializer">
+      </initializer>
+   </extension>
 
 </plugin>

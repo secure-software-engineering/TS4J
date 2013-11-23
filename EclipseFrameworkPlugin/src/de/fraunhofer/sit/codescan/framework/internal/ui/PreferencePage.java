@@ -58,6 +58,12 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				
 		return ok;
 	}
+	
+	@Override
+	protected void performApply() {
+		performOk();
+		previousMarkerStyle = getMarkerStyle();
+	}
 
 	public static String getMarkerStyle() {
 		return Activator.getDefault().getPreferenceStore().getString(Messages.PreferencePage_MarkerStyle);

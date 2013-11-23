@@ -7,6 +7,5 @@ public interface Constants {
 	public static final String ANDROID_NATURE_ID = "com.android.ide.eclipse.adt.AndroidNature";
 	public static final String EXTENSION_POINT_ID = "de.fraunhofer.sit.codescan.framework.analysis";
 	public static final String SOOT_ARGS = "-keep-line-number -f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp";
-	public static final String PLUGIN_ID = "de.fraunhofer.sit.codescan.framework";
 
 }
