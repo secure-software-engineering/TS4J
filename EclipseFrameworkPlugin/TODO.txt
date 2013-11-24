@@ -1,0 +1,2 @@
+- Add feature that automatically detects when being on a release branch and then
+	switches warnings to errors.
