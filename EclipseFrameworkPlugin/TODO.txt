@@ -1,2 +1,4 @@
 - Add feature that automatically detects when being on a release branch and then
 	switches warnings to errors.
+	https://code.google.com/p/egit/wiki/JGitTutorialRepository
+	http://www.developer.com/java/ent/article.php/3655231/Eclipse-Tip-Use-Optional-Plug-in-Dependencies-to-Support-Diverse-Runtime-Environments.htm
