@@ -144,7 +144,6 @@ public class AnalysisDispatcher {
 						Set<IType> topLevelTypesToAnalyze = entry.getValue();
 						Set<String> classesToAnalyze = typesToClassNames(topLevelTypesToAnalyze);
 						//perform analysis
-						G.reset();
 						registerMarkerCreator(project, classesToAnalyze);
 						AnalysisConfiguration[] configs = createAnalysisConfigurations(extensions);
 						registerAnalysisPack(classesToAnalyze, configs);
@@ -152,6 +151,7 @@ public class AnalysisDispatcher {
 						
 						LOGGER.trace("RUNNING SOOT: "+Joiner.on(" ").join(args));
 						soot.Main.main(args);
+						G.reset();
 					}
 				}
 				return Status.OK_STATUS;
