@@ -5,10 +5,10 @@ Bundle-SymbolicName: de.fraunhofer.sit.codescan.framework;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: %Bundle-Vendor
 Bundle-Activator: de.fraunhofer.sit.codescan.framework.internal.Activator
-Require-Bundle: org.eclipse.ui,
- org.eclipse.core.runtime,
- org.eclipse.core.resources;bundle-version="3.6.0",
- org.eclipse.jdt.core;bundle-version="3.6.0"
+Require-Bundle: org.eclipse.ui;bundle-version="3.8.0",
+ org.eclipse.core.runtime;bundle-version="3.8.0",
+ org.eclipse.core.resources;bundle-version="3.8.0",
+ org.eclipse.jdt.core;bundle-version="3.7.3"
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: slf4j-api-1.7.5.jar,
  slf4j-simple-1.7.5.jar,
