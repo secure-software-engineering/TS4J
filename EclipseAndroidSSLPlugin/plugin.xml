@@ -7,15 +7,13 @@
             id="SSLAnalysis">
          <ifdsAnalysis
                class="de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin"
+               errorMessage="SSL error handler is calling proceed() while it should really be checking the certificate."
                id="SSLAnalysisIFDS">
             <filter>
                <bySuperType
                      superType="android.webkit.WebViewClient">
 	               <byMethodDecl
 	                     subsignature="void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)">
-                   <byMethodCall
-                         subsignature="void proceed()">
-                   </byMethodCall>
 	               </byMethodDecl>
                </bySuperType>
             </filter>

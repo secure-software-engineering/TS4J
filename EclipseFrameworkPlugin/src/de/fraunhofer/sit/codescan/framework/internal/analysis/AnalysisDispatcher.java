@@ -1,24 +1,16 @@
 package de.fraunhofer.sit.codescan.framework.internal.analysis;
 
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -26,12 +18,10 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.Flags;
-import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
@@ -40,12 +30,17 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 
-import soot.toolkits.scalar.Pair;
+import soot.G;
 import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
 import de.fraunhofer.sit.codescan.framework.IAnalysisPack;
 import de.fraunhofer.sit.codescan.framework.IFDSAnalysisConfiguration;
 import de.fraunhofer.sit.codescan.framework.MethodBasedAnalysisConfiguration;
+import de.fraunhofer.sit.codescan.framework.SootBridge;
 import de.fraunhofer.sit.codescan.framework.internal.Constants;
 import de.fraunhofer.sit.codescan.framework.internal.Extensions;
 
@@ -66,42 +61,39 @@ public class AnalysisDispatcher {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				IConfigurationElement[] extensions = Extensions.getContributorsToExtensionPoint();
-				if(extensions.length==0) return Status.OK_STATUS;
+
+				//call the analysis
+				if(extensions.length==0) {
+					Display.getDefault().asyncExec(new Runnable() {
+				        public void run() {
+				        	final Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();  					  
+				            MessageDialog.openWarning(shell,"No analyses found","There are no analysis plugins installed. Install a plugin to conduct analyses.");
+				        }
+				    });
+					return Status.OK_STATUS;
+				}
+
 				
-				Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods = searchRelevantClasses(javaElements,extensions);
+				Set<IAnalysisPack> analysisPacks = createAnalysisConfigurations(extensions);
+				Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods = searchRelevantClasses(javaElements,analysisPacks);
 				
 				//re-map found methods
 				Map<IJavaProject, Map<AnalysisConfiguration, Set<IMethod>>> projectToAnalysisAndMethods = reMapFindings(analysisToRelevantMethods);
 
-				System.err.println();
+				//delete markers on the java elements
+				deleteMarkers(analysisToRelevantMethods);
+
+				for(Map.Entry<IJavaProject, Map<AnalysisConfiguration, Set<IMethod>>> entry: projectToAnalysisAndMethods.entrySet()) {
+					IJavaProject project = entry.getKey();
+					Map<AnalysisConfiguration, Set<IMethod>> analysisAndMethodsInProject = entry.getValue();
+					G.reset();
+					SootBridge.registerAnalysisPack(project, analysisAndMethodsInProject);
+				}
 				
-				//				
-//				//delete markers on the java elements
-//				deleteMarkers(javaElements);
-//		
-//				//call the analysis
-//				if(extensions.length==0) {
-//					Display.getDefault().asyncExec(new Runnable() {
-//				        public void run() {
-//				        	final Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();  					  
-//				            MessageDialog.openWarning(shell,"No analyses found","There are no analysis plugins installed. Install a plugin to conduct analyses.");
-//				        }
-//				    });
-//				} else {
-//					for(Map.Entry<IJavaProject, Set<ITypeRoot>> entry: projectToFoundMethods.entrySet()) {
-//						IJavaProject project = entry.getKey();
-//						Set<ITypeRoot> topLevelTypesToAnalyze = entry.getValue();
-//						Set<String> classesToAnalyze = typesToClassNames(topLevelTypesToAnalyze);
-//						//perform analysis
-//						G.reset();
-////						registerMarkerCreator(project, classesToAnalyze, analysisPacks);
-////						registerAnalysisPack(classesToAnalyze, analysisPacks);
-//						String[] args = (SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classesToAnalyze)).split(" ");
-//						soot.Main.main(args);
-//					}
-//				}
+				
 				return Status.OK_STATUS;
 			}
+
 
 			private Map<IJavaProject, Map<AnalysisConfiguration, Set<IMethod>>> reMapFindings(
 					Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
@@ -130,10 +122,9 @@ public class AnalysisDispatcher {
 			}
 
 			private Map<AnalysisConfiguration,Set<IMethod>> searchRelevantClasses(final IJavaElement[] javaElements,
-					IConfigurationElement[] extensions) {
+					Set<IAnalysisPack> analysisPacks) {
 				//initialize and execute the search for relevant methods
 				SearchEngine searchEngine = new SearchEngine();
-				Set<IAnalysisPack> analysisPacks = createAnalysisConfigurations(extensions);
 				Map<AnalysisConfiguration,Set<IMethod>> result = new HashMap<AnalysisConfiguration, Set<IMethod>>();
 				for (IAnalysisPack pack : analysisPacks) {
 					IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElements,IJavaSearchScope.SOURCES);
@@ -142,7 +133,6 @@ public class AnalysisDispatcher {
 					allConfigs.addAll(Arrays.asList(pack.getMethodBasedAnalysisConfigs()));
 					for (AnalysisConfiguration config : allConfigs) {
 						IConfigurationElement[] filters = config.getFilters();
-						NextFilter:
 						for (IConfigurationElement filter : filters) {
 							IJavaElement[] filteredJavaElements = javaElements;
 							IConfigurationElement[] superTypeFilters = filter.getChildren("bySuperType");
@@ -257,6 +247,25 @@ public class AnalysisDispatcher {
 		job.schedule();
 	}
 
+	protected static void deleteMarkers(Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
+		for (Map.Entry<AnalysisConfiguration, Set<IMethod>> entry : analysisToRelevantMethods.entrySet()) {
+			AnalysisConfiguration config = entry.getKey();
+			Set<IMethod> methods = entry.getValue();
+			for (IMethod m : methods) {
+				try {
+					for(IMarker marker: m.getResource().findMarkers(Constants.MARKER_TYPE, false, IResource.DEPTH_INFINITE)) {
+						String analysisID = marker.getAttribute(Constants.MARKER_ATTRIBUTE_ANALYSIS_ID, "<not found>");
+						if(analysisID.equals(config.getID())) {
+							marker.delete();
+						}
+					}
+				} catch (CoreException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
 	/**
 	 * Returns true if the given project is an Android project.
 	 */
@@ -275,111 +284,6 @@ public class AnalysisDispatcher {
 			//ignore project
 			return false;
 		}
-	}
-	
-	private static void deleteMarkers(IJavaElement[] javaElements) {
-		for (final IJavaElement je : javaElements) {
-			try {
-				je.getResource().deleteMarkers(Constants.MARKER_TYPE, false, IResource.DEPTH_INFINITE);
-			} catch (CoreException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	private static void registerMarkerCreator(final IJavaProject project, final Set<String> classesToStartAnalysisAt, final IAnalysisPack[] configs) {
-		//register marker creation
-//		PackManager.v().getPack("wjap").add(new Transform("wjap.errorreporter", new SceneTransformer() {			
-//			protected void internalTransform(String arg0, Map<String, String> arg1) {
-//				for(IAnalysisConfiguration config : configs) {
-//					for (String appClass : classesToStartAnalysisAt) {
-//						SootClass c = Scene.v().getSootClass(appClass);
-//						Set<SootMethod> methodsToConsider = new HashSet<SootMethod>();
-//						String subSig = config.getMethodSubSignature();
-//						if(subSig!=null && !subSig.isEmpty()) {
-//							methodsToConsider.add(c.getMethod(subSig));
-//						} else {
-//							methodsToConsider.addAll(c.getMethods());
-//						}							
-//						for (SootMethod m : methodsToConsider) {
-//							if(m.hasTag(VulnerableMethodTag.class.getName())) {
-//								VulnerableMethodTag tag = (VulnerableMethodTag) m.getTag(VulnerableMethodTag.class.getName());
-//								if(tag.getAnalysisConfig().equals(config)) {
-//									try {
-//										IType erronousClass = project.findType(c.getName());
-//										IResource erroneousFile = erronousClass.getCompilationUnit().getResource();
-//										IMarker marker = erroneousFile.createMarker(MARKER_TYPE);
-//										marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
-//										marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
-//										marker.setAttribute(IMarker.LINE_NUMBER, m.getJavaSourceStartLineNumber());
-//										marker.setAttribute(IMarker.USER_EDITABLE, false);
-//										marker.setAttribute(IMarker.MESSAGE, config.getErrorMessage());
-//									} catch (JavaModelException e) {
-//										e.printStackTrace();
-//									} catch (CoreException e) {
-//										e.printStackTrace();
-//									}
-//								}
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}));		
-	}
-	
-	private static Set<String> typesToClassNames(Set<ITypeRoot> topLevelTypesToAnalyze) {
-		Set<String> applicationClasses = new HashSet<String>();
-		for (ITypeRoot typeRoot : topLevelTypesToAnalyze) {
-			IType type = typeRoot.findPrimaryType();
-			String qualifiedName = type.getFullyQualifiedName();
-			applicationClasses.add(qualifiedName);
-		}
-		return applicationClasses;
-	}
-
-	private static URL[] projectClassPath(IJavaProject javaProject) {
-	    IWorkspace workspace = ResourcesPlugin.getWorkspace();
-	    IClasspathEntry[] cp;
-	    try {
-	            cp = javaProject.getResolvedClasspath(true);
-	            List<URL> urls = new ArrayList<URL>();
-	            String uriString = workspace.getRoot().getFile(
-	                            javaProject.getOutputLocation()).getLocationURI().toString()
-	                            + "/";
-	            urls.add(new URI(uriString).toURL());
-	            for (IClasspathEntry entry : cp) {
-	                    File file = entry.getPath().toFile();
-	                    URL url = file.toURI().toURL();
-	                    urls.add(url);
-	            }
-	            URL[] array = new URL[urls.size()];
-	            urls.toArray(array);
-	            return array;
-	    } catch (JavaModelException e) {
-	            e.printStackTrace();
-	            return new URL[0];
-	    } catch (MalformedURLException e) {
-	            e.printStackTrace();
-	            return new URL[0];
-	    } catch (URISyntaxException e) {
-	            e.printStackTrace();
-	            return new URL[0];
-	    }
-	}
-
-	private static String getSootClasspath(IJavaProject javaProject) {
-	    return urlsToString(projectClassPath(javaProject));
-	}
-
-	private static String urlsToString(URL[] urls) {
-	    StringBuffer cp = new StringBuffer();
-	    for (URL url : urls) {
-	            cp.append(url.getPath());
-	            cp.append(File.pathSeparator);
-	    }
-	    
-	    return cp.toString();
 	}
 
 	private static Set<IAnalysisPack> createAnalysisConfigurations(IConfigurationElement[] packs) {

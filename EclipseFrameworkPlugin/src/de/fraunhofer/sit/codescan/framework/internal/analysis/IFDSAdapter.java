@@ -15,6 +15,8 @@ import soot.SootMethod;
 import soot.Unit;
 import soot.jimple.Stmt;
 import soot.jimple.internal.JimpleLocal;
+import de.fraunhofer.sit.codescan.framework.IAnalysisContext;
+import de.fraunhofer.sit.codescan.framework.IFDSAnalysisConfiguration;
 import de.fraunhofer.sit.codescan.framework.IFDSAnalysisManager;
 import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisPlugin;
 
@@ -27,15 +29,11 @@ public class IFDSAdapter extends DefaultIFDSTabulationProblem<Unit, Local, SootM
 implements IFDSAnalysisManager {
 
 	protected boolean methodNotVulnerable = false;
-	private final MustAlias mustAliasManager;
-	private final IIFDSAnalysisPlugin plugin;
-	private SootMethod methodToFocusOn;
+	private final IAnalysisContext context;
 
-	public IFDSAdapter(InterproceduralCFG<Unit,SootMethod> icfg, MustAlias mustAliasManager, IIFDSAnalysisPlugin plugin, SootMethod methodToFocusOn) {
-		super(icfg);
-		this.mustAliasManager = mustAliasManager;
-		this.plugin = plugin;
-		this.methodToFocusOn = methodToFocusOn;
+	public IFDSAdapter(IAnalysisContext context) {
+		super(context.getICFG());
+		this.context = context;
 	}
 
 	/**
@@ -57,7 +55,7 @@ implements IFDSAnalysisManager {
 	 * Checks whether l1 will at stmt definitely point to the same value as l2 at stmt2.
 	 */
 	public boolean mustAlias(Stmt stmt, Local l1, Stmt stmt2, Local l2) {
-		return mustAliasManager.mustAlias(stmt, l1, stmt2, l2);
+		return context.getMustAliasManager().mustAlias(stmt, l1, stmt2, l2);
 	}
 
 	@Override
@@ -81,15 +79,17 @@ implements IFDSAnalysisManager {
 	}
 
 	public Map<Unit, Set<Local>> initialSeeds() {
-		return DefaultSeeds.make(Collections.singleton(methodToFocusOn.getActiveBody().getUnits().getFirst()), zeroValue());
+		return DefaultSeeds.make(Collections.singleton(context.getSootMethod().getActiveBody().getUnits().getFirst()), zeroValue());
 	}
 
 	@Override
 	protected FlowFunctions<Unit, Local, SootMethod> createFlowFunctionsFactory() {
-		return plugin.createFlowFunctionsFactory(this);
+		IFDSAnalysisConfiguration analysisConfiguration = (IFDSAnalysisConfiguration) context.getAnalysisConfiguration();
+		IIFDSAnalysisPlugin ifdsAnalysisPlugin = analysisConfiguration.createIFDSAnalysisPlugin();
+		return ifdsAnalysisPlugin.createFlowFunctionsFactory(this);
 	}
 	
 	public SootMethod getMethodToFocusOn() {
-		return methodToFocusOn;
+		return context.getSootMethod();
 	}
 }

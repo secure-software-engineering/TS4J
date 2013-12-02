@@ -12,13 +12,13 @@ import soot.tagkit.Tag;
  */
 public final class VulnerableMethodTag implements Tag {
 
-	private final IAnalysisPack config;
+	private final AnalysisConfiguration config;
 
-	public VulnerableMethodTag(IAnalysisPack config) {
-		this.config = config;
+	public VulnerableMethodTag(AnalysisConfiguration analysisConfiguration) {
+		this.config = analysisConfiguration;
 	}
 
-	public IAnalysisPack getAnalysisConfig() {
+	public AnalysisConfiguration getAnalysisConfig() {
 		return config;
 	}
 
