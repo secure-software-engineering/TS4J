@@ -1,6 +1,9 @@
 package de.fraunhofer.sit.codescan.framework;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -94,6 +97,11 @@ public class SootBridge {
 		}));	
 		Set<String> classNames = extractClassNames(analysisToRelevantMethods.values());					
 		String[] args = (Constants.SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classNames)).split(" ");
+		G.v().out = new PrintStream(new OutputStream() {
+			public void write(int b) throws IOException {
+				//swallow output
+			}
+		});
 		soot.Main.main(args);
 		G.reset();
 	}

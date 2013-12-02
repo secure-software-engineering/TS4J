@@ -1,3 +1,5 @@
+- Include proper logging.
+
 - Allow analyses to attach information about line numbers.
 
 =======
