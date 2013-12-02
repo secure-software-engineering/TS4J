@@ -44,7 +44,6 @@ public class SootBridge {
 
 	
 	public static void registerAnalysisPack(IJavaProject project, final Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
-		G.reset();
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new SceneTransformer() {
 			@Override
 			protected void internalTransform(String phaseName, Map<String, String> options) {
@@ -96,6 +95,7 @@ public class SootBridge {
 		Set<String> classNames = extractClassNames(analysisToRelevantMethods.values());					
 		String[] args = (Constants.SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classNames)).split(" ");
 		soot.Main.main(args);
+		G.reset();
 	}
 	
 	private static Set<String> extractClassNames(Collection<Set<IMethod>> values) {
