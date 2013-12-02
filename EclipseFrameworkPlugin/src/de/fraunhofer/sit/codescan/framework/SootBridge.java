@@ -64,6 +64,7 @@ public class SootBridge {
 				for(Map.Entry<AnalysisConfiguration, Set<IMethod>> analysisAndMethods: analysisToRelevantMethods.entrySet()) {
 					for(final IMethod method: analysisAndMethods.getValue()) {
 						final SootMethod m = Scene.v().getMethod(getSootMethodSignature(method));
+						if(m==null) continue;
 						if(!m.hasActiveBody()) continue;
 
 						final AnalysisConfiguration analysisConfig = analysisAndMethods.getKey();
@@ -136,7 +137,7 @@ public class SootBridge {
 					String simpleName = parameterTypes[i];
 					String[][] fqTypes = iMethod.getDeclaringType().resolveType(Signature.toString(simpleName));
 					if(fqTypes.length!=1) {
-						throw new RuntimeException("ambiguous types!?");
+						return null;
 					}
 					String pkg = fqTypes[0][0];
 					String className = fqTypes[0][1];
