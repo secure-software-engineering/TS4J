@@ -8,8 +8,8 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.Stmt;
 import soot.jimple.StringConstant;
 import soot.jimple.toolkits.scalar.ConstantPropagatorAndFolder;
-import de.fraunhofer.sit.codescan.framework.MethodBasedAnalysisManager;
 import de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin;
+import de.fraunhofer.sit.codescan.framework.MethodBasedAnalysisManager;
 
 public class ECBAnalysis implements IMethodBasedAnalysisPlugin {
 

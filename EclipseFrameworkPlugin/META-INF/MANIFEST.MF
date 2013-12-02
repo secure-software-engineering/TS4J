@@ -1,16 +1,14 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Code Scanner for Android SSL Vulnerabilities
+Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: de.fraunhofer.sit.codescan.framework;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-Vendor: Fraunhofer SIT
+Bundle-Vendor: %Bundle-Vendor
+Bundle-Activator: de.fraunhofer.sit.codescan.framework.internal.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
- org.eclipse.core.resources;bundle-version="3.8.100",
- com.android.ide.eclipse.adt;bundle-version="22.0.0",
- com.android.ide.eclipse.base;bundle-version="22.0.0",
- org.eclipse.jdt.core;bundle-version="3.7.3"
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
+ org.eclipse.core.resources;bundle-version="3.6.0",
+ org.eclipse.jdt.core;bundle-version="3.6.0"
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: slf4j-api-1.7.5.jar,
  slf4j-simple-1.7.5.jar,
@@ -162,3 +160,4 @@ Export-Package: com.google.common.annotations,
  soot.util.dot,
  soot.util.queue,
  soot.xml
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

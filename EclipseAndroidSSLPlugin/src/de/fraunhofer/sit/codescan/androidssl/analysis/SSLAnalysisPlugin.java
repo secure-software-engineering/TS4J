@@ -195,10 +195,8 @@ public class SSLAnalysisPlugin implements IIFDSAnalysisPlugin {
 		}
 	}
 
-	@Override
 	public FlowFunctions<Unit, Local, SootMethod> createFlowFunctionsFactory(IFDSAnalysisManager manager) {
 		return new FlowFunctionFactory(manager); 
 	}
-	
 
 }

@@ -4,11 +4,15 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisPlugin;
 import de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin;
 
 public class Extensions {
+
+	private final static Logger LOGGER = LoggerFactory.getLogger(Extensions.class);
 
 	/**
 	 * Returns the set of all registered analysis plugins. 
@@ -44,7 +48,7 @@ public class Extensions {
 			}
 			return res;
 		} catch (CoreException e) {
-			e.printStackTrace();
+			LOGGER.debug("",e);
 			return null;
 		}
 	}

@@ -1,3 +1,6 @@
 AndroidSSLTest/bin
 EclipseTestWorkspace/.metadata
 EclipseTestWorkspace/Test/bin
+EclipseUpdateSite/*.jar
+EclipseUpdateSite/features
+EclipseUpdateSite/plugins

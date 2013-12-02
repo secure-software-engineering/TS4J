@@ -15,6 +15,8 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.ui.IStartup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.fraunhofer.sit.codescan.framework.internal.analysis.AnalysisDispatcher;
 
@@ -23,6 +25,8 @@ import de.fraunhofer.sit.codescan.framework.internal.analysis.AnalysisDispatcher
  */
 public class StartupHandler implements IStartup {
 
+	private final static Logger LOGGER = LoggerFactory.getLogger(StartupHandler.class);
+	
 	private static final AfterBuildListener BUILD_LISTENER = new AfterBuildListener();
 
 	public void earlyStartup() {
@@ -65,7 +69,7 @@ public class StartupHandler implements IStartup {
 				IJavaElement[] changeArray = changedJavaElements.toArray(new IJavaElement[0]);
 				AnalysisDispatcher.searchAndAnalyze(changeArray);
 			} catch (CoreException e) {
-				e.printStackTrace();
+				LOGGER.debug("Internal error",e);
 			}
 		}
 
