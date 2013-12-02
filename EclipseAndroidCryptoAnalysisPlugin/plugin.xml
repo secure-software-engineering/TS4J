@@ -3,11 +3,13 @@
 <plugin>
    <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
-      <methodBasedAnalysis
-            class="de.fraunhofer.sit.codescan.androidcrypto.ECBAnalysis"
-            id="CryptoAnalysis">
-         <filter></filter>
-      </methodBasedAnalysis>
+      <analysisPack
+            id="ECBAnalysis">
+         <methodBasedAnalysis
+               class="de.fraunhofer.sit.codescan.androidcrypto.ECBAnalysis"
+               id="MethodBasedECBAnalysis">
+         </methodBasedAnalysis>
+      </analysisPack>
    </extension>
 
 </plugin>
