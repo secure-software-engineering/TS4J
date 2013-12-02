@@ -1,0 +1,24 @@
+- Start at beginning of methods onReceivedSslError (in subclasses of WebViewClient).
+- Propagate taint for second parameter (the handler). A tainted value is one which proceed() has not yet been called on.
+- See if a tainted value can transitively reach the end of the onReceivedSslError method. If yes, dismiss the method. If no, warn about the method.
+
+Flow functions:
+We only track Locals.
+
+Normal:
+	- Gen 2nd parameter at source and immediately kill ZERO
+	- Transfer on assignments
+	
+Call:
+	- Translate arguments to parameters
+
+Return:
+	- Report if at end of source method
+	- Union:
+		- Translate parameters back to arguments
+		- Translate return value if present
+
+Call-to-return:
+	- Kill on proceed()-call with right receiver
+	- Kill any tainted parameters passed to method calls (to implement "must" semantics)
+		those parameters are re-translated back to the caller by the return function instead

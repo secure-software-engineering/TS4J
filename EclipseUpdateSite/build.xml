@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="signJars" default="signJars">
+	
+	<target name="clean">
+		<delete includeemptydirs="true">
+			<fileset dir=".">
+			    <include name="features/**"/>
+			    <include name="plugins/**"/>
+			    <include name="artifacts.jar"/>
+			    <include name="content.jar"/>
+			</fileset>
+		</delete>
+	</target>
+
+    <target name="signJars" description="sign JAR files">
+    	<signjar
+    	    alias="ericbodden" keystore="${user.home}/.keystore"
+    	    storepass="selfsigned"
+    		keypass="selfsigned"
+    	    lazy="true"    		
+    	    >
+    	  <path>
+    	    <fileset dir="." includes="**/*.jar" />
+    	  </path>
+    	</signjar>        
+    </target>
+	
+	<target name="upload">
+		<sshexec host="sit.sit.fraunhofer.de" username="bodden" password="dfkl.04SSE31"
+			trust="true" command="cd /var/www2/eclipse; rm -fr *"/>
+		<scp todir="bodden:dfkl.04SSE31@sit.sit.fraunhofer.de:/var/www2/eclipse" trust="true">
+    	    <fileset dir="." includes="**/*">
+				<exclude name="build.xml"/>
+				<exclude name="signing-certificate.cer"/>
+	    	</fileset>
+		</scp>
+	</target>
+
+</project>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="analysis" name="%extension-point.name" schema="schema/de.fraunhofer.sit.codescan.analysis.exsd"/>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            id="de.fraunhofer.sit.codescan.androidssl.commands.scanAllProjects"
+            name="%command.name">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="de.fraunhofer.sit.codescan.framework.internal.handlers.AnalyzeAllProjectsButtonClickHandler"
+            commandId="de.fraunhofer.sit.codescan.androidssl.commands.scanAllProjects">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="de.fraunhofer.sit.codescan.androidssl.toolbars.scanToolbar">
+            <command
+                  commandId="de.fraunhofer.sit.codescan.androidssl.commands.scanAllProjects"
+                  label="%command.label.0"
+                  tooltip="%command.tooltip.0">
+            </command>
+         </toolbar>
+      </menuContribution>
+   </extension>
+   <extension
+         id="de.fraunhofer.sit.codescan.androidssl.findingmarker"
+         name="%marker.name"
+         point="org.eclipse.core.resources.markers">
+      <persistent
+            value="true">
+      </persistent>
+      <super
+            type="org.eclipse.core.resources.problemmarker">
+      </super>
+   </extension>
+   <extension
+         point="org.eclipse.ui.startup">
+      <startup
+            class="de.fraunhofer.sit.codescan.framework.internal.handlers.StartupHandler">
+      </startup>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="de.fraunhofer.sit.codescan.framework.internal.ui.PreferencePage"
+            id="de.fraunhofer.sit.codescan.framework.projectPreferencePage"
+            name="%page.name">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="de.fraunhofer.sit.codescan.framework.internal.PreferencesInitializer">
+      </initializer>
+   </extension>
+
+</plugin>
