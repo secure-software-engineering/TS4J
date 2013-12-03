@@ -146,7 +146,7 @@
          <choice>
             <element ref="byMethodDecl" minOccurs="0" maxOccurs="unbounded"/>
          </choice>
-         <attribute name="superType" type="string" use="required">
+         <attribute name="superType" type="string" use="default" value="">
             <annotation>
                <documentation>
                   
@@ -161,7 +161,7 @@
          <choice>
             <element ref="byMethodCall" minOccurs="0" maxOccurs="unbounded"/>
          </choice>
-         <attribute name="subsignature" type="string" use="required">
+         <attribute name="subsignature" type="string" use="default" value="">
             <annotation>
                <documentation>
                   
