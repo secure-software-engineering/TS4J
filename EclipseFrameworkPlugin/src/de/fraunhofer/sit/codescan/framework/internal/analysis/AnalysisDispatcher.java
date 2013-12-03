@@ -137,10 +137,15 @@ public class AnalysisDispatcher {
 							IJavaElement[] filteredJavaElements = javaElements;
 							IConfigurationElement[] superTypeFilters = filter.getChildren("bySuperType");
 							for (IConfigurationElement superTypeFilter : superTypeFilters) {
-								String superClassName = superTypeFilter.getAttribute("superType");
 								final Set<IType> subTypesFound = new HashSet<IType>();
-								if(superClassName!=null && !superClassName.isEmpty()) {
-									SearchPattern pattern = SearchPattern.createPattern(superClassName, IJavaSearchConstants.CLASS, IJavaSearchConstants.IMPLEMENTORS, SearchPattern.R_EXACT_MATCH);
+								{
+									String superClassName = superTypeFilter.getAttribute("superType");
+									int match = SearchPattern.R_EXACT_MATCH;
+									if(superClassName==null || superClassName.isEmpty()) {
+										superClassName = "*";
+										match = SearchPattern.R_PATTERN_MATCH;
+									}
+									SearchPattern pattern = SearchPattern.createPattern(superClassName, IJavaSearchConstants.CLASS, IJavaSearchConstants.IMPLEMENTORS, match);
 									SearchRequestor requestor = new SearchRequestor() {
 										public void acceptSearchMatch(SearchMatch match) throws CoreException {
 											IType found = (IType) match.getElement();
@@ -175,9 +180,15 @@ public class AnalysisDispatcher {
 								for (IConfigurationElement methodDeclFilter: methodDeclFilters) {
 									String declSubSignature = methodDeclFilter.getAttribute("subsignature");
 									final Set<IMethod> declsFound = new HashSet<IMethod>();
-									if(declSubSignature!=null && !declSubSignature.isEmpty()) {
-										declSubSignature = toEclipseSearchPattern(declSubSignature);
-										SearchPattern pattern = SearchPattern.createPattern(declSubSignature, IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH);
+									{
+										int match = SearchPattern.R_CAMELCASE_MATCH | SearchPattern.R_ERASURE_MATCH;
+										if(declSubSignature==null || declSubSignature.isEmpty()) {
+											declSubSignature = "*";
+											match = SearchPattern.R_PATTERN_MATCH;
+										} else {
+											declSubSignature = toEclipseSearchPattern(declSubSignature);
+										}
+										SearchPattern pattern = SearchPattern.createPattern(declSubSignature, IJavaSearchConstants.METHOD, IJavaSearchConstants.DECLARATIONS, match);
 										SearchRequestor requestor = new SearchRequestor() {
 											public void acceptSearchMatch(SearchMatch match) throws CoreException {
 												IMethod found = (IMethod) match.getElement();
