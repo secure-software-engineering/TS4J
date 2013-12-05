@@ -45,7 +45,20 @@ import de.fraunhofer.sit.codescan.framework.internal.analysis.MustAlias;
  */
 public class SootBridge {
 
+	private static final Set<String> PRIMITIVE_TYPE_NAMES;
 	
+	static {
+		PRIMITIVE_TYPE_NAMES = new HashSet<String>();
+		PRIMITIVE_TYPE_NAMES.add("void");
+		PRIMITIVE_TYPE_NAMES.add("byte");
+		PRIMITIVE_TYPE_NAMES.add("int");
+		PRIMITIVE_TYPE_NAMES.add("boolean");
+		PRIMITIVE_TYPE_NAMES.add("long");
+		PRIMITIVE_TYPE_NAMES.add("short");
+		PRIMITIVE_TYPE_NAMES.add("float");
+		PRIMITIVE_TYPE_NAMES.add("double");
+	}
+
 	public static void registerAnalysisPack(IJavaProject project, final Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new SceneTransformer() {
 			@Override
@@ -63,8 +76,12 @@ public class SootBridge {
 	
 				for(Map.Entry<AnalysisConfiguration, Set<IMethod>> analysisAndMethods: analysisToRelevantMethods.entrySet()) {
 					for(final IMethod method: analysisAndMethods.getValue()) {
-						final SootMethod m = Scene.v().getMethod(getSootMethodSignature(method));
-						if(m==null) continue;
+						String sootMethodSignature = getSootMethodSignature(method);
+						if(sootMethodSignature==null) {
+							//TODO log error
+							continue;
+						}
+						final SootMethod m = Scene.v().getMethod(sootMethodSignature);
 						if(!m.hasActiveBody()) continue;
 
 						final AnalysisConfiguration analysisConfig = analysisAndMethods.getKey();
@@ -103,8 +120,12 @@ public class SootBridge {
 				//swallow output
 			}
 		});
-		soot.Main.main(args);
-		G.reset();
+		try {
+			soot.Main.main(args);
+		} catch(RuntimeException e) {
+			e.printStackTrace();
+			G.reset();
+		}
 	}
 	
 	private static Set<String> extractClassNames(Collection<Set<IMethod>> values) {
@@ -125,7 +146,9 @@ public class SootBridge {
 	        name.append("<");
 	        name.append(iMethod.getDeclaringType().getFullyQualifiedName());
 	        name.append(": ");
-	        name.append(Signature.toString(iMethod.getReturnType()));
+	        String retTypeName = resolveName(iMethod, iMethod.getReturnType());
+	        if(retTypeName==null) return null;
+	        name.append(retTypeName);
 	        name.append(" ");
 	        name.append(iMethod.getElementName());
 	        name.append("(");
@@ -134,24 +157,39 @@ public class SootBridge {
 			String[] parameterTypes = iMethod.getParameterTypes();
 				for (int i=0; i<iMethod.getParameterTypes().length; ++i) {
 					name.append(comma);
-					String simpleName = parameterTypes[i];
-					String[][] fqTypes = iMethod.getDeclaringType().resolveType(Signature.toString(simpleName));
-					if(fqTypes.length!=1) {
-						return null;
-					}
-					String pkg = fqTypes[0][0];
-					String className = fqTypes[0][1];
-					name.append(pkg+"."+className);
+					String readableName = resolveName(iMethod, parameterTypes[i]);
+					if(readableName==null) return null;
+					name.append(readableName);
 	                comma = ",";
 				}
 
 	        name.append(")");
 	        name.append(">");
+	        
+	        //workaround for this bug in Eclipse:
+	        //https://bugs.eclipse.org/bugs/show_bug.cgi?id=423358
+	        //ignore inner classes for now
+	        
+	        if(name.toString().contains("$")) return null;
 
 	        return name.toString();
 		} catch (JavaModelException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private static String resolveName(IMethod iMethod, String simpleName) throws JavaModelException {
+		String readableName = Signature.toString(simpleName);
+		if(!PRIMITIVE_TYPE_NAMES.contains(readableName)) {
+			String[][] fqTypes = iMethod.getDeclaringType().resolveType(readableName);
+			if(fqTypes.length!=1) {
+				return null;
+			}
+			String pkg = fqTypes[0][0];
+			String className = fqTypes[0][1];
+			readableName = pkg+"."+className;
+		}
+		return readableName;
 	}
 	
 	private static URL[] projectClassPath(IJavaProject javaProject) {

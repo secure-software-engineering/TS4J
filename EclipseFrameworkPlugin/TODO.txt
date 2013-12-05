@@ -1,3 +1,8 @@
+- Resolve type names used in source methods returned from the search
+	to type names in IClassType such that anonymous methods are taken care of.
+	see: https://bugs.eclipse.org/bugs/show_bug.cgi?id=423358	
+	
+
 - Include proper logging.
 
 - Allow analyses to attach information about line numbers.
