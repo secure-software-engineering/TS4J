@@ -1,12 +1,8 @@
 package de.fraunhofer.sit.codescan.framework;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,8 +18,8 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
-
-import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import soot.Body;
 import soot.G;
@@ -36,6 +32,9 @@ import soot.Unit;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.DirectedGraph;
+
+import com.google.common.base.Joiner;
+
 import de.fraunhofer.sit.codescan.framework.internal.Constants;
 import de.fraunhofer.sit.codescan.framework.internal.analysis.MustAlias;
 
@@ -45,6 +44,8 @@ import de.fraunhofer.sit.codescan.framework.internal.analysis.MustAlias;
  */
 public class SootBridge {
 
+	private final static Logger LOGGER = LoggerFactory.getLogger(SootBridge.class);
+	
 	private static final Set<String> PRIMITIVE_TYPE_NAMES;
 	
 	static {
@@ -59,7 +60,7 @@ public class SootBridge {
 		PRIMITIVE_TYPE_NAMES.add("double");
 	}
 
-	public static void registerAnalysisPack(IJavaProject project, final Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
+	public static void runSootAnalysis(IJavaProject project, final Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new SceneTransformer() {
 			@Override
 			protected void internalTransform(String phaseName, Map<String, String> options) {
@@ -78,10 +79,15 @@ public class SootBridge {
 					for(final IMethod method: analysisAndMethods.getValue()) {
 						String sootMethodSignature = getSootMethodSignature(method);
 						if(sootMethodSignature==null) {
-							//TODO log error
 							continue;
 						}
-						final SootMethod m = Scene.v().getMethod(sootMethodSignature);
+						final SootMethod m;
+						try {
+							m = Scene.v().getMethod(sootMethodSignature);
+						} catch(RuntimeException e) {
+							LOGGER.debug("Failed to find SootMethod:"+sootMethodSignature);
+							continue;
+						}
 						if(!m.hasActiveBody()) continue;
 
 						final AnalysisConfiguration analysisConfig = analysisAndMethods.getKey();
@@ -115,15 +121,11 @@ public class SootBridge {
 		}));	
 		Set<String> classNames = extractClassNames(analysisToRelevantMethods.values());					
 		String[] args = (Constants.SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classNames)).split(" ");
-		G.v().out = new PrintStream(new OutputStream() {
-			public void write(int b) throws IOException {
-				//swallow output
-			}
-		});
+		G.v().out = new PrintStream(new LoggingOutputStream(LOGGER, false), true);
 		try {
 			soot.Main.main(args);
 		} catch(RuntimeException e) {
-			e.printStackTrace();
+			LOGGER.error("Error executing Soot",e);
 			G.reset();
 		}
 	}
@@ -168,13 +170,14 @@ public class SootBridge {
 	        
 	        //workaround for this bug in Eclipse:
 	        //https://bugs.eclipse.org/bugs/show_bug.cgi?id=423358
-	        //ignore inner classes for now
-	        
+	        //ignore inner classes for now	        
+			LOGGER.warn("Ignoring inner type:"+name.toString());			
 	        if(name.toString().contains("$")) return null;
 
 	        return name.toString();
 		} catch (JavaModelException e) {
-			throw new RuntimeException(e);
+			LOGGER.error("Error building Soot method signature",e);			
+			return null;
 		}
 	}
 
@@ -182,7 +185,14 @@ public class SootBridge {
 		String readableName = Signature.toString(simpleName);
 		if(!PRIMITIVE_TYPE_NAMES.contains(readableName)) {
 			String[][] fqTypes = iMethod.getDeclaringType().resolveType(readableName);
-			if(fqTypes.length!=1) {
+			if(fqTypes.length==0) {
+				LOGGER.debug("Failed to resolve type "+readableName+" in "+iMethod.getDeclaringType().getFullyQualifiedName());  
+				return null;
+			} else if(fqTypes.length>1) {
+				LOGGER.debug("Type "+readableName+" is ambiguous "+iMethod.getDeclaringType().getFullyQualifiedName()+":");
+				for(int i=0;i<fqTypes.length;i++) {
+					LOGGER.debug("    "+fqTypes[i][0]+"."+fqTypes[i][1]);
+				}
 				return null;
 			}
 			String pkg = fqTypes[0][0];
@@ -210,15 +220,9 @@ public class SootBridge {
 	            URL[] array = new URL[urls.size()];
 	            urls.toArray(array);
 	            return array;
-	    } catch (JavaModelException e) {
-	            e.printStackTrace();
-	            return new URL[0];
-	    } catch (MalformedURLException e) {
-	            e.printStackTrace();
-	            return new URL[0];
-	    } catch (URISyntaxException e) {
-	            e.printStackTrace();
-	            return new URL[0];
+	    } catch (Exception e) {
+	    	LOGGER.error("Error building project classpath",e);
+	    	return new URL[0];
 	    }
 	}
 

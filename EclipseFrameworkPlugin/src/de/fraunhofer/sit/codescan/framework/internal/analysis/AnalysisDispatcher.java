@@ -34,6 +34,8 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import soot.G;
 import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
@@ -50,6 +52,8 @@ import de.fraunhofer.sit.codescan.framework.internal.Extensions;
  */
 public class AnalysisDispatcher {
 	
+	private final static Logger LOGGER = LoggerFactory.getLogger(AnalysisDispatcher.class);
+	
 	/**
 	 * Searches the given javaElements for relevant code and then passes this code to the analysis.
 	 * The method will also remove vulnerability markers for the given javaElements and add new markers
@@ -60,6 +64,7 @@ public class AnalysisDispatcher {
 			
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
+	            LOGGER.trace("Started analysis job");
 				IConfigurationElement[] extensions = Extensions.getContributorsToExtensionPoint();
 
 				//call the analysis
@@ -68,6 +73,7 @@ public class AnalysisDispatcher {
 				        public void run() {
 				        	final Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();  					  
 				            MessageDialog.openWarning(shell,"No analyses found","There are no analysis plugins installed. Install a plugin to conduct analyses.");
+				            LOGGER.info("No analysis plugins installed");
 				        }
 				    });
 					return Status.OK_STATUS;
@@ -75,7 +81,10 @@ public class AnalysisDispatcher {
 
 				
 				Set<IAnalysisPack> analysisPacks = createAnalysisConfigurations(extensions);
+	            LOGGER.trace("Initiating eclipse search");
+	            long before = System.currentTimeMillis();
 				Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods = searchRelevantClasses(javaElements,analysisPacks);
+				LOGGER.trace("Eclipse search took "+(System.currentTimeMillis()-before)+"ms");
 				
 				//re-map found methods
 				Map<IJavaProject, Map<AnalysisConfiguration, Set<IMethod>>> projectToAnalysisAndMethods = reMapFindings(analysisToRelevantMethods);
@@ -85,12 +94,14 @@ public class AnalysisDispatcher {
 
 				for(Map.Entry<IJavaProject, Map<AnalysisConfiguration, Set<IMethod>>> entry: projectToAnalysisAndMethods.entrySet()) {
 					IJavaProject project = entry.getKey();
+					LOGGER.trace("Analyzing project "+project);
 					Map<AnalysisConfiguration, Set<IMethod>> analysisAndMethodsInProject = entry.getValue();
 					G.reset();
-					SootBridge.registerAnalysisPack(project, analysisAndMethodsInProject);
+					SootBridge.runSootAnalysis(project, analysisAndMethodsInProject);
+					LOGGER.trace("Done analyzing project "+project);
 				}
 				
-				
+				LOGGER.trace("Finished analysis job");				
 				return Status.OK_STATUS;
 			}
 
@@ -155,7 +166,7 @@ public class AnalysisDispatcher {
 									try {
 										searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
 									} catch (CoreException e) {
-										e.printStackTrace();
+										LOGGER.error("ERROR",e);
 									}
 									filteredJavaElements = subTypesFound.toArray(new IJavaElement[subTypesFound.size()]);
 									searchScope = SearchEngine.createJavaSearchScope(filteredJavaElements,IJavaSearchScope.SOURCES);
@@ -173,7 +184,7 @@ public class AnalysisDispatcher {
 												}
 											}
 										} catch (JavaModelException e) {
-											e.printStackTrace();
+											LOGGER.error("ERROR",e);
 										}
 									}
 								} 
@@ -198,7 +209,7 @@ public class AnalysisDispatcher {
 										try {
 											searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
 										} catch (CoreException e) {
-											e.printStackTrace();
+											LOGGER.error("ERROR",e);
 										}
 										filteredJavaElements = declsFound.toArray(new IJavaElement[declsFound.size()]);
 										searchScope = SearchEngine.createJavaSearchScope(filteredJavaElements,IJavaSearchScope.SOURCES);
@@ -226,7 +237,7 @@ public class AnalysisDispatcher {
 											try {
 												searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, searchScope, requestor, null);
 											} catch (CoreException e) {
-												e.printStackTrace();
+												LOGGER.error("ERROR",e);
 											}
 											Set<IMethod> methodsFound = getOrCreate(config, result);
 											methodsFound.addAll(containersFound);
@@ -271,7 +282,7 @@ public class AnalysisDispatcher {
 						}
 					}
 				} catch (CoreException e) {
-					e.printStackTrace();
+					LOGGER.error("Error deleting markers",e);
 				}
 			}
 		}
@@ -292,6 +303,7 @@ public class AnalysisDispatcher {
 			}
 			return found;
 		} catch (CoreException e) {
+			LOGGER.error("ERROR",e);
 			//ignore project
 			return false;
 		}
