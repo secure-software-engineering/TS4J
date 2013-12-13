@@ -25,10 +25,10 @@ public class AnalyzeAllProjectsButtonClickHandler extends AbstractHandler {
 
 		ArrayList<IJavaProject> androidProjects = new ArrayList<IJavaProject>();
 		for (IProject p : projects) {
-			if(AnalysisDispatcher.isAndroidProject(p)) {
+//			if(AnalysisDispatcher.isAndroidProject(p)) {
 				IJavaProject javaProject = JavaCore.create(p);
 				androidProjects.add(javaProject);
-			}
+//			}
 		}
 		IJavaProject[] androidProjectArray = androidProjects.toArray(new IJavaProject[0]);		
 		

@@ -4,3 +4,5 @@ EclipseTestWorkspace/Test/bin
 EclipseUpdateSite/*.jar
 EclipseUpdateSite/features
 EclipseUpdateSite/plugins
+EclipseTestWorkspaceTypeState/.metadata
+TypeStateExamples/bin

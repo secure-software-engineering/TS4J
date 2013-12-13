@@ -48,14 +48,7 @@ https://github.com/Sable/heros/
          unpack="false"/>
 
    <plugin
-         id="de.fraunhofer.sit.codescan.androidcrypto"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="de.fraunhofer.sit.codescan.androidssl"
+         id="de.fraunhofer.sit.codescan.typestate"
          download-size="0"
          install-size="0"
          version="0.0.0"

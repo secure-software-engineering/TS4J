@@ -6,12 +6,12 @@
       <analysisPack
             id="SSLAnalysis">
          <ifdsAnalysis
-               class="de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin"
-               errorMessage="SSL error handler is calling proceed() while it should really be checking the certificate."
-               id="SSLAnalysisIFDS">
+               class="de.fraunhofer.sit.codescan.typestate.analysis.SSLAnalysisPlugin"
+               errorMessage="Typestate error"
+               id="TypeStateAnalysisIFDS">
             <filter>
                <bySuperType>
-	               <byMethodDecl>
+	               <byMethodDecl subsignature="void main()">
 	               </byMethodDecl>
                </bySuperType>
             </filter>

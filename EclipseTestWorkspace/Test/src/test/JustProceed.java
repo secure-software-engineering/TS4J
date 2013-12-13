@@ -10,7 +10,14 @@ public class JustProceed extends WebViewClient {
 	
 	@DefinitelyVulnerable
 	public void onReceivedSslError (WebView view, SslErrorHandler handler, SslError error) {
-		handler.proceed();
+		extracted(handler);
 	}
+
+	private void extracted(SslErrorHandler handler) {
+		SslErrorHandler handler2 = handler;
+		handler2.proceed();
+	}
+
+	
 
 }
