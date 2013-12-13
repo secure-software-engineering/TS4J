@@ -9,3 +9,20 @@ when calling a non-Object method on an alias of one of the elements
 	
 now if the tainted valuegroup reaches the end of the method at which
 	the valuegroup was created, give a warning at the above statement
+	
+
+ValueGroup vg; ModelValue o; SootMethod m; Stmt s;
+
+create(vg;m): vg = new ValueGroup(); m = currentMethod();
+
+add(vg,o;s): vg.add(o); s = currentStmt();
+
+alter(o): o.set*... 
+ 
+flush(vg): vg.flush();
+ 
+end(m): exit of m
+
+create add (flush* alter)* end {
+	report error at s
+}
