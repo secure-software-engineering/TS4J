@@ -21,22 +21,19 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 	protected FlowFunctions<Unit, Abstraction, SootMethod> createFlowFunctionsFactory() {
 		return new FlowFunctions<Unit, Abstraction, SootMethod>() {
 
-			public FlowFunction<Abstraction> getCallFlowFunction(Unit arg0, SootMethod arg1) {
+			public FlowFunction<Abstraction> getCallFlowFunction(Unit src, SootMethod dest) {
 				return null;
 			}
 
-			public FlowFunction<Abstraction> getCallToReturnFlowFunction(
-					Unit arg0, Unit arg1) {
+			public FlowFunction<Abstraction> getCallToReturnFlowFunction(Unit curr, Unit succ) {
 				return null;
 			}
 
-			public FlowFunction<Abstraction> getNormalFlowFunction(Unit arg0,
-					Unit arg1) {
+			public FlowFunction<Abstraction> getNormalFlowFunction(Unit curr,Unit succ) {
 				return null;
 			}
 
-			public FlowFunction<Abstraction> getReturnFlowFunction(Unit arg0,
-					SootMethod arg1, Unit arg2, Unit arg3) {
+			public FlowFunction<Abstraction> getReturnFlowFunction(Unit callSite, SootMethod callee, Unit exitStmt, Unit retSite) {
 				return null;
 			}
 		};
