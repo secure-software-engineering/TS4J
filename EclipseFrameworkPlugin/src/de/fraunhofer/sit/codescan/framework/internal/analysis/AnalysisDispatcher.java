@@ -151,12 +151,14 @@ public class AnalysisDispatcher {
 								final Set<IType> subTypesFound = new HashSet<IType>();
 								{
 									String superClassName = superTypeFilter.getAttribute("superType");
+									int limitTo = IJavaSearchConstants.IMPLEMENTORS;
 									int match = SearchPattern.R_EXACT_MATCH;
 									if(superClassName==null || superClassName.isEmpty()) {
 										superClassName = "*";
+										limitTo = IJavaSearchConstants.DECLARATIONS;
 										match = SearchPattern.R_PATTERN_MATCH;
 									}
-									SearchPattern pattern = SearchPattern.createPattern(superClassName, IJavaSearchConstants.CLASS, IJavaSearchConstants.IMPLEMENTORS, match);
+									SearchPattern pattern = SearchPattern.createPattern(superClassName, IJavaSearchConstants.CLASS, limitTo, match);
 									SearchRequestor requestor = new SearchRequestor() {
 										public void acceptSearchMatch(SearchMatch match) throws CoreException {
 											IType found = (IType) match.getElement();
