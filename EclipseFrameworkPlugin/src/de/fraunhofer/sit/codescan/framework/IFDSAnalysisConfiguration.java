@@ -1,18 +1,18 @@
 package de.fraunhofer.sit.codescan.framework;
 
+import heros.IFDSTabulationProblem;
 import heros.InterproceduralCFG;
 import heros.solver.IFDSSolver;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 
-import soot.Local;
 import soot.SootMethod;
 import soot.Unit;
 import soot.jimple.toolkits.ide.JimpleIFDSSolver;
 import de.fraunhofer.sit.codescan.framework.internal.analysis.IFDSAdapter;
 
-public class IFDSAnalysisConfiguration extends AnalysisConfiguration{
+public class IFDSAnalysisConfiguration extends AnalysisConfiguration {
 
 	public IFDSAnalysisConfiguration(
 			IConfigurationElement analysisConfigElement) {
@@ -29,14 +29,18 @@ public class IFDSAnalysisConfiguration extends AnalysisConfiguration{
 
 	@Override
 	public void registerAnalysis(IAnalysisContext context) {
-		IFDSAdapter ifdsProblem = new IFDSAdapter(context);
-		IFDSSolver<Unit, Local, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver =
-				new JimpleIFDSSolver<Local, InterproceduralCFG<Unit,SootMethod>>(ifdsProblem);
+		IFDSAnalysisConfiguration analysisConfiguration = (IFDSAnalysisConfiguration) context.getAnalysisConfiguration();
+		IIFDSAnalysisPlugin ifdsAnalysisPlugin = analysisConfiguration.createIFDSAnalysisPlugin();
+		IFDSAdapter adapter = new IFDSAdapter(context);
+		IFDSTabulationProblem<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>> ifdsProblem =
+				ifdsAnalysisPlugin.createAnalysisProblem(adapter);
+		
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		IFDSSolver<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver = new JimpleIFDSSolver(ifdsProblem);
 		solver.solve();
 		
-		if(ifdsProblem.isMethodVulnerable()) {
+		if(adapter.isMethodVulnerable()) {
 			markMethodAsVulnerable(context);
 		}		
 	}
-
 }

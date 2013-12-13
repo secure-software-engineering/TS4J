@@ -6,7 +6,7 @@
       <analysisPack
             id="SSLAnalysis">
          <ifdsAnalysis
-               class="de.fraunhofer.sit.codescan.typestate.analysis.SSLAnalysisPlugin"
+               class="de.fraunhofer.sit.codescan.typestate.analysis.TypeStateAnalysisPlugin"
                errorMessage="Typestate error"
                id="TypeStateAnalysisIFDS">
             <filter>

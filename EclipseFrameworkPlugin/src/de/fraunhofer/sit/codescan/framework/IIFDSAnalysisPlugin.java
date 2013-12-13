@@ -1,7 +1,7 @@
 package de.fraunhofer.sit.codescan.framework;
 
-import heros.FlowFunctions;
-import soot.Local;
+import heros.IFDSTabulationProblem;
+import heros.InterproceduralCFG;
 import soot.SootMethod;
 import soot.Unit;
 
@@ -13,6 +13,6 @@ public interface IIFDSAnalysisPlugin {
 	/**
 	 * Creates a novel flow-function factory.
 	 */
-	public FlowFunctions<Unit, Local, SootMethod> createFlowFunctionsFactory(IFDSAnalysisManager manager);
+	public IFDSTabulationProblem<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>> createAnalysisProblem(IFDSAnalysisManager manager);
 	
 }
