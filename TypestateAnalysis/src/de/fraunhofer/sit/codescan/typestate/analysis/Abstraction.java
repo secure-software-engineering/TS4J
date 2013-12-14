@@ -1,48 +1,65 @@
 package de.fraunhofer.sit.codescan.typestate.analysis;
 
-import java.util.HashSet;
-
+import soot.NullType;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.AssignStmt;
+import soot.jimple.Stmt;
+import soot.jimple.internal.JimpleLocal;
 
 public class Abstraction implements Cloneable {
 	
-	protected Unit constrCallToValueGroup;
+	protected Unit valueAddStmt;
 	protected Value valueGroup;
-	protected HashSet<Value> elements = new HashSet<Value>();
-	protected boolean modelValueAdded;
+	protected Value modelValue;
+	protected boolean modelValueChanged;
 	
-	public final static Abstraction ZERO = new Abstraction(); 
+	public final static Abstraction ZERO = new Abstraction() {
+		{
+			this.valueGroup = new JimpleLocal("", NullType.v());
+			this.modelValue = new JimpleLocal("", NullType.v());
+		}
+		public String toString() { return "<ZERO>"; };
+	};
 	
-	public Abstraction(AssignStmt constrCallToValueGroup) {
-		this.constrCallToValueGroup = constrCallToValueGroup;
-		this.valueGroup = (Value) constrCallToValueGroup.getLeftOp();
-		modelValueAdded = false;
+	public Abstraction(Value valueGroup) {
+		this.valueGroup = valueGroup;
 	}
 	
 	public Value getValueGroupLocal() {
 		return valueGroup;
 	}
 	
-	private Abstraction() {		
+	private Abstraction() {
 	}
 	
-	public Abstraction derive(Value newLocal) {
-		Abstraction copy = copy();
-		copy.valueGroup = newLocal;
-		return copy;
+	public Abstraction derive(Value lhs, Value rhs) {
+		if(valueGroup.equals(rhs)||lhs.equals(rhs)) {
+			Abstraction copy = copy();
+			if(copy.valueGroup.equals(rhs))
+				copy.valueGroup = lhs;
+			if(copy.modelValue.equals(rhs))
+				copy.modelValue = lhs;
+			return copy;
+		} else
+			return this;
 	}
 	
 	public Abstraction markedAsTainted() {
 		Abstraction copy = copy();
-		copy.modelValueAdded = true;
+		copy.modelValueChanged = true;
 		return copy;
 	}
 		
 	public Abstraction markedAsFlushed() {
 		Abstraction copy = copy();
-		copy.modelValueAdded = false;
+		copy.modelValueChanged = false;
+		return copy;
+	}	
+	
+	public Abstraction valueAdded(Stmt valueAddStmt) {
+		Abstraction copy = copy();
+		copy.valueAddStmt = valueAddStmt;
+		copy.modelValue = valueAddStmt.getInvokeExpr().getArg(0);		
 		return copy;
 	}
 
@@ -52,16 +69,16 @@ public class Abstraction implements Cloneable {
 		int result = 1;
 		result = prime
 				* result
-				+ ((constrCallToValueGroup == null) ? 0
-						: constrCallToValueGroup.hashCode());
+				+ ((valueAddStmt == null) ? 0
+						: valueAddStmt.hashCode());
 		result = prime * result
-				+ ((elements == null) ? 0 : elements.hashCode());
-		result = prime * result + (modelValueAdded ? 1231 : 1237);
+				+ ((modelValue == null) ? 0 : modelValue.hashCode());
+		result = prime * result + (modelValueChanged ? 1231 : 1237);
 		result = prime * result
 				+ ((valueGroup == null) ? 0 : valueGroup.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -71,17 +88,17 @@ public class Abstraction implements Cloneable {
 		if (getClass() != obj.getClass())
 			return false;
 		Abstraction other = (Abstraction) obj;
-		if (constrCallToValueGroup == null) {
-			if (other.constrCallToValueGroup != null)
+		if (valueAddStmt == null) {
+			if (other.valueAddStmt != null)
 				return false;
-		} else if (!constrCallToValueGroup.equals(other.constrCallToValueGroup))
+		} else if (!valueAddStmt.equals(other.valueAddStmt))
 			return false;
-		if (elements == null) {
-			if (other.elements != null)
+		if (modelValue == null) {
+			if (other.modelValue != null)
 				return false;
-		} else if (!elements.equals(other.elements))
+		} else if (!modelValue.equals(other.modelValue))
 			return false;
-		if (modelValueAdded != other.modelValueAdded)
+		if (modelValueChanged != other.modelValueChanged)
 			return false;
 		if (valueGroup == null) {
 			if (other.valueGroup != null)
@@ -91,11 +108,9 @@ public class Abstraction implements Cloneable {
 		return true;
 	}
 
-	@SuppressWarnings("unchecked")
 	private Abstraction copy() {
 		try {
 			Abstraction clone = (Abstraction) super.clone();
-			clone.elements = (HashSet<Value>) elements.clone();
 			return clone;
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException(e);
