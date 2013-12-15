@@ -54,4 +54,11 @@ https://github.com/Sable/heros/
          version="0.0.0"
          unpack="false"/>
 
+   <plugin
+         id="de.fraunhofer.sit.codescan.sootbridge"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
 </feature>
