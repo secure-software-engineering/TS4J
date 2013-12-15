@@ -10,14 +10,15 @@ import java.util.Set;
 
 import soot.SootMethod;
 import soot.Unit;
+import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 
 public abstract class AbstractIFDSAnalysisProblem<D> extends DefaultIFDSTabulationProblem<Unit, D, SootMethod, InterproceduralCFG<Unit, SootMethod>> {
 
-	protected final IFDSAnalysisManager manager;
+	protected final IIFDSAnalysisContext context;
 
-	public AbstractIFDSAnalysisProblem(IFDSAnalysisManager manager) {
-		super(manager.getContext().getICFG());
-		this.manager = manager;
+	public AbstractIFDSAnalysisProblem(IIFDSAnalysisContext context) {
+		super(context.getICFG());
+		this.context = context;
 	}
 
 	public boolean autoAddZero() {
@@ -33,7 +34,7 @@ public abstract class AbstractIFDSAnalysisProblem<D> extends DefaultIFDSTabulati
 	}
 
 	public Map<Unit, Set<D>> initialSeeds() {
-		return DefaultSeeds.make(Collections.singleton(manager.getContext().getSootMethod().getActiveBody().getUnits().getFirst()), zeroValue());
+		return DefaultSeeds.make(Collections.singleton(context.getSootMethod().getActiveBody().getUnits().getFirst()), zeroValue());
 	}
 
 }

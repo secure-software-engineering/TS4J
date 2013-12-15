@@ -10,7 +10,8 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import soot.SootMethod;
 import soot.Unit;
 import soot.jimple.toolkits.ide.JimpleIFDSSolver;
-import de.fraunhofer.sit.codescan.framework.internal.analysis.IFDSAdapter;
+import de.fraunhofer.sit.codescan.sootbridge.IAnalysisContext;
+import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 
 public class IFDSAnalysisConfiguration extends AnalysisConfiguration {
 
@@ -28,19 +29,17 @@ public class IFDSAnalysisConfiguration extends AnalysisConfiguration {
 	}
 
 	@Override
-	public void registerAnalysis(IAnalysisContext context) {
+	public void runAnalysis(IAnalysisContext context) {
+		//TODO avoid downcast by using generic types (if possible)
+		IIFDSAnalysisContext ifdsContext = (IIFDSAnalysisContext) context;
+		
 		IFDSAnalysisConfiguration analysisConfiguration = (IFDSAnalysisConfiguration) context.getAnalysisConfiguration();
 		IIFDSAnalysisPlugin ifdsAnalysisPlugin = analysisConfiguration.createIFDSAnalysisPlugin();
-		IFDSAdapter adapter = new IFDSAdapter(context);
 		IFDSTabulationProblem<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>> ifdsProblem =
-				ifdsAnalysisPlugin.createAnalysisProblem(adapter);
+				ifdsAnalysisPlugin.createAnalysisProblem(ifdsContext);
 		
 		@SuppressWarnings({ "rawtypes", "unchecked" })
 		IFDSSolver<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver = new JimpleIFDSSolver(ifdsProblem);
 		solver.solve();
-		
-		if(adapter.isMethodVulnerable()) {
-			markMethodAsVulnerable(context);
-		}		
 	}
 }

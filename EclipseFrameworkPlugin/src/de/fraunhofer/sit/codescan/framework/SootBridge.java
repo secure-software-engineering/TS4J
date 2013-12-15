@@ -1,18 +1,21 @@
 package de.fraunhofer.sit.codescan.framework;
 
 import java.io.File;
-import java.io.PrintStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
@@ -21,22 +24,9 @@ import org.eclipse.jdt.core.Signature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import soot.Body;
-import soot.G;
-import soot.PackManager;
-import soot.Scene;
-import soot.SceneTransformer;
-import soot.SootMethod;
-import soot.Transform;
-import soot.Unit;
-import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
-import soot.toolkits.graph.BriefUnitGraph;
-import soot.toolkits.graph.DirectedGraph;
-
-import com.google.common.base.Joiner;
-
 import de.fraunhofer.sit.codescan.framework.internal.Constants;
-import de.fraunhofer.sit.codescan.framework.internal.analysis.MustAlias;
+import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
+import de.fraunhofer.sit.codescan.sootbridge.SootRunner;
 
 /**
  * Registers an analysis pack with Soot, which can then be executed by calling {@link soot.Main#main(String[])}.
@@ -60,86 +50,38 @@ public class SootBridge {
 		PRIMITIVE_TYPE_NAMES.add("double");
 	}
 
-	public static void runSootAnalysis(IJavaProject project, final Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
-		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new SceneTransformer() {
-			@Override
-			protected void internalTransform(String phaseName, Map<String, String> options) {
-				//create single ICFG and MustAlias objects used for all the analyses
-				final JimpleBasedInterproceduralCFG icfg = new JimpleBasedInterproceduralCFG() {
-					@Override
-					protected synchronized DirectedGraph<Unit> makeGraph(Body body) {
-						//we use brief unit graphs such that we warn in situations where
-						//the code only might be safe due to some exceptional flows
-						return new BriefUnitGraph(body);
-					}
-				};
-				final MustAlias mustAliasManager = new MustAlias(icfg);
-	
-				for(Map.Entry<AnalysisConfiguration, Set<IMethod>> analysisAndMethods: analysisToRelevantMethods.entrySet()) {
-					for(final IMethod method: analysisAndMethods.getValue()) {
-						String sootMethodSignature = getSootMethodSignature(method);
-						if(sootMethodSignature==null) {
-							continue;
-						}
-						final SootMethod m;
-						try {
-							m = Scene.v().getMethod(sootMethodSignature);
-						} catch(RuntimeException e) {
-							LOGGER.debug("Failed to find SootMethod:"+sootMethodSignature);
-							continue;
-						}
-						if(!m.hasActiveBody()) continue;
-
-						final AnalysisConfiguration analysisConfig = analysisAndMethods.getKey();
-						
-						analysisConfig.registerAnalysis(new IAnalysisContext() {
-							
-							public MustAlias getMustAliasManager() {
-								return mustAliasManager;
-							}
-							
-							public SootMethod getSootMethod() {
-								return m;
-							}
-							
-							public JimpleBasedInterproceduralCFG getICFG() {
-								return icfg;
-							}
-							
-							public AnalysisConfiguration getAnalysisConfiguration() {
-								return analysisConfig;
-							}
-
-							public IMethod getMethod() {
-								return method;
-							}
-						});
-						
-					}
-				}
-			}				
-		}));	
-		Set<String> classNames = extractClassNames(analysisToRelevantMethods.values());					
-		String[] args = (Constants.SOOT_ARGS+" -cp "+getSootClasspath(project)+" "+Joiner.on(" ").join(classNames)).split(" ");
-		G.v().out = new PrintStream(new LoggingOutputStream(LOGGER, false), true);
-		try {
-			soot.Main.main(args);
-		} catch(RuntimeException e) {
-			LOGGER.error("Error executing Soot",e);
-			G.reset();
+	public static void runSootAnalysis(IJavaProject project, Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
+		Map<AnalysisConfiguration,Set<String>> analysisToMethodSignatures = new HashMap<AnalysisConfiguration, Set<String>>();
+		for(Map.Entry<AnalysisConfiguration, Set<IMethod>> analysisAndMethods: analysisToRelevantMethods.entrySet()) {
+			Set<String> signatures = new HashSet<String>(analysisAndMethods.getValue().size());
+			for(IMethod m: analysisAndMethods.getValue()) {
+				String sig = getSootMethodSignature(m);
+				if(sig!=null)
+					signatures.add(sig);
+			}
+			analysisToMethodSignatures.put(analysisAndMethods.getKey(), signatures);
 		}
-	}
-	
-	private static Set<String> extractClassNames(Collection<Set<IMethod>> values) {
-		Set<String> res = new HashSet<String>();
-		for(Set<IMethod> methods: values) {
-			for(IMethod m: methods) {
-				res.add(m.getDeclaringType().getFullyQualifiedName());
+		
+		Map<AnalysisConfiguration, Set<ErrorMarker>> results = SootRunner.runSoot(analysisToMethodSignatures, Constants.SOOT_ARGS, getSootClasspath(project));
+		for (Entry<AnalysisConfiguration, Set<ErrorMarker>> analysisAndErrorMarkers : results.entrySet()) {
+			AnalysisConfiguration analysisConfiguration = analysisAndErrorMarkers.getKey();
+			Set<ErrorMarker> errorMarkers = analysisAndErrorMarkers.getValue();
+			for (ErrorMarker errorMarker : errorMarkers) {
+				try {
+					IResource erroneousFile = project.findType(errorMarker.getClassName()).getResource();
+					IMarker marker = erroneousFile.createMarker(Constants.MARKER_TYPE);
+					marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);
+					marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
+					marker.setAttribute(IMarker.LINE_NUMBER, errorMarker.getLineNumber());
+					marker.setAttribute(IMarker.USER_EDITABLE, false);
+					marker.setAttribute(IMarker.MESSAGE, errorMarker.getErrorMessage());
+					marker.setAttribute(Constants.MARKER_ATTRIBUTE_ANALYSIS_ID, analysisConfiguration.getID());
+				} catch (CoreException e) {
+					LOGGER.error("ERROR while setting marker", e);
+				}
 			}
 		}
-		return res;
 	}
-
 	
 	private static String getSootMethodSignature(IMethod iMethod)
 	{

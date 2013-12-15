@@ -23,7 +23,7 @@ import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import de.fraunhofer.sit.codescan.framework.AbstractIFDSAnalysisProblem;
-import de.fraunhofer.sit.codescan.framework.IFDSAnalysisManager;
+import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisManager;
 
 @SuppressWarnings("serial")
 public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstraction> {
@@ -34,7 +34,7 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 	private static final String VALUE_GROUP_CONSTRUCTOR_SIG = "<example1.ValueGroup: void <init>()>";
 	private final JimpleBasedInterproceduralCFG ICFG;
 
-	public TypestateAnalysisProblem(IFDSAnalysisManager manager) {
+	public TypestateAnalysisProblem(IIFDSAnalysisManager manager) {
 		super(manager);
 		ICFG = manager.getContext().getICFG();
 	}

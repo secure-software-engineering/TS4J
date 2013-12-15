@@ -3,8 +3,7 @@ package de.fraunhofer.sit.codescan.framework;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 
-import soot.Local;
-import soot.jimple.Stmt;
+import de.fraunhofer.sit.codescan.sootbridge.IAnalysisContext;
 
 public class MethodBasedAnalysisConfiguration extends AnalysisConfiguration {
 
@@ -22,21 +21,9 @@ public class MethodBasedAnalysisConfiguration extends AnalysisConfiguration {
 	}
 
 	@Override
-	public void registerAnalysis(final IAnalysisContext context) {
-		final boolean[] vulnerable = new boolean[] { true };
+	public void runAnalysis(final IAnalysisContext context) {
 		IMethodBasedAnalysisPlugin plugin = createMethodBasedAnalysisPlugin();
-		plugin.analyzeMethod(context.getSootMethod(), new MethodBasedAnalysisManager() {			
-			public boolean mustAlias(Stmt stmt, Local l1, Stmt stmt2, Local l2) {
-				return context.getMustAliasManager().mustAlias(stmt, l1, stmt2, l2);
-			}
-			
-			public void markMethodAsBenign() {
-				vulnerable[0] = false; 
-			}
-		});
-		if(vulnerable[0]) {
-			markMethodAsVulnerable(context);
-		}		
+		plugin.analyzeMethod(context.getSootMethod(), context);
 	}
 
 

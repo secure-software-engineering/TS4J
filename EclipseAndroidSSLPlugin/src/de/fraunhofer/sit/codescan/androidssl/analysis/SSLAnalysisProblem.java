@@ -30,11 +30,11 @@ import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.internal.JimpleLocal;
 import de.fraunhofer.sit.codescan.framework.AbstractIFDSAnalysisProblem;
-import de.fraunhofer.sit.codescan.framework.IFDSAnalysisManager;
+import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisManager;
 
 public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
 	
-	public SSLAnalysisProblem(IFDSAnalysisManager manager) {
+	public SSLAnalysisProblem(IIFDSAnalysisManager manager) {
 		super(manager);
 	}
 

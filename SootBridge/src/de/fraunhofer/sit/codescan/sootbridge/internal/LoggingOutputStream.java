@@ -1,4 +1,4 @@
-package de.fraunhofer.sit.codescan.framework;
+package de.fraunhofer.sit.codescan.sootbridge.internal;
 
 import java.io.IOException;
 
