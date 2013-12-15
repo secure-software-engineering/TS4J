@@ -171,8 +171,10 @@ public class SootBridge {
 	        //workaround for this bug in Eclipse:
 	        //https://bugs.eclipse.org/bugs/show_bug.cgi?id=423358
 	        //ignore inner classes for now	        
-			LOGGER.warn("Ignoring inner type:"+name.toString());			
-	        if(name.toString().contains("$")) return null;
+	        if(name.toString().contains("$")) {
+				LOGGER.warn("Ignoring inner type:"+name.toString());			
+	        	return null;
+	        }
 
 	        return name.toString();
 		} catch (JavaModelException e) {
