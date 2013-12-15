@@ -1,17 +1,24 @@
 package de.fraunhofer.sit.codescan.typestate.analysis;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import soot.NullType;
 import soot.Unit;
 import soot.Value;
+import soot.jimple.InstanceInvokeExpr;
+import soot.jimple.ParameterRef;
 import soot.jimple.Stmt;
 import soot.jimple.internal.JimpleLocal;
 
 public class Abstraction implements Cloneable {
 	
+	protected Unit constrCallToValueGroup;
 	protected Unit valueAddStmt;
 	protected Value valueGroup;
 	protected Value modelValue;
-	protected boolean modelValueChanged;
+	protected boolean flushed = true;
 	
 	public final static Abstraction ZERO = new Abstraction() {
 		{
@@ -21,38 +28,81 @@ public class Abstraction implements Cloneable {
 		public String toString() { return "<ZERO>"; };
 	};
 	
-	public Abstraction(Value valueGroup) {
-		this.valueGroup = valueGroup;
+	public Abstraction(Stmt s) {
+		this.constrCallToValueGroup = s;
+		InstanceInvokeExpr iie = (InstanceInvokeExpr) s.getInvokeExpr();
+		this.valueGroup = (Value) iie.getBase();
 	}
 	
 	public Value getValueGroupLocal() {
 		return valueGroup;
 	}
 	
+	public Value getModelValueLocal() {
+		return modelValue;
+	}
+	
+	public boolean isFlushed() {
+		return flushed;
+	}
+	
+	public Unit getConstrCallToValueGroup() {
+		return constrCallToValueGroup;
+	}
+	
 	private Abstraction() {
 	}
 	
-	public Abstraction derive(Value lhs, Value rhs) {
-		if(valueGroup.equals(rhs)||lhs.equals(rhs)) {
+	/**
+	 * If this abstraction contains fromVal then this method returns
+	 * a copy of this abstraction where fromVal was replaced by toVal.
+	 * Otherwise it returns <code>this</code>.
+	 */
+	public Abstraction replaceValue(Value fromVal, Value toVal) {
+		if(valueGroup.equals(fromVal)||toVal.equals(fromVal)) {
 			Abstraction copy = copy();
-			if(copy.valueGroup.equals(rhs))
-				copy.valueGroup = lhs;
-			if(copy.modelValue.equals(rhs))
-				copy.modelValue = lhs;
+			if(copy.valueGroup!=null && copy.valueGroup.equals(fromVal))
+				copy.valueGroup = toVal;
+			if(copy.modelValue!=null && copy.modelValue.equals(fromVal))
+				copy.modelValue = toVal;
 			return copy;
 		} else
 			return this;
 	}
 	
+	/**
+	 * This method is usually called for computing the abstractions to be passed
+	 * at call and return flow functions. This method returns one copy of this abstraction
+	 * for every value in from that is contained in this abstraction. Within that copy,
+	 * the from-value has been replaced by the corresponding to-value from the other list.
+	 * If an entry is <code>null</code> in the from or to list, then this entry is not processed.   
+	 */
+	public Set<Abstraction> replaceValues(List<Value> from, List<ParameterRef> to) {
+		assert(from.size()==to.size());
+		Set<Abstraction> res = new HashSet<Abstraction>();
+		for(int i=0; i<from.size(); i++) {
+			Value fromVal = from.get(i);
+			Value toVal = to.get(i);
+			if(fromVal!=null && toVal!=null) {
+				Abstraction derived = replaceValue(fromVal,toVal);
+				if(derived!=this) {
+					res.add(derived);
+				}
+			}
+			i++;
+		}
+		return res;
+	}
+	
 	public Abstraction markedAsTainted() {
 		Abstraction copy = copy();
-		copy.modelValueChanged = true;
+		copy.flushed = false;
 		return copy;
 	}
 		
 	public Abstraction markedAsFlushed() {
 		Abstraction copy = copy();
-		copy.modelValueChanged = false;
+		copy.flushed = true;
 		return copy;
 	}	
 	
@@ -69,11 +119,13 @@ public class Abstraction implements Cloneable {
 		int result = 1;
 		result = prime
 				* result
-				+ ((valueAddStmt == null) ? 0
-						: valueAddStmt.hashCode());
+				+ ((constrCallToValueGroup == null) ? 0
+						: constrCallToValueGroup.hashCode());
 		result = prime * result
 				+ ((modelValue == null) ? 0 : modelValue.hashCode());
-		result = prime * result + (modelValueChanged ? 1231 : 1237);
+		result = prime * result + (flushed ? 1231 : 1237);
+		result = prime * result
+				+ ((valueAddStmt == null) ? 0 : valueAddStmt.hashCode());
 		result = prime * result
 				+ ((valueGroup == null) ? 0 : valueGroup.hashCode());
 		return result;
@@ -88,17 +140,22 @@ public class Abstraction implements Cloneable {
 		if (getClass() != obj.getClass())
 			return false;
 		Abstraction other = (Abstraction) obj;
-		if (valueAddStmt == null) {
-			if (other.valueAddStmt != null)
+		if (constrCallToValueGroup == null) {
+			if (other.constrCallToValueGroup != null)
 				return false;
-		} else if (!valueAddStmt.equals(other.valueAddStmt))
+		} else if (!constrCallToValueGroup.equals(other.constrCallToValueGroup))
 			return false;
 		if (modelValue == null) {
 			if (other.modelValue != null)
 				return false;
 		} else if (!modelValue.equals(other.modelValue))
 			return false;
-		if (modelValueChanged != other.modelValueChanged)
+		if (flushed != other.flushed)
+			return false;
+		if (valueAddStmt == null) {
+			if (other.valueAddStmt != null)
+				return false;
+		} else if (!valueAddStmt.equals(other.valueAddStmt))
 			return false;
 		if (valueGroup == null) {
 			if (other.valueGroup != null)
@@ -116,5 +173,10 @@ public class Abstraction implements Cloneable {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
+	@Override
+	public String toString() {
+		return "Abstraction [valueGroup=" + valueGroup + ", modelValue="
+				+ modelValue + ", flushed=" + flushed + "]";
+	}
 }
