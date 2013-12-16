@@ -1,9 +1,12 @@
 package de.fraunhofer.sit.codescan.framework.internal.analysis;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -138,14 +141,16 @@ public class AnalysisDispatcher {
 				SearchEngine searchEngine = new SearchEngine();
 				Map<AnalysisConfiguration,Set<IMethod>> result = new HashMap<AnalysisConfiguration, Set<IMethod>>();
 				for (IAnalysisPack pack : analysisPacks) {
-					IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElements,IJavaSearchScope.SOURCES);
+					String natureFilter = pack.getNatureFilter();
+					IJavaElement[] javaElementsForNature = filterByNature(javaElements,natureFilter);
+					IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaElementsForNature,IJavaSearchScope.SOURCES);
 					Set<AnalysisConfiguration> allConfigs = new HashSet<AnalysisConfiguration>();
 					allConfigs.addAll(Arrays.asList(pack.getIFDSAnalysisConfigs()));
 					allConfigs.addAll(Arrays.asList(pack.getMethodBasedAnalysisConfigs()));
 					for (AnalysisConfiguration config : allConfigs) {
 						IConfigurationElement[] filters = config.getFilters();
 						for (IConfigurationElement filter : filters) {
-							IJavaElement[] filteredJavaElements = javaElements;
+							IJavaElement[] filteredJavaElements = javaElementsForNature;							
 							IConfigurationElement[] superTypeFilters = filter.getChildren("bySuperType");
 							for (IConfigurationElement superTypeFilter : superTypeFilters) {
 								final Set<IType> subTypesFound = new HashSet<IType>();
@@ -253,6 +258,20 @@ public class AnalysisDispatcher {
 				return result;
 			}
 
+			private IJavaElement[] filterByNature(IJavaElement[] javaElements,String natureFilter) {
+				if(natureFilter.isEmpty()) return javaElements;
+				Collection<IJavaElement> elements = new ArrayList<IJavaElement>(Arrays.asList(javaElements));
+				for (Iterator<IJavaElement> iterator = elements.iterator(); iterator.hasNext();) {
+					IJavaElement elem = iterator.next();
+					IProject project = elem.getJavaProject().getProject();
+					if(!hasNature(project, natureFilter)) {
+						iterator.remove();
+					}
+				}				
+				return elements.toArray(new IJavaElement[elements.size()]);
+			}
+
+
 			private Set<IMethod> getOrCreate(AnalysisConfiguration config,Map<AnalysisConfiguration, Set<IMethod>> result) {
 				Set<IMethod> methodsFound = result.get(config);
 				if(methodsFound==null) {
@@ -290,16 +309,13 @@ public class AnalysisDispatcher {
 		}
 	}
 
-	/**
-	 * Returns true if the given project is an Android project.
-	 */
-	public static boolean isAndroidProject(IProject p) {
+	public static boolean hasNature(IProject p, String natureID) {
 		try {				
 			IProjectDescription description = p.getDescription();
 			String[] natures = description.getNatureIds();
 			boolean found = false;
 			for (String nature : natures) {
-				if(nature.equals(Constants.ANDROID_NATURE_ID)) {
+				if(nature.equals(natureID)) {
 					found = true;
 				}
 			}
@@ -332,6 +348,11 @@ public class AnalysisDispatcher {
 						res[i++] = new MethodBasedAnalysisConfiguration(analysisInfo);
 					}
 					return res;
+				}
+				public String getNatureFilter() {
+					String attribute = pack.getAttribute("natureFilter");
+					if(attribute==null) return "";
+					else return attribute;
 				}
 			});
 		}

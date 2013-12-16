@@ -22,17 +22,14 @@ public class AnalyzeAllProjectsButtonClickHandler extends AbstractHandler {
 	public Object execute(final ExecutionEvent event) throws ExecutionException {
 		
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-
-		ArrayList<IJavaProject> androidProjects = new ArrayList<IJavaProject>();
+		ArrayList<IJavaProject> javaProjects = new ArrayList<IJavaProject>();
 		for (IProject p : projects) {
-//			if(AnalysisDispatcher.isAndroidProject(p)) {
 				IJavaProject javaProject = JavaCore.create(p);
-				androidProjects.add(javaProject);
-//			}
+				javaProjects.add(javaProject);
 		}
-		IJavaProject[] androidProjectArray = androidProjects.toArray(new IJavaProject[0]);		
+		IJavaProject[] javaProjectArray = javaProjects.toArray(new IJavaProject[0]);		
 		
-		AnalysisDispatcher.searchAndAnalyze(androidProjectArray);
+		AnalysisDispatcher.searchAndAnalyze(javaProjectArray);
 
 		return null;
 	}

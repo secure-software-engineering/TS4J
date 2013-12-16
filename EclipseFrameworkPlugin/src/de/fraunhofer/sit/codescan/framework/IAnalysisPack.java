@@ -9,5 +9,6 @@ public interface IAnalysisPack {
 	
 	MethodBasedAnalysisConfiguration[] getMethodBasedAnalysisConfigs();
 	
+	String getNatureFilter(); 
 	
 }

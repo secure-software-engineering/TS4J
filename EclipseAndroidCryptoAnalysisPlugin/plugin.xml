@@ -4,7 +4,8 @@
    <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
       <analysisPack
-            id="ECBAnalysis">
+            id="ECBAnalysis"
+            natureFilter="com.android.ide.eclipse.adt.AndroidNature">
          <methodBasedAnalysis
                class="de.fraunhofer.sit.codescan.androidcrypto.ECBAnalysis"
                id="MethodBasedECBAnalysis">
