@@ -85,16 +85,6 @@
                </appinfo>
             </annotation>
          </attribute>
-         <attribute name="errorMessage" type="string" use="required">
-            <annotation>
-               <documentation>
-                  
-               </documentation>
-               <appinfo>
-                  <meta.attribute translatable="true"/>
-               </appinfo>
-            </annotation>
-         </attribute>
       </complexType>
    </element>
 
@@ -117,16 +107,6 @@
                </documentation>
                <appinfo>
                   <meta.attribute kind="java" basedOn=":de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin"/>
-               </appinfo>
-            </annotation>
-         </attribute>
-         <attribute name="errorMessage" type="string" use="required">
-            <annotation>
-               <documentation>
-                  
-               </documentation>
-               <appinfo>
-                  <meta.attribute translatable="true"/>
                </appinfo>
             </annotation>
          </attribute>

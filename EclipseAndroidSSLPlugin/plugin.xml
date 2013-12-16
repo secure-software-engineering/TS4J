@@ -7,7 +7,6 @@
             id="SSLAnalysis">
          <ifdsAnalysis
                class="de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin"
-               errorMessage="SSL error handler is calling proceed() while it should really be checking the certificate."
                id="SSLAnalysisIFDS">
             <filter>
                <bySuperType>
