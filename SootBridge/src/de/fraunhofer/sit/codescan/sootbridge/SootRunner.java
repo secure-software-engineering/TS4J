@@ -1,6 +1,7 @@
 package de.fraunhofer.sit.codescan.sootbridge;
 
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,8 +76,13 @@ public class SootRunner {
 							}
 
 							@Override
-							public void setResult(Set<ErrorMarker> result) {
-								analysisConfigToResultingErrorMarkers.put(analysisConfig,result);
+							public void reportError(ErrorMarker... result) {
+								Set<ErrorMarker> set = analysisConfigToResultingErrorMarkers.get(analysisConfig);
+								if(set==null) {
+									set = new HashSet<ErrorMarker>();
+									analysisConfigToResultingErrorMarkers.put(analysisConfig, set);
+								}
+								set.addAll(Arrays.asList(result));
 							}
 
 							@Override

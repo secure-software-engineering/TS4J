@@ -1,7 +1,5 @@
 package de.fraunhofer.sit.codescan.sootbridge;
 
-import java.util.Set;
-
 import soot.Local;
 import soot.SootMethod;
 import soot.jimple.Stmt;
@@ -14,7 +12,7 @@ public interface IAnalysisContext {
 	
 	public IAnalysisConfiguration getAnalysisConfiguration();
 	
-	public void setResult(Set<ErrorMarker> result);
+	public void reportError(ErrorMarker... result);
 
 
 }

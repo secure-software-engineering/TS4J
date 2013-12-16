@@ -15,7 +15,7 @@ import soot.jimple.internal.JimpleLocal;
 public class Abstraction implements Cloneable {
 	
 	protected Unit constrCallToValueGroup;
-	protected Unit valueAddStmt;
+	protected Unit taintStmt;
 	protected Value valueGroup;
 	protected Value modelValue;
 	protected boolean flushed = true;
@@ -48,6 +48,10 @@ public class Abstraction implements Cloneable {
 	
 	public Unit getConstrCallToValueGroup() {
 		return constrCallToValueGroup;
+	}
+	
+	public Unit getTaintStmt() {
+		return taintStmt;
 	}
 	
 	private Abstraction() {
@@ -94,9 +98,10 @@ public class Abstraction implements Cloneable {
 		return res;
 	}
 	
-	public Abstraction markedAsTainted() {
+	public Abstraction markedAsTainted(Stmt taintStmt) {
 		Abstraction copy = copy();
 		copy.flushed = false;
+		copy.taintStmt = taintStmt;
 		return copy;
 	}
 		
@@ -106,10 +111,9 @@ public class Abstraction implements Cloneable {
 		return copy;
 	}	
 	
-	public Abstraction valueAdded(Stmt valueAddStmt) {
+	public Abstraction valueAdded(Value addedValue) {
 		Abstraction copy = copy();
-		copy.valueAddStmt = valueAddStmt;
-		copy.modelValue = valueAddStmt.getInvokeExpr().getArg(0);		
+		copy.modelValue = addedValue;		
 		return copy;
 	}
 
@@ -125,7 +129,7 @@ public class Abstraction implements Cloneable {
 				+ ((modelValue == null) ? 0 : modelValue.hashCode());
 		result = prime * result + (flushed ? 1231 : 1237);
 		result = prime * result
-				+ ((valueAddStmt == null) ? 0 : valueAddStmt.hashCode());
+				+ ((taintStmt == null) ? 0 : taintStmt.hashCode());
 		result = prime * result
 				+ ((valueGroup == null) ? 0 : valueGroup.hashCode());
 		return result;
@@ -152,10 +156,10 @@ public class Abstraction implements Cloneable {
 			return false;
 		if (flushed != other.flushed)
 			return false;
-		if (valueAddStmt == null) {
-			if (other.valueAddStmt != null)
+		if (taintStmt == null) {
+			if (other.taintStmt != null)
 				return false;
-		} else if (!valueAddStmt.equals(other.valueAddStmt))
+		} else if (!taintStmt.equals(other.taintStmt))
 			return false;
 		if (valueGroup == null) {
 			if (other.valueGroup != null)

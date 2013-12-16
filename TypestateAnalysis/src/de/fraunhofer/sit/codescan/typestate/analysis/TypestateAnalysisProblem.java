@@ -23,6 +23,7 @@ import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import de.fraunhofer.sit.codescan.framework.AbstractIFDSAnalysisProblem;
+import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 
 @SuppressWarnings("serial")
@@ -75,7 +76,7 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 							if(source.getValueGroupLocal().equals(iie.getBase())) {
 								//we are adding a value to our value group; change its typestate
 								//and bind the value
-								return Collections.singleton(source.valueAdded(s));									
+								return Collections.singleton(source.valueAdded(iie.getArg(0)));									
 							} else {
 								return Collections.singleton(source);
 							}								
@@ -102,7 +103,7 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 							public Set<Abstraction> computeTargets(Abstraction source) {
 								if(source.getModelValueLocal()!=null && source.getModelValueLocal().equals(iie.getBase())) {
 									//mark the value group as tainted
-									return Collections.singleton(source.markedAsTainted());									
+									return Collections.singleton(source.markedAsTainted(s));									
 								} else {
 									return Collections.singleton(source);
 								}								
@@ -139,8 +140,9 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 						//if we are returning from the method in which the value group was constructed...
 						if(interproceduralCFG().getMethodOf(source.getConstrCallToValueGroup()).equals(callee)) {
 							if(!source.isFlushed()) {
-								//TODO report error
-								System.err.println("VIOLATION FOUND!");
+								Unit reportStmt = source.getTaintStmt();
+								String className = interproceduralCFG().getMethodOf(reportStmt).getDeclaringClass().getName();
+								context.reportError(new ErrorMarker("Value group not flushed!",className,reportStmt.getJavaSourceStartLineNumber()));
 							}
 							//don't check past this return edge
 							return Collections.emptySet();
