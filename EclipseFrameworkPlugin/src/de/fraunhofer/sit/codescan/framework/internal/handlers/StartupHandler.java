@@ -46,12 +46,13 @@ public class StartupHandler implements IStartup {
 							IResource res = delta.getResource();
 							IJavaElement javaElement = JavaCore.create(res);
 							if(javaElement!=null) {
-								if(res instanceof IProject) {
-									if(!AnalysisDispatcher.isAndroidProject((IProject) res)) {
-										//don't care about non-Android projects
-										return false;
-									}
-								}
+//								if(res instanceof IProject) {
+//TODO allow for filtering of Android projects in plugin config
+//									if(!AnalysisDispatcher.isAndroidProject((IProject) res)) {
+//										don't care about non-Android projects
+//										return false;
+//									}
+//								}
 								if(javaElement instanceof ICompilationUnit) {
 									//only care if file contents changed
 									if((delta.getFlags() & IResourceDelta.CONTENT) != 0) {
