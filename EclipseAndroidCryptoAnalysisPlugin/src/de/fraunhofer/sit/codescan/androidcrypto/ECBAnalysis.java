@@ -29,7 +29,7 @@ public class ECBAnalysis implements IMethodBasedAnalysisPlugin {
 							StringConstant constant = (StringConstant) firstArgument;
 							if(!constant.value.contains("/") || /*ECB is default*/
 								constant.value.contains("/ECB/")) {
-								//found violation
+								//TODO mark error 		
 								return;
 							}
 						}
@@ -37,7 +37,6 @@ public class ECBAnalysis implements IMethodBasedAnalysisPlugin {
 				}
 			}			
 		}
-		manager.markMethodAsBenign();		
 	}
 
 }

@@ -20,9 +20,11 @@ public class IFDSAnalysisConfiguration extends AnalysisConfiguration {
 		super(analysisConfigElement);
 	}
 	
-	public IIFDSAnalysisPlugin createIFDSAnalysisPlugin() {
+	@SuppressWarnings("unchecked")
+	public <P extends IFDSTabulationProblem<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>>>
+		IIFDSAnalysisPlugin<P> createIFDSAnalysisPlugin() {
 		try {
-			return (IIFDSAnalysisPlugin) analysisConfigElement.createExecutableExtension("class");
+			return (IIFDSAnalysisPlugin<P>) analysisConfigElement.createExecutableExtension("class");
 		} catch (CoreException e) {
 			throw new RuntimeException(e);
 		}
@@ -34,12 +36,15 @@ public class IFDSAnalysisConfiguration extends AnalysisConfiguration {
 		IIFDSAnalysisContext ifdsContext = (IIFDSAnalysisContext) context;
 		
 		IFDSAnalysisConfiguration analysisConfiguration = (IFDSAnalysisConfiguration) context.getAnalysisConfiguration();
-		IIFDSAnalysisPlugin ifdsAnalysisPlugin = analysisConfiguration.createIFDSAnalysisPlugin();
+		IIFDSAnalysisPlugin<IFDSTabulationProblem<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>>> ifdsAnalysisPlugin =
+				analysisConfiguration.createIFDSAnalysisPlugin();
 		IFDSTabulationProblem<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>> ifdsProblem =
 				ifdsAnalysisPlugin.createAnalysisProblem(ifdsContext);
 		
 		@SuppressWarnings({ "rawtypes", "unchecked" })
 		IFDSSolver<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver = new JimpleIFDSSolver(ifdsProblem);
 		solver.solve();
+		
+		ifdsAnalysisPlugin.afterAnalysis(ifdsProblem);
 	}
 }

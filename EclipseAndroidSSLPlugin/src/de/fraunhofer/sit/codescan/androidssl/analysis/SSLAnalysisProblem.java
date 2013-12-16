@@ -30,12 +30,15 @@ import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.internal.JimpleLocal;
 import de.fraunhofer.sit.codescan.framework.AbstractIFDSAnalysisProblem;
-import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisManager;
+import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 
 public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
 	
-	public SSLAnalysisProblem(IIFDSAnalysisManager manager) {
-		super(manager);
+	//we assume a method to be vulnerable unless proven otherwise 
+	private boolean isVulnerable = true; 
+	
+	public SSLAnalysisProblem(IIFDSAnalysisContext context) {
+		super(context);
 	}
 
 	private class FlowFunctionFactory implements FlowFunctions<Unit, Local, SootMethod> {
@@ -47,10 +50,10 @@ public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
 
 		@SuppressWarnings("unchecked")
 		public FlowFunction<Local> getNormalFlowFunction(Unit curr, Unit succ) {
-			if(!manager.isMethodVulnerable()) return KillAll.v(); //quit
+			if(!isVulnerable) return KillAll.v(); //quit
 			
 			if(curr instanceof IdentityStmt) {
-				if(manager.getContext().getICFG().getMethodOf(curr).equals(manager.getMethodToFocusOn())) {
+				if(context.getICFG().getMethodOf(curr).equals(context.getSootMethod())) {
 					IdentityStmt identityStmt = (IdentityStmt) curr;
 					Value rightOp = identityStmt.getRightOp();
 					if(rightOp instanceof ParameterRef) {
@@ -78,7 +81,7 @@ public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
 		}
 	
 		public FlowFunction<Local> getCallFlowFunction(Unit src, final SootMethod dest) {
-			if(!manager.isMethodVulnerable()) return KillAll.v(); //quit
+			if(!isVulnerable) return KillAll.v(); //quit
 	
 			Stmt stmt = (Stmt) src;
 			InvokeExpr ie = stmt.getInvokeExpr();
@@ -101,11 +104,11 @@ public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
 	
 		@SuppressWarnings("unchecked")
 		public FlowFunction<Local> getReturnFlowFunction(Unit callSite, SootMethod callee, Unit exitStmt, Unit retSite) {
-			if(!manager.isMethodVulnerable()) return KillAll.v(); //quit
+			if(!isVulnerable) return KillAll.v(); //quit
 	
-			if(manager.getContext().getICFG().getMethodOf(exitStmt).equals(manager.getMethodToFocusOn())) {
+			if(context.getICFG().getMethodOf(exitStmt).equals(context.getSootMethod())) {
 				//an un-proceeded taint reaches the end of the method; method found to be not vulnerable!				
-				manager.markMethodAsBenign();
+				isVulnerable = false;
 				return KillAll.v();
 			} else {
 				Stmt stmt = (Stmt) callSite;
@@ -160,7 +163,7 @@ public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
 		}
 	
 		public FlowFunction<Local> getCallToReturnFlowFunction(Unit call, Unit returnSite) {
-			if(!manager.isMethodVulnerable()) return KillAll.v(); //quit
+			if(!isVulnerable) return KillAll.v(); //quit
 	
 			final Stmt stmt = (Stmt) call;
 			InvokeExpr ie = stmt.getInvokeExpr();
@@ -170,7 +173,7 @@ public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
 					final Local base = (Local) iie.getBase();
 					return new FlowFunction<Local>() {
 						public Set<Local> computeTargets(Local source) {
-							boolean mustAlias = manager.mustAlias(stmt, base, stmt, source);
+							boolean mustAlias = context.mustAlias(stmt, base, stmt, source);
 							if(mustAlias) {
 								return Collections.emptySet(); //kill
 							}
@@ -210,6 +213,10 @@ public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
 				return "<ZERO>";
 			}
 		};
+	}
+	
+	public boolean isVulnerable() {
+		return isVulnerable;
 	}
 
 }

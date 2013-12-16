@@ -9,11 +9,13 @@ import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 /**
  * An analysis plugin creates a flow-function factory which is given access to an {@link IIFDSAnalysisManager}.
  */
-public interface IIFDSAnalysisPlugin {
+public interface IIFDSAnalysisPlugin<P extends IFDSTabulationProblem<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>>> {
 
 	/**
 	 * Creates a novel flow-function factory.
 	 */
-	public IFDSTabulationProblem<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>> createAnalysisProblem(IIFDSAnalysisContext context);
+	public P createAnalysisProblem(IIFDSAnalysisContext context);
+	
+	public void afterAnalysis(P problem);
 	
 }

@@ -12,12 +12,14 @@ import org.slf4j.LoggerFactory;
 
 import soot.Body;
 import soot.G;
+import soot.Local;
 import soot.PackManager;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootMethod;
 import soot.Transform;
 import soot.Unit;
+import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.DirectedGraph;
@@ -59,11 +61,7 @@ public class SootRunner {
 
 						final C analysisConfig = analysisAndMethodSignatures.getKey();
 						analysisConfig.runAnalysis(new IIFDSAnalysisContext() {
-							
-							public MustAlias getMustAliasManager() {
-								return mustAliasManager;
-							}
-							
+
 							public SootMethod getSootMethod() {
 								return m;
 							}
@@ -79,6 +77,11 @@ public class SootRunner {
 							@Override
 							public void setResult(Set<ErrorMarker> result) {
 								analysisConfigToResultingErrorMarkers.put(analysisConfig,result);
+							}
+
+							@Override
+							public boolean mustAlias(Stmt stmt, Local l1, Stmt stmt2, Local l2) {
+								return mustAliasManager.mustAlias(stmt, l1, stmt2, l2);
 							}
 						});
 						
