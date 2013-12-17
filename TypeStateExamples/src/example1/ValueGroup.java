@@ -15,9 +15,9 @@ public class ValueGroup {
 	}
 	
 	public void flush() {
-		for (final ModelValue value : values) {
-			// update the UI widget connected to the model
-		}
+//		for (final ModelValue value : values) {
+//			// update the UI widget connected to the model
+//		}
 	}
 	
 }
