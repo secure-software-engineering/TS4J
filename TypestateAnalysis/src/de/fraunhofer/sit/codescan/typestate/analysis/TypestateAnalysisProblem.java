@@ -131,20 +131,17 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 				return Identity.v();
 			}
 
-			public FlowFunction<Abstraction> getReturnFlowFunction(final Unit callSite, final SootMethod callee, final Unit exitStmt, Unit retSite) {
+			public FlowFunction<Abstraction> getReturnFlowFunction(final Unit callSite, SootMethod callee, final Unit exitStmt, Unit retSite) {
 				return new FlowFunction<Abstraction>() {
 					public Set<Abstraction> computeTargets(Abstraction source) {
 						//no need to pass on ZERO beyond returns
 						if(source==zeroValue()) return Collections.emptySet();
-						
 						//if we are returning from the method in which the value group was constructed...
-						if(interproceduralCFG().getMethodOf(source.getConstrCallToValueGroup()).equals(callee)) {
 							if(!source.isFlushed()) {
 								Unit reportStmt = source.getTaintStmt();
 								String className = interproceduralCFG().getMethodOf(reportStmt).getDeclaringClass().getName();
 								context.reportError(new ErrorMarker("Value group not flushed!",className,reportStmt.getJavaSourceStartLineNumber()));
-							}
-							//don't check past this return edge
+							//don't propagate further
 							return Collections.emptySet();
 						}
 						if(exitStmt instanceof ReturnStmt) {
