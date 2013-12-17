@@ -64,7 +64,7 @@ public class Abstraction implements Cloneable {
 	 * Otherwise it returns <code>this</code>.
 	 */
 	public Abstraction replaceValue(Value fromVal, Value toVal) {
-		if(valueGroup.equals(fromVal)||toVal.equals(fromVal)) {
+		if(valueGroup!=null && valueGroup.equals(fromVal) || modelValue!=null && modelValue.equals(fromVal)) {
 			Abstraction copy = copy();
 			if(copy.valueGroup!=null && copy.valueGroup.equals(fromVal))
 				copy.valueGroup = toVal;
@@ -94,7 +94,6 @@ public class Abstraction implements Cloneable {
 					res.add(derived);
 				}
 			}
-			i++;
 		}
 		return res;
 	}
