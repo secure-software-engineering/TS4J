@@ -9,11 +9,14 @@ import soot.jimple.Stmt;
 import soot.jimple.StringConstant;
 import soot.jimple.toolkits.scalar.ConstantPropagatorAndFolder;
 import de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin;
+import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
 import de.fraunhofer.sit.codescan.sootbridge.IAnalysisContext;
 
 public class ECBAnalysis implements IMethodBasedAnalysisPlugin {
 
-	public void analyzeMethod(SootMethod m, IAnalysisContext manager) {
+	private static final String ERROR_MESSAGE = "Using ECB is insecure.";
+
+	public void analyzeMethod(SootMethod m, IAnalysisContext context) {
 		if(m.hasActiveBody()) {
 			Body b = m.getActiveBody();
 			ConstantPropagatorAndFolder.v().transform(b);
@@ -29,7 +32,7 @@ public class ECBAnalysis implements IMethodBasedAnalysisPlugin {
 							StringConstant constant = (StringConstant) firstArgument;
 							if(!constant.value.contains("/") || /*ECB is default*/
 								constant.value.contains("/ECB/")) {
-								//TODO mark error 		
+								context.reportError(new ErrorMarker(ERROR_MESSAGE,m.getDeclaringClass().getName(),s.getJavaSourceStartLineNumber())); 		
 								return;
 							}
 						}
