@@ -137,10 +137,10 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 						//no need to pass on ZERO beyond returns
 						if(source==zeroValue()) return Collections.emptySet();
 						//if we are returning from the method in which the value group was constructed...
-							if(!source.isFlushed()) {
-								Unit reportStmt = source.getTaintStmt();
-								String className = interproceduralCFG().getMethodOf(reportStmt).getDeclaringClass().getName();
-								context.reportError(new ErrorMarker("Value group not flushed!",className,reportStmt.getJavaSourceStartLineNumber()));
+						if(!source.isFlushed()) {
+							Unit reportStmt = source.getTaintStmt();
+							String className = interproceduralCFG().getMethodOf(reportStmt).getDeclaringClass().getName();
+							context.reportError(new ErrorMarker("ValueGroup not flushed!",className,reportStmt.getJavaSourceStartLineNumber()));
 							//don't propagate further
 							return Collections.emptySet();
 						}
