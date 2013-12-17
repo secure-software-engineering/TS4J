@@ -45,6 +45,6 @@ public class IFDSAnalysisConfiguration extends AnalysisConfiguration {
 		IFDSSolver<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>> solver = new JimpleIFDSSolver(ifdsProblem);
 		solver.solve();
 		
-		ifdsAnalysisPlugin.afterAnalysis(ifdsProblem);
+		ifdsAnalysisPlugin.afterAnalysis(ifdsContext,ifdsProblem);
 	}
 }

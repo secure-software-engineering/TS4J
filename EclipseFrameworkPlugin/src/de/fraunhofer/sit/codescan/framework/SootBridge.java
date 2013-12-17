@@ -68,6 +68,7 @@ public class SootBridge {
 			Set<ErrorMarker> errorMarkers = analysisAndErrorMarkers.getValue();
 			for (ErrorMarker errorMarker : errorMarkers) {
 				try {
+					//TODO may need to map back Soot's inner-class names to the ones used by Eclipse
 					IResource erroneousFile = project.findType(errorMarker.getClassName()).getResource();
 					IMarker marker = erroneousFile.createMarker(Constants.MARKER_TYPE);
 					marker.setAttribute(IMarker.SEVERITY,IMarker.SEVERITY_ERROR);

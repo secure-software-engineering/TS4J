@@ -16,6 +16,6 @@ public interface IIFDSAnalysisPlugin<P extends IFDSTabulationProblem<Unit, ?, So
 	 */
 	public P createAnalysisProblem(IIFDSAnalysisContext context);
 	
-	public void afterAnalysis(P problem);
+	public void afterAnalysis(IIFDSAnalysisContext ifdsContext, P problem);
 	
 }

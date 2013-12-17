@@ -9,7 +9,7 @@ public class TypeStateAnalysisPlugin implements IIFDSAnalysisPlugin<TypestateAna
 		return new TypestateAnalysisProblem(context);
 	}
 
-	public void afterAnalysis(TypestateAnalysisProblem problem) {
+	public void afterAnalysis(IIFDSAnalysisContext context, TypestateAnalysisProblem problem) {
 		//do nothing
 	}
 	
