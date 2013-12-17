@@ -76,7 +76,7 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 							if(source.getValueGroupLocal().equals(iie.getBase())) {
 								//we are adding a value to our value group; change its typestate
 								//and bind the value
-								return Collections.singleton(source.valueAdded(iie.getArg(0)));									
+								return source.valueAdded(iie.getArg(0));									
 							} else {
 								return Collections.singleton(source);
 							}								

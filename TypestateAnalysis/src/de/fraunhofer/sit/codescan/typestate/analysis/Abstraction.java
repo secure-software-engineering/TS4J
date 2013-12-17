@@ -1,5 +1,6 @@
 package de.fraunhofer.sit.codescan.typestate.analysis;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -111,10 +112,16 @@ public class Abstraction implements Cloneable {
 		return copy;
 	}	
 	
-	public Abstraction valueAdded(Value addedValue) {
-		Abstraction copy = copy();
-		copy.modelValue = addedValue;		
-		return copy;
+	public Set<Abstraction> valueAdded(Value addedValue) {
+		if(modelValue==null) {
+			final Abstraction copy = copy();
+			copy.modelValue = addedValue;
+			Set<Abstraction> res = new HashSet<Abstraction>();
+			res.add(this);
+			res.add(copy);
+			return res; 
+		} else
+			return Collections.singleton(this);
 	}
 
 	@Override
