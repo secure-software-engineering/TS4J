@@ -97,7 +97,7 @@ public class AnalysisDispatcher {
 
 				for(Map.Entry<IJavaProject, Map<AnalysisConfiguration, Set<IMethod>>> entry: projectToAnalysisAndMethods.entrySet()) {
 					IJavaProject project = entry.getKey();
-					LOGGER.trace("Analyzing project "+project);
+					LOGGER.trace("Analyzing project "+project.getProject().getName());
 					Map<AnalysisConfiguration, Set<IMethod>> analysisAndMethodsInProject = entry.getValue();
 					G.reset();
 					SootBridge.runSootAnalysis(project, analysisAndMethodsInProject);
