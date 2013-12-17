@@ -19,7 +19,7 @@ public class SSLAnalysisPlugin implements IIFDSAnalysisPlugin<SSLAnalysisProblem
 			context.reportError(new ErrorMarker(
 					ERROR_MESSAGE,
 					m.getDeclaringClass().getName(),
-					context.getSootMethod().getActiveBody().getJavaSourceStartLineNumber()
+					context.getSootMethod().getJavaSourceStartLineNumber()
 					));
 		}
 	}
