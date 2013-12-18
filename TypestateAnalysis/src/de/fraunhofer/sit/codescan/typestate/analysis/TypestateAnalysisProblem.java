@@ -1,5 +1,10 @@
 package de.fraunhofer.sit.codescan.typestate.analysis;
 
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State.FLUSHED;
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State.TAINTED;
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId.MODEL_VALUE_UPDATE;
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var.MODEL_VALUE;
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var.VALUE_GROUP;
 import heros.FlowFunction;
 import heros.FlowFunctions;
 import heros.flowfunc.Gen;
@@ -18,21 +23,30 @@ import soot.jimple.AssignStmt;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
-import soot.jimple.ParameterRef;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import de.fraunhofer.sit.codescan.framework.AbstractIFDSAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
+import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State;
+import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId;
+import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var;
 
 @SuppressWarnings("serial")
-public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstraction> {
-
+public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstraction<Var,Value,State,StatementId>> {
+	
 	private static final String MODEL_VALUE_CLASS_NAME = "example1.ModelValue";
 	private static final String MODEL_VALUE_ADD_SIG = "<example1.ValueGroup: void add(example1.ModelValue)>";
-	private static final String MODEL_GROUP_FLUSH_SIG = "<example1.ValueGroup: void flush()>";
+	private static final String VALUE_GROUP_FLUSH_SIG = "<example1.ValueGroup: void flush()>";
 	private static final String VALUE_GROUP_CONSTRUCTOR_SIG = "<example1.ValueGroup: void <init>()>";
+
+	enum Var { VALUE_GROUP, MODEL_VALUE };
+	
+	enum State { FLUSHED, TAINTED };
+	
+	enum StatementId { VALUE_ADD_CALL, MODEL_VALUE_UPDATE };
+
 	private final JimpleBasedInterproceduralCFG ICFG;
 
 	public TypestateAnalysisProblem(IIFDSAnalysisContext context) {
@@ -40,22 +54,22 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 		ICFG = context.getICFG();
 	}
 
-	protected Abstraction createZeroValue() {
-		return Abstraction.ZERO;
+	protected Abstraction<Var,Value,State,StatementId> createZeroValue() {
+		return Abstraction.zero();
 	}
 
 	@Override
-	protected FlowFunctions<Unit, Abstraction, SootMethod> createFlowFunctionsFactory() {
+	protected FlowFunctions<Unit, Abstraction<Var,Value,State,StatementId>, SootMethod> createFlowFunctionsFactory() {
 		
-		return new FlowFunctions<Unit, Abstraction, SootMethod>() {
+		return new FlowFunctions<Unit, Abstraction<Var,Value,State,StatementId>, SootMethod>() {
 
-			public FlowFunction<Abstraction> getCallFlowFunction(Unit src, final SootMethod dest) {
+			public FlowFunction<Abstraction<Var,Value,State,StatementId>> getCallFlowFunction(Unit src, final SootMethod dest) {
 				Stmt stmt = (Stmt) src;
 				InvokeExpr ie = stmt.getInvokeExpr();
 				final List<Value> callArgs = ie.getArgs();
-				final List<ParameterRef> parameterRefs = ICFG.getParameterRefs(dest);
-				return new FlowFunction<Abstraction>() {	
-					public Set<Abstraction> computeTargets(Abstraction source) {
+				final List<Value> parameterRefs = ICFG.getParameterRefs(dest);
+				return new FlowFunction<Abstraction<Var,Value,State,StatementId>>() {	
+					public Set<Abstraction<Var,Value,State,StatementId>> computeTargets(Abstraction<Var,Value,State,StatementId> source) {
 						//no need to pass on ZERO beyond calls
 						if(source==zeroValue()) return Collections.emptySet();
 
@@ -64,31 +78,33 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 				};				
 			}
 
-			public FlowFunction<Abstraction> getCallToReturnFlowFunction(Unit curr, Unit succ) {
+			public FlowFunction<Abstraction<Var,Value,State,StatementId>> getCallToReturnFlowFunction(Unit curr, Unit succ) {
 				final Stmt s = (Stmt) curr;
-				final InvokeExpr ie = s.getInvokeExpr();
+				final InvokeExpr ie = s.getInvokeExpr();				
 				if(ie.getMethodRef().getSignature().equals(VALUE_GROUP_CONSTRUCTOR_SIG)) {
-					return new Gen<Abstraction>(new Abstraction(s), zeroValue());
+					InstanceInvokeExpr iie = (InstanceInvokeExpr) ie;
+					return new Gen<Abstraction<Var,Value,State,StatementId>>(
+							new Abstraction<Var,Value,State,StatementId>(VALUE_GROUP,iie.getBase(),FLUSHED), zeroValue());
 				} else if(ie.getMethodRef().getSignature().equals(MODEL_VALUE_ADD_SIG)) {
-					return new FlowFunction<Abstraction>() {
-						public Set<Abstraction> computeTargets(Abstraction source) {
+					return new FlowFunction<Abstraction<Var,Value,State,StatementId>>() {
+						public Set<Abstraction<Var,Value,State,StatementId>> computeTargets(Abstraction<Var,Value,State,StatementId> source) {
 							InstanceInvokeExpr iie = (InstanceInvokeExpr)ie;
-							if(source.getValueGroupLocal().equals(iie.getBase())) {
+							if(iie.getBase().equals(source.getValue(VALUE_GROUP))) {
 								//we are adding a value to our value group; change its typestate
 								//and bind the value
-								return source.valueAdded(iie.getArg(0));									
+								return source.storeStmt(s, StatementId.VALUE_ADD_CALL).bindValue(iie.getArg(0), MODEL_VALUE);
 							} else {
 								return Collections.singleton(source);
 							}								
 						}
 					};
-				} else if(ie.getMethodRef().getSignature().equals(MODEL_GROUP_FLUSH_SIG)) {
-					return new FlowFunction<Abstraction>() {
-						public Set<Abstraction> computeTargets(Abstraction source) {
+				} else if(ie.getMethodRef().getSignature().equals(VALUE_GROUP_FLUSH_SIG)) {
+					return new FlowFunction<Abstraction<Var,Value,State,StatementId>>() {
+						public Set<Abstraction<Var,Value,State,StatementId>> computeTargets(Abstraction<Var,Value,State,StatementId> source) {
 							InstanceInvokeExpr iie = (InstanceInvokeExpr)ie;
-							if(source.getValueGroupLocal().equals(iie.getBase())) {
+							if(iie.getBase().equals(source.getValue(VALUE_GROUP))) {
 								//mark the value group as flushed
-								return Collections.singleton(source.markedAsFlushed());									
+								return Collections.singleton(source.withStateChangedTo(State.FLUSHED));									
 							} else {
 								return Collections.singleton(source);
 							}								
@@ -99,11 +115,11 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 					//on any instance invoke to a model value...
 					if(ie instanceof InstanceInvokeExpr) {
 						final InstanceInvokeExpr iie = (InstanceInvokeExpr) ie;
-						return new FlowFunction<Abstraction>() {
-							public Set<Abstraction> computeTargets(Abstraction source) {
-								if(source.getModelValueLocal()!=null && source.getModelValueLocal().equals(iie.getBase())) {
+						return new FlowFunction<Abstraction<Var,Value,State,StatementId>>() {
+							public Set<Abstraction<Var,Value,State,StatementId>> computeTargets(Abstraction<Var,Value,State,StatementId> source) {
+								if(source.getValue(MODEL_VALUE)!=null && source.getValue(MODEL_VALUE).equals(iie.getBase())) {
 									//mark the value group as tainted
-									return Collections.singleton(source.markedAsTainted(s));									
+									return Collections.singleton(source.withStateChangedTo(TAINTED).storeStmt(s, MODEL_VALUE_UPDATE));									
 								} else {
 									return Collections.singleton(source);
 								}								
@@ -114,13 +130,13 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 				return Identity.v();
 			}
 
-			public FlowFunction<Abstraction> getNormalFlowFunction(Unit curr,Unit succ) {
+			public FlowFunction<Abstraction<Var,Value,State,StatementId>> getNormalFlowFunction(Unit curr,Unit succ) {
 				if(curr instanceof DefinitionStmt) {
 					final DefinitionStmt assign = (DefinitionStmt) curr;
-					return new FlowFunction<Abstraction>() {
+					return new FlowFunction<Abstraction<Var,Value,State,StatementId>>() {
 
-						public Set<Abstraction> computeTargets(final Abstraction source) {
-							HashSet<Abstraction> hashSet = new HashSet<Abstraction>() {{
+						public Set<Abstraction<Var,Value,State,StatementId>> computeTargets(final Abstraction<Var,Value,State,StatementId> source) {
+							HashSet<Abstraction<Var,Value,State,StatementId>> hashSet = new HashSet<Abstraction<Var,Value,State,StatementId>>() {{
 								add(source);
 								add(source.replaceValue(assign.getRightOp(),assign.getLeftOp()));
 							}};
@@ -131,14 +147,14 @@ public class TypestateAnalysisProblem extends AbstractIFDSAnalysisProblem<Abstra
 				return Identity.v();
 			}
 
-			public FlowFunction<Abstraction> getReturnFlowFunction(final Unit callSite, SootMethod callee, final Unit exitStmt, Unit retSite) {
-				return new FlowFunction<Abstraction>() {
-					public Set<Abstraction> computeTargets(Abstraction source) {
+			public FlowFunction<Abstraction<Var,Value,State,StatementId>> getReturnFlowFunction(final Unit callSite, SootMethod callee, final Unit exitStmt, Unit retSite) {
+				return new FlowFunction<Abstraction<Var,Value,State,StatementId>>() {
+					public Set<Abstraction<Var,Value,State,StatementId>> computeTargets(Abstraction<Var,Value,State,StatementId> source) {
 						//no need to pass on ZERO beyond returns
 						if(source==zeroValue()) return Collections.emptySet();
 						//if we are returning from the method in which the value group was constructed...
-						if(!source.isFlushed()) {
-							Unit reportStmt = source.getTaintStmt();
+						if(source.stateIs(TAINTED)) {
+							Unit reportStmt = source.getStatement(MODEL_VALUE_UPDATE);
 							String className = interproceduralCFG().getMethodOf(reportStmt).getDeclaringClass().getName();
 							context.reportError(new ErrorMarker("ValueGroup not flushed!",className,reportStmt.getJavaSourceStartLineNumber()));
 							//don't propagate further

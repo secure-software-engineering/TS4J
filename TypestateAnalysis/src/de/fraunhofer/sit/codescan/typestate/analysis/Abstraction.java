@@ -1,61 +1,56 @@
 package de.fraunhofer.sit.codescan.typestate.analysis;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import soot.NullType;
 import soot.Unit;
-import soot.Value;
-import soot.jimple.InstanceInvokeExpr;
-import soot.jimple.ParameterRef;
-import soot.jimple.Stmt;
-import soot.jimple.internal.JimpleLocal;
 
-public class Abstraction implements Cloneable {
+public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,StmtID extends Enum<StmtID>> implements Cloneable {
 	
-	protected Unit constrCallToValueGroup;
-	protected Unit taintStmt;
-	protected Value valueGroup;
-	protected Value modelValue;
-	protected boolean flushed = true;
+	protected Val[] boundValues;
+	protected Unit[] stmtTrace;
+	protected State state;
 	
-	public final static Abstraction ZERO = new Abstraction() {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private final static Abstraction ZERO = new Abstraction() {
 		{
-			this.valueGroup = new JimpleLocal("", NullType.v());
-			this.modelValue = new JimpleLocal("", NullType.v());
+			boundValues = new Object[0];
+			stmtTrace = new Unit[0];
 		}
 		public String toString() { return "<ZERO>"; };
+		public Object getValue(Enum e) { return null; };
+		public boolean stateIs(Enum s) { return false; }
+		public boolean equals(Object obj) { return obj==this; }
+		public int hashCode() { return 23; };
 	};
-	
-	public Abstraction(Stmt s) {
-		this.constrCallToValueGroup = s;
-		InstanceInvokeExpr iie = (InstanceInvokeExpr) s.getInvokeExpr();
-		this.valueGroup = (Value) iie.getBase();
-	}
-	
-	public Value getValueGroupLocal() {
-		return valueGroup;
-	}
-	
-	public Value getModelValueLocal() {
-		return modelValue;
-	}
-	
-	public boolean isFlushed() {
-		return flushed;
-	}
-	
-	public Unit getConstrCallToValueGroup() {
-		return constrCallToValueGroup;
-	}
-	
-	public Unit getTaintStmt() {
-		return taintStmt;
+
+	@SuppressWarnings("unchecked")
+	public final static <Var extends Enum<Var>,Val,State extends Enum<State>,StmtID extends Enum<StmtID>> Abstraction<Var,Val,State,StmtID> zero() {
+		return ZERO;
 	}
 	
 	private Abstraction() {
+		//only used for ZERO
+	}
+
+	@SuppressWarnings("unchecked")
+	public Abstraction(Var e, Val v, State s) {
+		int size = e.getClass().getEnumConstants().length;		
+		boundValues = (Val[]) new Object[size];
+		boundValues[e.ordinal()] = v;
+		state = s;
+	}
+	
+	public Val getValue(Var e) {
+		return boundValues[e.ordinal()];
+	}
+
+	public Unit getStatement(StmtID sid) {
+		if(stmtTrace==null) return null;
+		else return stmtTrace[sid.ordinal()];
 	}
 	
 	/**
@@ -63,16 +58,29 @@ public class Abstraction implements Cloneable {
 	 * a copy of this abstraction where fromVal was replaced by toVal.
 	 * Otherwise it returns <code>this</code>.
 	 */
-	public Abstraction replaceValue(Value fromVal, Value toVal) {
-		if(valueGroup!=null && valueGroup.equals(fromVal) || modelValue!=null && modelValue.equals(fromVal)) {
-			Abstraction copy = copy();
-			if(copy.valueGroup!=null && copy.valueGroup.equals(fromVal))
-				copy.valueGroup = toVal;
-			if(copy.modelValue!=null && copy.modelValue.equals(fromVal))
-				copy.modelValue = toVal;
+	public Abstraction<Var,Val,State,StmtID> replaceValue(Val fromVal, Val toVal) {
+		Abstraction<Var,Val,State,StmtID> copy = null;
+		for (int i = 0; i < boundValues.length; i++) {
+			Val val = boundValues[i];
+			if(val!=null && val.equals(fromVal)) {
+				if(copy==null) copy = copy();
+				copy.boundValues[i] = toVal;
+			}
+		}
+		if(copy==null) return this;
+		else return copy;
+	}
+	
+	public Abstraction<Var,Val,State,StmtID> storeStmt(Unit u, StmtID sid) {
+		if(stmtTrace==null) stmtTrace = new Unit[sid.getClass().getEnumConstants().length];
+		int index = sid.ordinal();
+		if(stmtTrace[index]==null || !stmtTrace[index].equals(u)) {
+			Abstraction<Var,Val,State,StmtID> copy = copy();
+			copy.stmtTrace[index] = u;
 			return copy;
-		} else
+		} else {
 			return this;
+		}
 	}
 	
 	/**
@@ -82,14 +90,14 @@ public class Abstraction implements Cloneable {
 	 * the from-value has been replaced by the corresponding to-value from the other list.
 	 * If an entry is <code>null</code> in the from or to list, then this entry is not processed.   
 	 */
-	public Set<Abstraction> replaceValues(List<Value> from, List<ParameterRef> to) {
+	public Set<Abstraction<Var,Val,State,StmtID>> replaceValues(List<Val> from, List<Val> to) {
 		assert(from.size()==to.size());
-		Set<Abstraction> res = new HashSet<Abstraction>();
+		Set<Abstraction<Var,Val,State,StmtID>> res = new HashSet<Abstraction<Var,Val,State,StmtID>>();
 		for(int i=0; i<from.size(); i++) {
-			Value fromVal = from.get(i);
-			Value toVal = to.get(i);
+			Val fromVal = from.get(i);
+			Val toVal = to.get(i);
 			if(fromVal!=null && toVal!=null) {
-				Abstraction derived = replaceValue(fromVal,toVal);
+				Abstraction<Var,Val,State,StmtID> derived = replaceValue(fromVal,toVal);
 				if(derived!=this) {
 					res.add(derived);
 				}
@@ -98,46 +106,50 @@ public class Abstraction implements Cloneable {
 		return res;
 	}
 	
-	public Abstraction markedAsTainted(Stmt taintStmt) {
-		Abstraction copy = copy();
-		copy.flushed = false;
-		copy.taintStmt = taintStmt;
-		return copy;
-	}
-		
-	public Abstraction markedAsFlushed() {
-		Abstraction copy = copy();
-		copy.flushed = true;
-		return copy;
-	}	
-	
-	public Set<Abstraction> valueAdded(Value addedValue) {
-		if(modelValue==null) {
-			final Abstraction copy = copy();
-			copy.modelValue = addedValue;
-			Set<Abstraction> res = new HashSet<Abstraction>();
+	public Set<Abstraction<Var,Val,State,StmtID>> bindValue(Val addedValue, Var e) {
+		int index = e.ordinal();
+		if(boundValues[index]==null) {
+			final Abstraction<Var,Val,State,StmtID> copy = copy();
+			copy.boundValues[index] = addedValue;
+			Set<Abstraction<Var,Val,State,StmtID>> res = new HashSet<Abstraction<Var,Val,State,StmtID>>();
 			res.add(this);
 			res.add(copy);
 			return res; 
-		} else
-			return Collections.singleton(this);
+		}
+		return Collections.singleton(this);
+	}
+	
+	public Abstraction<Var,Val,State,StmtID> withStateChangedTo(State s) {
+		if(state != null && state.equals(s))
+			return this;
+		Abstraction<Var,Val,State,StmtID> copy = copy();
+		copy.state = s;
+		return copy;
+	}
+	
+	public boolean stateIs(State s) {
+		return state!=null && state.equals(s);
+	}
+
+	private Abstraction<Var,Val,State,StmtID> copy() {
+		try {
+			@SuppressWarnings("unchecked")
+			Abstraction<Var,Val,State,StmtID> clone = (Abstraction<Var,Val,State,StmtID>) super.clone();
+			clone.boundValues = boundValues.clone();
+			if(stmtTrace!=null) clone.stmtTrace = stmtTrace.clone();
+			return clone;
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime
-				* result
-				+ ((constrCallToValueGroup == null) ? 0
-						: constrCallToValueGroup.hashCode());
-		result = prime * result
-				+ ((modelValue == null) ? 0 : modelValue.hashCode());
-		result = prime * result + (flushed ? 1231 : 1237);
-		result = prime * result
-				+ ((taintStmt == null) ? 0 : taintStmt.hashCode());
-		result = prime * result
-				+ ((valueGroup == null) ? 0 : valueGroup.hashCode());
+		result = prime * result + Arrays.hashCode(stmtTrace);
+		result = prime * result + Arrays.hashCode(boundValues);
+		result = prime * result + ((state == null) ? 0 : state.hashCode());
 		return result;
 	}
 
@@ -149,44 +161,25 @@ public class Abstraction implements Cloneable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
+		@SuppressWarnings("rawtypes")
 		Abstraction other = (Abstraction) obj;
-		if (constrCallToValueGroup == null) {
-			if (other.constrCallToValueGroup != null)
-				return false;
-		} else if (!constrCallToValueGroup.equals(other.constrCallToValueGroup))
+		if (!Arrays.equals(stmtTrace, other.stmtTrace))
 			return false;
-		if (modelValue == null) {
-			if (other.modelValue != null)
-				return false;
-		} else if (!modelValue.equals(other.modelValue))
+		if (!Arrays.equals(boundValues, other.boundValues))
 			return false;
-		if (flushed != other.flushed)
-			return false;
-		if (taintStmt == null) {
-			if (other.taintStmt != null)
+		if (state == null) {
+			if (other.state != null)
 				return false;
-		} else if (!taintStmt.equals(other.taintStmt))
-			return false;
-		if (valueGroup == null) {
-			if (other.valueGroup != null)
-				return false;
-		} else if (!valueGroup.equals(other.valueGroup))
+		} else if (!state.equals(other.state))
 			return false;
 		return true;
 	}
 
-	private Abstraction copy() {
-		try {
-			Abstraction clone = (Abstraction) super.clone();
-			return clone;
-		} catch (CloneNotSupportedException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	@Override
 	public String toString() {
-		return "Abstraction [valueGroup=" + valueGroup + ", modelValue="
-				+ modelValue + ", flushed=" + flushed + "]";
+		return "Abstraction [boundValues=" + Arrays.toString(boundValues)
+				+ ", stmtTrace=" + Arrays.toString(stmtTrace)
+				+ ", state=" + state + "]";
 	}
+
 }
