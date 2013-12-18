@@ -14,7 +14,8 @@ import de.fraunhofer.sit.codescan.sootbridge.IAnalysisContext;
 
 public class ECBAnalysis implements IMethodBasedAnalysisPlugin {
 
-	private static final String ERROR_MESSAGE = "Using ECB is insecure.";
+	private static final String ERROR_MESSAGE_DEFAULT = "Per default, an ECB cypher will be used, which is insecure.";
+	private static final String ERROR_MESSAGE_ECB = "ECB is insecure.";
 
 	public void analyzeMethod(SootMethod m, IAnalysisContext context) {
 		if(m.hasActiveBody()) {
@@ -30,9 +31,11 @@ public class ECBAnalysis implements IMethodBasedAnalysisPlugin {
 						Value firstArgument = ie.getArg(0);
 						if(firstArgument instanceof StringConstant) {
 							StringConstant constant = (StringConstant) firstArgument;
-							if(!constant.value.contains("/") || /*ECB is default*/
-								constant.value.contains("/ECB/")) {
-								context.reportError(new ErrorMarker(ERROR_MESSAGE,m.getDeclaringClass().getName(),s.getJavaSourceStartLineNumber())); 		
+							if(!constant.value.contains("/")) {
+								context.reportError(new ErrorMarker(ERROR_MESSAGE_DEFAULT,m.getDeclaringClass().getName(),s.getJavaSourceStartLineNumber())); 		
+								return;
+							} else if (constant.value.contains("/ECB/")) {
+								context.reportError(new ErrorMarker(ERROR_MESSAGE_ECB,m.getDeclaringClass().getName(),s.getJavaSourceStartLineNumber())); 		
 								return;
 							}
 						}
