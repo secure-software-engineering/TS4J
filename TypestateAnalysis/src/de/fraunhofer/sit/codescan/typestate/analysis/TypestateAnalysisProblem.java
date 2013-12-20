@@ -1,5 +1,9 @@
 package de.fraunhofer.sit.codescan.typestate.analysis;
 
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State.FLUSHED;
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State.TAINTED;
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var.MODEL_VALUE;
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var.VALUE_GROUP;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State;
 import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId;
@@ -20,6 +24,17 @@ public class TypestateAnalysisProblem extends AbstractTypestateAnalysisProblem<V
 
 	public TypestateAnalysisProblem(IIFDSAnalysisContext context) {
 		super(context);
+	}
+
+	@Override
+	protected Done<Var, State, StatementId> applyRules(Do<Var, State, StatementId> d) {
+		return d.atCallTo(VALUE_GROUP_CONSTRUCTOR_SIG).always().trackThis().as(VALUE_GROUP).toState(FLUSHED).andAlso().
+			     atCallTo(MODEL_VALUE_ADD_SIG).ifValueBoundTo(VALUE_GROUP).equalsThis().trackParameter(0).as(MODEL_VALUE).andAlso().
+			     atCallTo(VALUE_GROUP_FLUSH_SIG).ifValueBoundTo(VALUE_GROUP).equalsThis().toState(FLUSHED).andAlso().
+			     atAnyCallToClass(MODEL_VALUE_CLASS_NAME).
+			     ifValueBoundTo(MODEL_VALUE).
+			     equalsThis().
+			     toState(TAINTED);
 	}
 	
 //	@Override

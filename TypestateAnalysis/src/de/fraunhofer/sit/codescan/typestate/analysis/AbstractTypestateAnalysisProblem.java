@@ -15,6 +15,7 @@ import soot.Value;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.InvokeExpr;
 import soot.jimple.Stmt;
+import soot.jimple.parser.node.APlusBinop;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import de.fraunhofer.sit.codescan.framework.AbstractIFDSAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
@@ -32,6 +33,8 @@ public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,Sta
 	protected Abstraction<Var,Value,State,StmtID> createZeroValue() {
 		return Abstraction.zero();
 	}
+	
+	protected abstract Done<Var,State,StmtID> applyRules(Do<Var,State,StmtID> d);
 	
 	@Override
 	protected FlowFunctions<Unit, Abstraction<Var,Value,State,StmtID>, SootMethod> createFlowFunctionsFactory() {
@@ -53,14 +56,13 @@ public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,Sta
 				};				
 			}
 
-			Set<Config<Var,State,StmtID>> configs;
-			
 			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getCallToReturnFlowFunction(Unit curr, Unit succ) {
 				final Stmt s = (Stmt) curr;
-				final InvokeExpr ie = s.getInvokeExpr();
 				return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
 					public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
-						
+						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,s);
+						applyRules(config);
+						return config.getAbstractions();
 					}
 				};
 			}
@@ -85,12 +87,13 @@ public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,Sta
 
 			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getReturnFlowFunction(final Unit callSite, SootMethod callee, final Unit exitStmt, Unit retSite) {
 				return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
-					public Set<Abstraction<Var,Value,State,StmtID>> computeTargets(Abstraction<Var,Value,State,StmtID> source) {
-						//TODO implement rules
-						return Collections.emptySet();
+					public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
+						//TODO add more context
+						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite);
+						applyRules(config);
+						return config.getAbstractions();
 					}
 				};
-				
 			}
 		};
 	}
