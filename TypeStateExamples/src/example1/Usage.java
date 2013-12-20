@@ -16,14 +16,8 @@ public class Usage {
         modelGroup.add(someTextValue);
 
         someBooleanValue.setChecked(false);
-        someIntValue.increment(3);
-        
-        extracted(someTextValue);
         modelGroup.flush();
-    }
-
-	private void extracted(TextValue someTextValue) {
-		someTextValue.setText("foo");
-	}
+        someIntValue.increment(3);
+    } 
 
 }
