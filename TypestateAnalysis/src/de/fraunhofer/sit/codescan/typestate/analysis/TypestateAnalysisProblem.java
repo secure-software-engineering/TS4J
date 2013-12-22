@@ -2,6 +2,7 @@ package de.fraunhofer.sit.codescan.typestate.analysis;
 
 import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State.FLUSHED;
 import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State.TAINTED;
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId.MODEL_VALUE_UPDATE;
 import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var.MODEL_VALUE;
 import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var.VALUE_GROUP;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
@@ -20,7 +21,7 @@ public class TypestateAnalysisProblem extends AbstractTypestateAnalysisProblem<V
 	
 	enum State { FLUSHED, TAINTED };
 	
-	enum StatementId { VALUE_ADD_CALL, MODEL_VALUE_UPDATE };
+	enum StatementId { MODEL_VALUE_UPDATE };
 
 	public TypestateAnalysisProblem(IIFDSAnalysisContext context) {
 		super(context);
@@ -28,13 +29,10 @@ public class TypestateAnalysisProblem extends AbstractTypestateAnalysisProblem<V
 
 	@Override
 	protected Done<Var, State, StatementId> applyRules(Do<Var, State, StatementId> d) {
-		return d.atCallTo(VALUE_GROUP_CONSTRUCTOR_SIG).always().trackThis().as(VALUE_GROUP).toState(FLUSHED).andAlso().
-			     atCallTo(MODEL_VALUE_ADD_SIG).ifValueBoundTo(VALUE_GROUP).equalsThis().trackParameter(0).as(MODEL_VALUE).andAlso().
-			     atCallTo(VALUE_GROUP_FLUSH_SIG).ifValueBoundTo(VALUE_GROUP).equalsThis().toState(FLUSHED).andAlso().
-			     atAnyCallToClass(MODEL_VALUE_CLASS_NAME).
-			     ifValueBoundTo(MODEL_VALUE).
-			     equalsThis().
-			     toState(TAINTED);
+		return d.atCallTo(VALUE_GROUP_CONSTRUCTOR_SIG).always().trackThis().as(VALUE_GROUP).toState(FLUSHED).orElse().
+			     atCallTo(MODEL_VALUE_ADD_SIG).ifValueBoundTo(VALUE_GROUP).equalsThis().trackParameter(0).as(MODEL_VALUE).orElse().
+			     atCallTo(VALUE_GROUP_FLUSH_SIG).ifValueBoundTo(VALUE_GROUP).equalsThis().toState(FLUSHED).orElse().
+			     atAnyCallToClass(MODEL_VALUE_CLASS_NAME).ifValueBoundTo(MODEL_VALUE).equalsThis().toState(TAINTED).storeStmtAs(MODEL_VALUE_UPDATE);
 	}
 	
 //	@Override

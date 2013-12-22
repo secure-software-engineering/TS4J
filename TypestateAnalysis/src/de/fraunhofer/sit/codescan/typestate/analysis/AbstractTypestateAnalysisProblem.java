@@ -15,7 +15,6 @@ import soot.Value;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.InvokeExpr;
 import soot.jimple.Stmt;
-import soot.jimple.parser.node.APlusBinop;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import de.fraunhofer.sit.codescan.framework.AbstractIFDSAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
@@ -86,9 +85,14 @@ public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,Sta
 			}
 
 			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getReturnFlowFunction(final Unit callSite, SootMethod callee, final Unit exitStmt, Unit retSite) {
+				System.err.println(callee.getActiveBody());
 				return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
 					public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
 						//TODO add more context
+						if(callSite==null) {
+							return Collections.emptySet();
+						}
+							
 						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite);
 						applyRules(config);
 						return config.getAbstractions();

@@ -18,8 +18,8 @@ public class Config<Var extends Enum<Var>,State extends Enum<State>,StmtID exten
 implements Do<Var,State,StmtID>, CallContext<Var,State,StmtID>, ValueContext<Var,State,StmtID>, VarContext<Var,State,StmtID>, Done<Var,State,StmtID>,
 EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 	
-	private final static int THIS = 0;
-	private final static int RETURN = 1;
+	private final static int THIS = -1;
+	private final static int RETURN = -2;
 	
 	SootMethod method;
 	Stmt invokeStmt;
@@ -27,6 +27,8 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 	int currSlot = -1;
 	Var eqCheckVar;
 	boolean done;
+	Set<Abstraction<Var, Value, State, StmtID>> originalAbstractions;
+	Config<Var,State,StmtID> next;
 	
 	@SuppressWarnings("serial")
 	public Config(final Abstraction<Var, Value, State, StmtID> abstraction, Stmt invokeStmt) {
@@ -36,8 +38,9 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 	}
 	
 	public Config(Set<Abstraction<Var, Value, State, StmtID>> abstractions, Stmt invokeStmt) {
-		this.abstractions = abstractions;
-		this.invokeStmt = invokeStmt;
+		this.abstractions = new HashSet<Abstraction<Var, Value, State, StmtID>>(abstractions);
+		this.originalAbstractions = Collections.unmodifiableSet(abstractions);
+		this.invokeStmt = invokeStmt;		
 		this.done = false;
 	}
 
@@ -81,7 +84,7 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 		if(i<0||i>method.getParameterCount()-1) {
 			throw new IllegalArgumentException("Invalid parameter index");
 		}
-		currSlot = i+2;
+		currSlot = i;
 		return this;
 	}
 
@@ -133,12 +136,21 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 	}
 	
 	public Set<Abstraction<Var, Value, State, StmtID>> getAbstractions() {
-		return abstractions;
+		Set<Abstraction<Var, Value, State, StmtID>> res = new HashSet<Abstraction<Var,Value,State,StmtID>>();
+		fillAbstractions(res);
+		return res;
+	}
+	
+	private void fillAbstractions(Set<Abstraction<Var, Value, State, StmtID>> returnValue) {
+		returnValue.addAll(abstractions);
+		if(next!=null)
+			next.fillAbstractions(returnValue);
 	}
 
-	public Do<Var,State,StmtID> andAlso() {
-		//TODO should we instead implement an "or" semantics here, applying this to the old abstractions?
-		return new Config<Var,State,StmtID>(abstractions, invokeStmt);
+	public Do<Var,State,StmtID> orElse() {
+		assert(next==null);
+		next = new Config<Var,State,StmtID>(originalAbstractions, invokeStmt);
+		return next;
 	}
 
 	public CallContext<Var, State, StmtID> always() {
@@ -184,9 +196,20 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 			done = true;
 		return this;
 	}
+
+	public IfCheckContext<Var, State, StmtID> and() {
+		return this;
+	}
+
+	public Done<Var, State, StmtID> storeStmtAs(StmtID sid) {
+		Set<Abstraction<Var, Value, State, StmtID>> res = new HashSet<Abstraction<Var,Value,State,StmtID>>(abstractions.size());
+		for(Abstraction<Var, Value, State, StmtID> abs: abstractions) {
+			res.add(abs.storeStmt(invokeStmt, sid));
+		}
+		this.abstractions = res;
+		return this;
+	}
 }
-
-
 
 interface Do<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {
 	public IfCheckContext<Var,State,StmtID> atCallTo(String methodSignature);
@@ -200,6 +223,7 @@ interface EqualsContext<Var extends Enum<Var>,State extends Enum<State>,StmtID e
 }
 
 interface CallContext<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> extends VarContext<Var,State,StmtID> {
+	public IfCheckContext<Var,State,StmtID> and();
 	public ValueContext<Var,State,StmtID> trackThis();
 	public ValueContext<Var,State,StmtID> trackReturnValue();
 	public ValueContext<Var,State,StmtID> trackParameter(int paramIndex);
@@ -219,7 +243,8 @@ interface VarContext<Var extends Enum<Var>,State extends Enum<State>,StmtID exte
 }
 
 interface Done<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {	
-	public Do<Var,State,StmtID> andAlso();
+	public Do<Var,State,StmtID> orElse();
+	public Done<Var,State,StmtID> storeStmtAs(StmtID sid);
 }
 
 

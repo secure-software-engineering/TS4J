@@ -14,7 +14,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	protected Unit[] stmtTrace;
 	protected State state;
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private final static Abstraction ZERO = new Abstraction() {
 		{
 			boundValues = new Object[0];
@@ -25,6 +25,15 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		public boolean stateIs(Enum s) { return false; }
 		public boolean equals(Object obj) { return obj==this; }
 		public int hashCode() { return 23; };
+		public Abstraction replaceValue(Object fromVal, Object toVal) { return this; };
+		protected Abstraction copy() { return new Abstraction(); };
+		protected Object getBoundValue(int index) { return null; };
+		protected Object getBoundValue(Enum var) { return null; };
+		protected void setBoundVal(Object val, Enum var) { throw new UnsupportedOperationException(); };
+		protected void setBoundVal(Object val, int index) { throw new UnsupportedOperationException(); };
+		protected void setStatement(Unit u, Enum sid) { throw new UnsupportedOperationException(); };
+		public Abstraction withStateChangedTo(Enum s) { return this; }
+		public Unit getStatement(Enum sid) { return null; };
 	};
 
 	@SuppressWarnings("unchecked")
@@ -45,6 +54,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	}
 	
 	public Val getValue(Var e) {
+		if(boundValues==null) return null;
 		return boundValues[e.ordinal()];
 	}
 
@@ -59,12 +69,13 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	 * Otherwise it returns <code>this</code>.
 	 */
 	public Abstraction<Var,Val,State,StmtID> replaceValue(Val fromVal, Val toVal) {
+		if(boundValues==null) return this;
 		Abstraction<Var,Val,State,StmtID> copy = null;
 		for (int i = 0; i < boundValues.length; i++) {
-			Val val = boundValues[i];
+			Val val = getBoundValue(i);
 			if(val!=null && val.equals(fromVal)) {
 				if(copy==null) copy = copy();
-				copy.boundValues[i] = toVal;
+				copy.setBoundVal(toVal, i);
 			}
 		}
 		if(copy==null) return this;
@@ -72,15 +83,19 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	}
 	
 	public Abstraction<Var,Val,State,StmtID> storeStmt(Unit u, StmtID sid) {
-		if(stmtTrace==null) stmtTrace = new Unit[sid.getClass().getEnumConstants().length];
-		int index = sid.ordinal();
-		if(stmtTrace[index]==null || !stmtTrace[index].equals(u)) {
+		Unit storedStmt = getStatement(sid);
+		if(storedStmt==null || !storedStmt.equals(u)) {
 			Abstraction<Var,Val,State,StmtID> copy = copy();
-			copy.stmtTrace[index] = u;
+			copy.setStatement(u, sid);
 			return copy;
 		} else {
 			return this;
 		}
+	}
+	
+	protected void setStatement(Unit u, StmtID sid) {
+		if(stmtTrace==null) stmtTrace = new Unit[sid.getClass().getEnumConstants().length];
+		stmtTrace[sid.ordinal()] = u;
 	}
 	
 	/**
@@ -106,17 +121,36 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		return res;
 	}
 	
-	public Set<Abstraction<Var,Val,State,StmtID>> bindValue(Val addedValue, Var e) {
-		int index = e.ordinal();
-		if(boundValues[index]==null) {
+	public Set<Abstraction<Var,Val,State,StmtID>> bindValue(Val addedValue, Var var) {
+		if(getBoundValue(var)==null) {
 			final Abstraction<Var,Val,State,StmtID> copy = copy();
-			copy.boundValues[index] = addedValue;
+			copy.setBoundVal(addedValue, var);
 			Set<Abstraction<Var,Val,State,StmtID>> res = new HashSet<Abstraction<Var,Val,State,StmtID>>();
 			res.add(this);
 			res.add(copy);
 			return res; 
 		}
 		return Collections.singleton(this);
+	}
+
+	protected Val getBoundValue(Var var) {
+		return getBoundValue(var.ordinal());
+	}
+
+	protected Val getBoundValue(int index) {
+		return boundValues[index];
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void setBoundVal(Val val, Var var) {
+		if(boundValues==null) {
+			boundValues = ((Val[]) new Object[var.getClass().getEnumConstants().length]);
+		}
+		setBoundVal(val, var.ordinal());
+	}
+
+	protected void setBoundVal(Val val, int index) {
+		boundValues[index] = val;
 	}
 	
 	public Abstraction<Var,Val,State,StmtID> withStateChangedTo(State s) {
@@ -131,11 +165,11 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		return state!=null && state.equals(s);
 	}
 
-	private Abstraction<Var,Val,State,StmtID> copy() {
+	protected Abstraction<Var,Val,State,StmtID> copy() {
 		try {
 			@SuppressWarnings("unchecked")
 			Abstraction<Var,Val,State,StmtID> clone = (Abstraction<Var,Val,State,StmtID>) super.clone();
-			clone.boundValues = boundValues.clone();
+			if(boundValues!=null) clone.boundValues = boundValues.clone();
 			if(stmtTrace!=null) clone.stmtTrace = stmtTrace.clone();
 			return clone;
 		} catch (CloneNotSupportedException e) {
