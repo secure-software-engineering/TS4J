@@ -28,11 +28,16 @@ public class TypestateAnalysisProblem extends AbstractTypestateAnalysisProblem<V
 	}
 
 	@Override
-	protected Done<Var, State, StatementId> applyRules(Do<Var, State, StatementId> d) {
+	protected Done<Var, State, StatementId> atCallToReturn(AtCallToReturn<Var, State, StatementId> d) {
 		return d.atCallTo(VALUE_GROUP_CONSTRUCTOR_SIG).always().trackThis().as(VALUE_GROUP).toState(FLUSHED).orElse().
 			     atCallTo(MODEL_VALUE_ADD_SIG).ifValueBoundTo(VALUE_GROUP).equalsThis().trackParameter(0).as(MODEL_VALUE).orElse().
 			     atCallTo(VALUE_GROUP_FLUSH_SIG).ifValueBoundTo(VALUE_GROUP).equalsThis().toState(FLUSHED).orElse().
 			     atAnyCallToClass(MODEL_VALUE_CLASS_NAME).ifValueBoundTo(MODEL_VALUE).equalsThis().toState(TAINTED).storeStmtAs(MODEL_VALUE_UPDATE);
+	}
+
+	@Override
+	protected Done<Var, State, StatementId> atReturn(AtReturn<Var, State, StatementId> d) {
+		return d.atReturnFrom("*");
 	}
 	
 //	@Override

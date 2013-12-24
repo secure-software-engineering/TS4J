@@ -15,8 +15,8 @@ import soot.jimple.Stmt;
 
 
 public class Config<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>>
-implements Do<Var,State,StmtID>, CallContext<Var,State,StmtID>, ValueContext<Var,State,StmtID>, VarContext<Var,State,StmtID>, Done<Var,State,StmtID>,
-EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
+implements AtCallToReturn<Var,State,StmtID>, CallContext<Var,State,StmtID>, ValueContext<Var,State,StmtID>, VarContext<Var,State,StmtID>, Done<Var,State,StmtID>,
+EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,State,StmtID> {
 	
 	private final static int THIS = -1;
 	private final static int RETURN = -2;
@@ -29,41 +29,53 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 	boolean done;
 	Set<Abstraction<Var, Value, State, StmtID>> originalAbstractions;
 	Config<Var,State,StmtID> next;
-	
-	@SuppressWarnings("serial")
+	private final SootMethod calleeAtReturnFlow;
+
 	public Config(final Abstraction<Var, Value, State, StmtID> abstraction, Stmt invokeStmt) {
-		this(new HashSet<Abstraction<Var, Value, State, StmtID>>(){{
-			add(abstraction);
-		}}, invokeStmt);
+		this(abstraction, invokeStmt, null);
 	}
 	
-	public Config(Set<Abstraction<Var, Value, State, StmtID>> abstractions, Stmt invokeStmt) {
+	@SuppressWarnings("serial")
+	public Config(final Abstraction<Var, Value, State, StmtID> abstraction, Stmt invokeStmt, SootMethod callee) {
+		this(new HashSet<Abstraction<Var, Value, State, StmtID>>(){{
+			add(abstraction);
+		}}, invokeStmt, callee);
+	}
+	
+	public Config(Set<Abstraction<Var, Value, State, StmtID>> abstractions, Stmt invokeStmt, SootMethod callee) {
+		this.calleeAtReturnFlow = callee;
 		this.abstractions = new HashSet<Abstraction<Var, Value, State, StmtID>>(abstractions);
 		this.originalAbstractions = Collections.unmodifiableSet(abstractions);
 		this.invokeStmt = invokeStmt;		
 		this.done = false;
 	}
 
+
 	public IfCheckContext<Var, State, StmtID> atAnyCallToClass(String className) {
 		if(done) return this;
-		SootMethod calledMethod = invokeStmt.getInvokeExpr().getMethod();
-		if(Scene.v().getActiveHierarchy().isClassSubclassOfIncluding(
-				calledMethod.getDeclaringClass(), Scene.v().getSootClass(className))) {
-			method = calledMethod;
-		} else {
-			done = true;
-		}
+
+		if(invokeStmt!=null) {
+			SootMethod calledMethod = invokeStmt.getInvokeExpr().getMethod();
+			if(Scene.v().getActiveHierarchy().isClassSubclassOfIncluding(
+					calledMethod.getDeclaringClass(), Scene.v().getSootClass(className))) {
+				method = calledMethod;
+				return this;
+			}
+		} 
+		done = true;
 		return this;
 	}
 
 	public IfCheckContext<Var, State, StmtID> atCallTo(String signature) {
 		if(done) return this;
-		SootMethod calledMethod = invokeStmt.getInvokeExpr().getMethod();
-		if(calledMethod.getSignature().equals(signature)) {
-			method = calledMethod;
-		} else {
-			done = true;
+		if(invokeStmt!=null) {
+			SootMethod calledMethod = invokeStmt.getInvokeExpr().getMethod();
+			if(calledMethod.getSignature().equals(signature)) {
+				method = calledMethod;
+				return this;
+			}
 		}
+		done = true;
 		return this;
 	}
 
@@ -104,6 +116,9 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 
 	private Value extractValue() {
 		InvokeExpr ie = invokeStmt.getInvokeExpr();
+		if(ie==null)
+			throw new IllegalArgumentException("Cannot extract values at return.");
+		
 		Value val;
 		switch(currSlot) {
 		case THIS:
@@ -147,9 +162,9 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 			next.fillAbstractions(returnValue);
 	}
 
-	public Do<Var,State,StmtID> orElse() {
+	public AtCallToReturn<Var,State,StmtID> orElse() {
 		assert(next==null);
-		next = new Config<Var,State,StmtID>(originalAbstractions, invokeStmt);
+		next = new Config<Var,State,StmtID>(originalAbstractions, invokeStmt, calleeAtReturnFlow);
 		return next;
 	}
 
@@ -202,6 +217,8 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 	}
 
 	public Done<Var, State, StmtID> storeStmtAs(StmtID sid) {
+		if(invokeStmt==null)
+			throw new IllegalArgumentException("Atempting to store call statement at return");
 		Set<Abstraction<Var, Value, State, StmtID>> res = new HashSet<Abstraction<Var,Value,State,StmtID>>(abstractions.size());
 		for(Abstraction<Var, Value, State, StmtID> abs: abstractions) {
 			res.add(abs.storeStmt(invokeStmt, sid));
@@ -209,11 +226,28 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID> {
 		this.abstractions = res;
 		return this;
 	}
+
+	public IfCheckContext<Var, State, StmtID> atReturnFrom(String signature) {
+		if(done) return this;
+		if(calleeAtReturnFlow!=null) {
+			if(signature.equals("*")) return this;
+			if(calleeAtReturnFlow.getSignature().equals(signature)) {
+				method = calleeAtReturnFlow;
+				return this;
+			}
+		}
+		done = true;
+		return this;
+	}
 }
 
-interface Do<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {
+interface AtCallToReturn<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {
 	public IfCheckContext<Var,State,StmtID> atCallTo(String methodSignature);
 	public IfCheckContext<Var,State,StmtID> atAnyCallToClass(String className);
+}
+
+interface AtReturn<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {
+	public IfCheckContext<Var,State,StmtID> atReturnFrom(String methodSignature);
 }
 
 interface EqualsContext<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {
@@ -243,7 +277,7 @@ interface VarContext<Var extends Enum<Var>,State extends Enum<State>,StmtID exte
 }
 
 interface Done<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {	
-	public Do<Var,State,StmtID> orElse();
+	public AtCallToReturn<Var,State,StmtID> orElse();
 	public Done<Var,State,StmtID> storeStmtAs(StmtID sid);
 }
 

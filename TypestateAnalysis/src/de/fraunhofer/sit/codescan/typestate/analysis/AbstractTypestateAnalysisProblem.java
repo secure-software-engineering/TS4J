@@ -33,8 +33,10 @@ public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,Sta
 		return Abstraction.zero();
 	}
 	
-	protected abstract Done<Var,State,StmtID> applyRules(Do<Var,State,StmtID> d);
-	
+	protected abstract Done<Var,State,StmtID> atCallToReturn(AtCallToReturn<Var,State,StmtID> d);
+
+	protected abstract Done<Var,State,StmtID> atReturn(AtReturn<Var,State,StmtID> d);
+
 	@Override
 	protected FlowFunctions<Unit, Abstraction<Var,Value,State,StmtID>, SootMethod> createFlowFunctionsFactory() {
 		
@@ -60,7 +62,7 @@ public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,Sta
 				return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
 					public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
 						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,s);
-						applyRules(config);
+						atCallToReturn(config);
 						return config.getAbstractions();
 					}
 				};
@@ -84,17 +86,12 @@ public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,Sta
 				return Identity.v();
 			}
 
-			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getReturnFlowFunction(final Unit callSite, SootMethod callee, final Unit exitStmt, Unit retSite) {
+			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getReturnFlowFunction(final Unit callSite, final SootMethod callee, final Unit exitStmt, Unit retSite) {
 				System.err.println(callee.getActiveBody());
 				return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
 					public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
-						//TODO add more context
-						if(callSite==null) {
-							return Collections.emptySet();
-						}
-							
-						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite);
-						applyRules(config);
+						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite, callee);
+						atReturn(config);
 						return config.getAbstractions();
 					}
 				};
