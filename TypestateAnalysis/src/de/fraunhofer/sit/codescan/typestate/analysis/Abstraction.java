@@ -1,7 +1,9 @@
 package de.fraunhofer.sit.codescan.typestate.analysis;
 
+import static heros.TwoElementSet.twoElementSet;
+import static java.util.Collections.singleton;
+
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -125,12 +127,9 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		if(getBoundValue(var)==null) {
 			final Abstraction<Var,Val,State,StmtID> copy = copy();
 			copy.setBoundVal(addedValue, var);
-			Set<Abstraction<Var,Val,State,StmtID>> res = new HashSet<Abstraction<Var,Val,State,StmtID>>();
-			res.add(this);
-			res.add(copy);
-			return res; 
+			return twoElementSet(this, copy); 
 		}
-		return Collections.singleton(this);
+		return singleton(this);
 	}
 
 	protected Val getBoundValue(Var var) {

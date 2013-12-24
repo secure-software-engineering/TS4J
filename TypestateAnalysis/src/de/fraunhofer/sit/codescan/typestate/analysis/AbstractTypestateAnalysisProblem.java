@@ -1,11 +1,11 @@
 package de.fraunhofer.sit.codescan.typestate.analysis;
 
+import static heros.TwoElementSet.twoElementSet;
 import heros.FlowFunction;
 import heros.FlowFunctions;
 import heros.flowfunc.Identity;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -74,12 +74,7 @@ public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,Sta
 					return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
 
 						public Set<Abstraction<Var,Value,State,StmtID>> computeTargets(final Abstraction<Var,Value,State,StmtID> source) {
-							@SuppressWarnings("serial")
-							HashSet<Abstraction<Var,Value,State,StmtID>> hashSet = new HashSet<Abstraction<Var,Value,State,StmtID>>() {{
-								add(source);
-								add(source.replaceValue(assign.getRightOp(),assign.getLeftOp()));
-							}};
-							return hashSet;
+							return twoElementSet(source, source.replaceValue(assign.getRightOp(),assign.getLeftOp()));
 						}
 					};
 				}
