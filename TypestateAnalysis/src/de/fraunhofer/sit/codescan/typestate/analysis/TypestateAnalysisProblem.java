@@ -37,7 +37,7 @@ public class TypestateAnalysisProblem extends AbstractTypestateAnalysisProblem<V
 
 	@Override
 	protected Done<Var, State, StatementId> atReturn(AtReturn<Var, State, StatementId> d) {
-		return d.atReturnFrom("*");
+		return d.atAnyReturn().ifInState(TAINTED).reportError("ERROR!").atStmt(MODEL_VALUE_UPDATE);
 	}
 	
 //	@Override

@@ -61,7 +61,7 @@ public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,Sta
 				final Stmt s = (Stmt) curr;
 				return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
 					public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
-						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,s);
+						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,s,context);
 						atCallToReturn(config);
 						return config.getAbstractions();
 					}
@@ -85,7 +85,7 @@ public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,Sta
 				System.err.println(callee.getActiveBody());
 				return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
 					public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
-						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite, callee);
+						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite, context, callee);
 						atReturn(config);
 						return config.getAbstractions();
 					}
