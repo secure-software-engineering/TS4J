@@ -10,10 +10,23 @@ import java.util.Set;
 
 import soot.Unit;
 
+/**
+ * A generic typestate abstraction that can be used to track multiple correlated objects whose pointer values
+ * are bound to a finite set of variables. In addition, the abstraction stores an internal state and
+ * can store a finite set of statement references (e.g. for error reporting), also indexed by variables. 
+ *
+ * @param <Var> The set of variables used to index over bound values.
+ * @param <Val>	The type of values that can be bound. In Soot, this will typically be Value.
+ * @param <State> The finite set of possible internal states.
+ * @param <StmtID> The set of variables used to index over bound statements. 
+ */
 public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,StmtID extends Enum<StmtID>> implements Cloneable {
 	
+	/** The values bound to the abstraction, indexed by Var-type variables. */
 	protected Val[] boundValues;
+	/** The Statement-Trace bound to the abstraction, indexed by StmtID-type variables. */
 	protected Unit[] stmtTrace;
+	/** The internal state. */
 	protected State state;
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
