@@ -1,7 +1,7 @@
 ReturnRules ::=
 	ReturnRule [orElse ReturnRules]
 ReturnRule ::=
-	ReturnLocationFilter [AbstractionFiler] Actions
+	ReturnLocationFilter [AbstractionFilter] Actions
 	
 ReturnLocationFilter ::=
 	atReturnFromMethodWithName(name) MethodFilter
@@ -11,8 +11,11 @@ ReturnLocationFilter ::=
 CallToReturnRules ::=
 	CallToReturnRule [orElse CallToReturnRules]
 CallToReturnRule ::=
-	LocationFilter [AbstractionFilter] Actions
+	LocationFilters [AbstractionFilter] Actions
 	
+LocationFilters ::=
+	LocationFilter [or LocationFilters]
+
 LocationFilter ::=
 	atCallToMethodWithName(name) MethodFilter
   | atAnyCallToClass(name) MethodFilter
@@ -36,7 +39,9 @@ Actions ::=
   | Reports [and Kill | NonKillActions]
   | NonKillActions
 Reports ::=
-	Report [and Reports] 
+	Report [and Reports]
+Report ::=
+	reportError(msg) atStmt(stmtId)	 
 NonKillActions ::=
 	ChangeState
   | BindValue [and NonKillActions]
@@ -53,5 +58,3 @@ Kill ::=
 	kill
 StoreStmt ::=
 	storeStmtAs(stmtId)
-Report ::=
-	reportError(msg) atStmt(stmtId)
