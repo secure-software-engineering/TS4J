@@ -1,7 +1,6 @@
 TODO:
 
-	separate "abstractions" into list of filtered abstractions and list of unfiltered ones to avoid "done" state
-
+	Must be able to match current method against method of bound stmt
 
 NOT TODO:
 
