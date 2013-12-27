@@ -169,14 +169,18 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 	
 	public Set<Abstraction<Var, Value, State, StmtID>> getAbstractions() {
 		Set<Abstraction<Var, Value, State, StmtID>> res = new HashSet<Abstraction<Var,Value,State,StmtID>>();
-		fillAbstractions(res);
+		if(fillAbstractions(res)) {
+			res.addAll(originalAbstractions);
+		}
 		return res;
 	}
 	
-	private void fillAbstractions(Set<Abstraction<Var, Value, State, StmtID>> returnValue) {
-		returnValue.addAll(filteredOut ? originalAbstractions : abstractions);
+	private boolean fillAbstractions(Set<Abstraction<Var, Value, State, StmtID>> returnValue) {
+		boolean nextFilteredOut = true;
 		if(next!=null)
-			next.fillAbstractions(returnValue);
+			nextFilteredOut = next.fillAbstractions(returnValue);
+		if(!filteredOut) returnValue.addAll(abstractions);
+		return filteredOut && nextFilteredOut;
 	}
 
 	public AtCallToReturn<Var,State,StmtID> orElse() {
@@ -224,6 +228,7 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 				i.remove();
 			}			
 		}
+		if(abstractions.isEmpty()) noMatch();
 		return this;
 	}
 
@@ -272,6 +277,7 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 				i.remove();
 			}			
 		}
+		if(abstractions.isEmpty()) noMatch();
 		return this;
 	}
 	
