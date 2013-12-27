@@ -95,6 +95,25 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 		noMatch();
 		return this;
 	}
+	
+	public IfCheckContext<Var, State, StmtID> atReturnFromMethodOfStmt(StmtID sid) {
+		if(abstractions.isEmpty()) return this;
+
+		if(calleeAtReturnFlow!=null) {
+			for (Iterator<Abstraction<Var,Value,State,StmtID>> i = abstractions.iterator(); i.hasNext();) {
+				Abstraction<Var,Value,State,StmtID> abs = i.next();
+				Unit stmt = abs.getStatement(sid);
+				if(stmt==null || !context.getICFG().getMethodOf(stmt).equals(calleeAtReturnFlow)) {
+					i.remove();
+				}			
+			}
+		}
+		
+		if(abstractions.isEmpty())
+			//the filter did not match
+			noMatch();
+		return this;
+	}
 
 	public ValueContext<Var,State,StmtID> trackThis() {
 		if(abstractions.isEmpty()) return this;
@@ -168,6 +187,8 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 	}
 	
 	public Set<Abstraction<Var, Value, State, StmtID>> getAbstractions() {
+		//TODO is it really ok to store a global filteredOut flag?
+		//or does this need to be done per abstraction?
 		Set<Abstraction<Var, Value, State, StmtID>> res = new HashSet<Abstraction<Var,Value,State,StmtID>>();
 		if(fillAbstractions(res)) {
 			res.addAll(originalAbstractions);
@@ -307,6 +328,7 @@ interface AtCallToReturn<Var extends Enum<Var>,State extends Enum<State>,StmtID 
 }
 
 interface AtReturn<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {
+	public IfCheckContext<Var, State, StmtID> atReturnFromMethodOfStmt(StmtID sid);
 	public IfCheckContext<Var,State,StmtID> atReturnFrom(String methodSignature);
 	public IfCheckContext<Var, State, StmtID> atAnyReturn();
 }

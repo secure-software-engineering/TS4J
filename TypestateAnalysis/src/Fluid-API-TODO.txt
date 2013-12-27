@@ -1,6 +1,7 @@
 TODO:
 
-	Must be able to match current method against method of bound stmt
+	Must map back may-aliases to caller's context;
+	to do so, store original parameter-ref in abstraction
 
 NOT TODO:
 
