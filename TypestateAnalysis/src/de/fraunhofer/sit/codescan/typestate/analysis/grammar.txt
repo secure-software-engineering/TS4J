@@ -1,0 +1,57 @@
+ReturnRules ::=
+	ReturnRule [orElse ReturnRules]
+ReturnRule ::=
+	ReturnLocationFilter [AbstractionFiler] Actions
+	
+ReturnLocationFilter ::=
+	atReturnFromMethodWithName(name) MethodFilter
+  |	atReturnFromAnyCallToClass(name) MethodFilter
+	
+
+CallToReturnRules ::=
+	CallToReturnRule [orElse CallToReturnRules]
+CallToReturnRule ::=
+	LocationFilter [AbstractionFilter] Actions
+	
+LocationFilter ::=
+	atCallToMethodWithName(name) MethodFilter
+  | atAnyCallToClass(name) MethodFilter
+MethodFilter ::=
+	[withParameters(paramTypeName...)] [returning(typeName)]
+	
+AbstractionFilter ::=
+	StateFilter
+  |	ValueFilter [and AbstractionFilter]
+ValueFilter ::=
+	ifValueBoundTo(varName) EqualsSpec
+EqualsSpec ::=
+	equalsThis
+  |	equalsReturn
+  |	equalsParameter(index)
+StateFilter ::=
+	ifInState(stateName)
+	
+Actions ::=
+	Kill
+  | Reports [and Kill | NonKillActions]
+  | NonKillActions
+Reports ::=
+	Report [and Reports] 
+NonKillActions ::=
+	ChangeState
+  | BindValue [and NonKillActions]
+  | StoreStmt [and NonKillActions]
+ChangeState ::=
+	toState(stateName)
+BindValue ::=
+	ValueSpec as(varName)
+ValueSpec ::=
+	trackThis
+  |	trackReturn
+  | trackParameter(index)
+Kill ::=
+	kill
+StoreStmt ::=
+	storeStmtAs(stmtId)
+Report ::=
+	reportError(msg) atStmt(stmtId)
