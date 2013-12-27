@@ -28,10 +28,11 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 	
 	SootMethod method;
 	Stmt invokeStmt;
-	Set<Abstraction<Var, Value, State, StmtID>> abstractions;
 	int currSlot = -1;
 	Var eqCheckVar;
 	Set<Abstraction<Var, Value, State, StmtID>> originalAbstractions;
+	Set<Abstraction<Var, Value, State, StmtID>> abstractions;
+	boolean filteredOut = false;
 	Config<Var,State,StmtID> next;
 	private final SootMethod calleeAtReturnFlow;
 	private final IIFDSAnalysisContext context;
@@ -70,8 +71,13 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 		} 
 		
 		//the filter did not match
-		abstractions.clear();
+		noMatch();
 		return this;
+	}
+
+	private void noMatch() {
+		filteredOut = true;
+		abstractions.clear();
 	}
 
 	public IfCheckContext<Var, State, StmtID> atCallTo(String signature) {
@@ -86,7 +92,7 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 		}
 		
 		//the filter did not match
-		abstractions.clear();
+		noMatch();
 		return this;
 	}
 
@@ -168,7 +174,7 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 	}
 	
 	private void fillAbstractions(Set<Abstraction<Var, Value, State, StmtID>> returnValue) {
-		returnValue.addAll(abstractions);
+		returnValue.addAll(filteredOut ? originalAbstractions : abstractions);
 		if(next!=null)
 			next.fillAbstractions(returnValue);
 	}
@@ -252,7 +258,7 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 		}
 		
 		//filter did not match
-		abstractions.clear();
+		noMatch();
 		return this;
 	}
 
