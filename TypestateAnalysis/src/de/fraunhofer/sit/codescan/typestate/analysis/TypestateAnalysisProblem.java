@@ -10,7 +10,7 @@ import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.St
 import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId;
 import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var;
 
-public class TypestateAnalysisProblem extends AbstractTypestateAnalysisProblem<Var,State,StatementId> {
+public class TypestateAnalysisProblem extends AbstractJimpleTypestateAnalysisProblem<Var,State,StatementId> {
 	
 	private static final String MODEL_VALUE_CLASS_NAME = "example1.ModelValue";
 	private static final String MODEL_VALUE_ADD_SIG = "<example1.ValueGroup: void add(example1.ModelValue)>";

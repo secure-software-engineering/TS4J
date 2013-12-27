@@ -19,12 +19,20 @@ import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import de.fraunhofer.sit.codescan.framework.AbstractIFDSAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 
-public abstract class AbstractTypestateAnalysisProblem<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> extends
+/**
+ * An abstract Jimple-based typestate-analysis problem that can be configured through a set of rules defined
+ * through a fluent API.
+ *
+ * @param <Var> The set of variables used to index over bound values.
+ * @param <State> The finite set of possible internal states.
+ * @param <StmtID> The set of variables used to index over bound statements. 
+ */
+public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> extends
 		AbstractIFDSAnalysisProblem<Abstraction<Var, Value, State, StmtID>> {
 
 	protected final JimpleBasedInterproceduralCFG ICFG;
 
-	public AbstractTypestateAnalysisProblem(IIFDSAnalysisContext context) {
+	public AbstractJimpleTypestateAnalysisProblem(IIFDSAnalysisContext context) {
 		super(context);
 		ICFG = context.getICFG();
 	}
