@@ -1,6 +1,3 @@
-TODO 	Must be able to match current method against method of bound stmt
-
-
 ReturnRules ::=
 	ReturnRule [orElse ReturnRules]
 ReturnRule ::=
@@ -9,8 +6,8 @@ ReturnRule ::=
 ReturnLocationFilter ::=
 	atReturnFromMethodWithName(name) MethodFilter
   |	atReturnFromAnyCallToClass(name) MethodFilter
+  | atReturnFromMethodContainingStmt(stmtId)
 	
-
 CallToReturnRules ::=
 	CallToReturnRule [orElse CallToReturnRules]
 CallToReturnRule ::=
