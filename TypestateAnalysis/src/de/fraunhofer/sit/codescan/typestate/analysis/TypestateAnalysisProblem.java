@@ -2,11 +2,15 @@ package de.fraunhofer.sit.codescan.typestate.analysis;
 
 import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State.FLUSHED;
 import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State.TAINTED;
-import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId.VALUE_GROUP_CREATED;
 import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId.MODEL_VALUE_UPDATE;
+import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId.VALUE_GROUP_CREATED;
 import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var.MODEL_VALUE;
 import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var.VALUE_GROUP;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateAnalysisProblem;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
 import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State;
 import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId;
 import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var;

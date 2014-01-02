@@ -1,11 +1,12 @@
-package de.fraunhofer.sit.codescan.typestate.analysis;
+package de.fraunhofer.sit.codescan.sootbridge.typestate;
 
 import static heros.TwoElementSet.twoElementSet;
 import heros.FlowFunction;
 import heros.FlowFunctions;
+import heros.flowfunc.Compose;
 import heros.flowfunc.Identity;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -17,8 +18,11 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
-import de.fraunhofer.sit.codescan.framework.AbstractIFDSAnalysisProblem;
+import de.fraunhofer.sit.codescan.sootbridge.AbstractIFDSAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
 
 /**
  * An abstract Jimple-based typestate-analysis problem that can be configured through a set of rules defined
@@ -73,13 +77,9 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getCallFlowFunction(Unit src, final SootMethod dest) {
 				Stmt stmt = (Stmt) src;
 				InvokeExpr ie = stmt.getInvokeExpr();
-				final List<Value> callArgs = ie.getArgs();
-				final List<Value> parameterRefs = ICFG.getParameterRefs(dest);
-				return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {	
-					public Set<Abstraction<Var,Value,State,StmtID>> computeTargets(Abstraction<Var,Value,State,StmtID> source) {
-						return source.replaceValues(callArgs,parameterRefs);
-					}
-				};				
+				List<Value> callArgs = ie.getArgs();
+				List<Value> parameterRefs = ICFG.getParameterRefs(dest);
+				return new ReplaceValues(callArgs, parameterRefs);				
 			}
 
 			/**
@@ -116,53 +116,62 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 			 * On returns, apply the appropriate rules and replace formal parameters by arguments, as well as return locals by
 			 * LHS of the assignment of the call (if any).
 			 */
+			@SuppressWarnings("unchecked")
 			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getReturnFlowFunction(final Unit callSite, final SootMethod callee, final Unit exitStmt, Unit retSite) {
 				if(callSite!=null) {
 					Stmt stmt = (Stmt) callSite;
 					InvokeExpr ie = stmt.getInvokeExpr();
-					final List<Value> callArgs = ie.getArgs();
+					List<Value> toValues = ie.getArgs();
 					//FIXME must also map back all may-aliases
-					final List<Value> parameterRefs = ICFG.getParameterRefs(callee);
-					Value retFrom = null, retTo = null;
+					List<Value> fromValues = ICFG.getParameterRefs(callee);
 					if(exitStmt instanceof ReturnStmt && callSite instanceof DefinitionStmt) {
 						DefinitionStmt definitionStmt = (DefinitionStmt) callSite;
 						ReturnStmt returnStmt = (ReturnStmt) exitStmt;
-						retFrom = returnStmt.getOp();
-						retTo = definitionStmt.getLeftOp();
+						fromValues = new ArrayList<Value>(fromValues);
+						fromValues.add(returnStmt.getOp());
+						toValues = new ArrayList<Value>(toValues);
+						toValues.add(definitionStmt.getLeftOp());
 					}
-					final Value fRetFrom = retFrom, fRetTo = retTo;
-					return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
-						public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
-							//first apply rules with abstractions at the callee
-							Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite, context, callee);
-							atReturn(config);
-							Set<Abstraction<Var, Value, State, StmtID>> abstractionWithRulesApplied = config.getAbstractions();
-							
-							//then map back to caller's context
-							Set<Abstraction<Var, Value, State, StmtID>> res = new HashSet<Abstraction<Var,Value,State,StmtID>>();
-							for (Abstraction<Var, Value, State, StmtID> abs : abstractionWithRulesApplied) {
-								if(fRetFrom!=null){
-									abs = abs.replaceValue(fRetFrom, fRetTo);
-								}
-								res.addAll(abs.replaceValues(parameterRefs, callArgs));
-							}
-							
-							return res;
-						}
-					};
+					FlowFunction<Abstraction<Var,Value,State,StmtID>> applyRules = new ApplyReturnRules(callSite, callee);
+					FlowFunction<Abstraction<Var,Value,State,StmtID>> mapFormalsToActuals = new ReplaceValues(fromValues, toValues);
+					return Compose.compose(applyRules,mapFormalsToActuals);
 				} else {
 					//we have an unbalanced problem and the callsite is null; hence there is no caller to map back to
-					return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
-						public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
-							//just apply rules with abstractions at the callee
-							Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite, context, callee);
-							atReturn(config);
-							return config.getAbstractions();
-						}
-					};
+					return new ApplyReturnRules(callSite, callee);
 				}
 			}
 		};
 	}
 
+	private final class ApplyReturnRules implements
+			FlowFunction<Abstraction<Var, Value, State, StmtID>> {
+		private final Unit callSite;
+		private final SootMethod callee;
+
+		private ApplyReturnRules(Unit callSite, SootMethod callee) {
+			this.callSite = callSite;
+			this.callee = callee;
+		}
+
+		public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
+			//first apply rules with abstractions at the callee
+			Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite, context, callee);
+			atReturn(config);
+			return config.getAbstractions();
+		}
+	}
+
+	private class ReplaceValues implements FlowFunction<Abstraction<Var, Value, State, StmtID>> {
+		private final List<Value> fromValues;
+		private final List<Value> toValues;
+
+		private ReplaceValues(List<Value> fromValues, List<Value> toValues) {
+			this.fromValues = fromValues;
+			this.toValues = toValues;
+		}
+
+		public Set<Abstraction<Var,Value,State,StmtID>> computeTargets(Abstraction<Var,Value,State,StmtID> source) {
+			return source.replaceValues(fromValues,toValues);
+		}
+	}
 }

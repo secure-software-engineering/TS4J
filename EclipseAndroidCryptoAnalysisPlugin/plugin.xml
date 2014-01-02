@@ -10,6 +10,11 @@
                class="de.fraunhofer.sit.codescan.androidcrypto.ECBAnalysis"
                id="MethodBasedECBAnalysis">
          </methodBasedAnalysis>
+         <ifdsAnalysis
+               class="de.fraunhofer.sit.codescan.androidcrypto.IFDSAnalysisPlugin1"
+               direction="backward"
+               id="ConstantInitAnalysis">
+         </ifdsAnalysis>
       </analysisPack>
    </extension>
 

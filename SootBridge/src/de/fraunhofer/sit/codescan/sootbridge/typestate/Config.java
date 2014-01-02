@@ -1,12 +1,9 @@
-package de.fraunhofer.sit.codescan.typestate.analysis;
+package de.fraunhofer.sit.codescan.sootbridge.typestate;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
-import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
-import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 
 import soot.Scene;
 import soot.SootMethod;
@@ -16,6 +13,17 @@ import soot.jimple.DefinitionStmt;
 import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
 import soot.jimple.Stmt;
+import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
+import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.CallContext;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.EqualsContext;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.IfCheckContext;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.ReportError;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.ValueContext;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.VarContext;
 
 
 public class Config<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>>
@@ -321,55 +329,6 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 		return null;
 	}
 }
-
-interface AtCallToReturn<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {
-	public IfCheckContext<Var,State,StmtID> atCallTo(String methodSignature);
-	public IfCheckContext<Var,State,StmtID> atAnyCallToClass(String className);
-}
-
-interface AtReturn<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {
-	public IfCheckContext<Var, State, StmtID> atReturnFromMethodOfStmt(StmtID sid);
-	public IfCheckContext<Var,State,StmtID> atReturnFrom(String methodSignature);
-	public IfCheckContext<Var, State, StmtID> atAnyReturn();
-}
-
-interface EqualsContext<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {
-	public CallContext<Var,State,StmtID> equalsThis();
-	public CallContext<Var,State,StmtID> equalsReturnValue();
-	public CallContext<Var,State,StmtID> equalsParameter(int paramIndex);
-}
-
-interface CallContext<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> extends VarContext<Var,State,StmtID> {
-	public IfCheckContext<Var,State,StmtID> and();
-	public ValueContext<Var,State,StmtID> trackThis();
-	public ValueContext<Var,State,StmtID> trackReturnValue();
-	public ValueContext<Var,State,StmtID> trackParameter(int paramIndex);
-	public ReportError<Var,State,StmtID> reportError(String errorMessage);
-}
-
-interface IfCheckContext<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> extends VarContext<Var,State,StmtID> {
-	public EqualsContext<Var,State,StmtID> ifValueBoundTo(Var var);
-	public CallContext<Var,State,StmtID> always();
-	public CallContext<Var,State,StmtID> ifInState(State s);
-}
-
-interface ValueContext<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {
-	public VarContext<Var,State,StmtID> as(Var var);
-}
-
-interface VarContext<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> extends Done<Var,State,StmtID> {
-	public Done<Var,State,StmtID> toState(State s);
-}
-
-interface Done<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {	
-	public AtCallToReturn<Var,State,StmtID> orElse();
-	public Done<Var,State,StmtID> storeStmtAs(StmtID sid);
-}
-
-interface ReportError<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> {	
-	public Done<Var,State,StmtID> atStmt(StmtID sid);
-}
-
 
 enum ValueId {
 	BASE(0), RETURN(-1), PARAM1(1), PARAM2(2), PARAM3(3), PARAM4(4), PARAM5(5);

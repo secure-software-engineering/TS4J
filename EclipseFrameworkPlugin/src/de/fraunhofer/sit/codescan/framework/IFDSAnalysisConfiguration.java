@@ -21,7 +21,7 @@ public class IFDSAnalysisConfiguration extends AnalysisConfiguration {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <P extends IFDSTabulationProblem<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>>>
+	private <P extends IFDSTabulationProblem<Unit, ?, SootMethod, InterproceduralCFG<Unit, SootMethod>>>
 		IIFDSAnalysisPlugin<P> createIFDSAnalysisPlugin() {
 		try {
 			return (IIFDSAnalysisPlugin<P>) analysisConfigElement.createExecutableExtension("class");

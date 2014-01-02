@@ -5,5 +5,7 @@ import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 public interface IIFDSAnalysisContext extends IAnalysisContext {
 	
 	JimpleBasedInterproceduralCFG getICFG();
+	
+	JimpleBasedInterproceduralCFG getBackwardICFG();
 
 }

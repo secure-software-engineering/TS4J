@@ -1,4 +1,4 @@
-package de.fraunhofer.sit.codescan.typestate.analysis;
+package de.fraunhofer.sit.codescan.sootbridge.typestate;
 
 import static heros.TwoElementSet.twoElementSet;
 import static java.util.Collections.singleton;

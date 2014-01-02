@@ -1,4 +1,4 @@
-package de.fraunhofer.sit.codescan.framework;
+package de.fraunhofer.sit.codescan.sootbridge;
 
 import heros.DefaultSeeds;
 import heros.InterproceduralCFG;
@@ -10,7 +10,6 @@ import java.util.Set;
 
 import soot.SootMethod;
 import soot.Unit;
-import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 
 public abstract class AbstractIFDSAnalysisProblem<D> extends DefaultIFDSTabulationProblem<Unit, D, SootMethod, InterproceduralCFG<Unit, SootMethod>> {
 

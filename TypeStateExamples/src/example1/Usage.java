@@ -15,8 +15,8 @@ public class Usage {
         modelGroup.add(someIntValue);
         modelGroup.add(someTextValue);
 
-        someBooleanValue.setChecked(false);
         modelGroup.flush();
+        someBooleanValue.setChecked(false);
         someIntValue.increment(3);
     } 
 

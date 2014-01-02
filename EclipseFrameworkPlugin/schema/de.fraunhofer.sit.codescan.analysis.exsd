@@ -92,6 +92,21 @@
                </appinfo>
             </annotation>
          </attribute>
+         <attribute name="direction" use="default" value="forward">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+            <simpleType>
+               <restriction base="string">
+                  <enumeration value="forward">
+                  </enumeration>
+                  <enumeration value="backward">
+                  </enumeration>
+               </restriction>
+            </simpleType>
+         </attribute>
       </complexType>
    </element>
 
@@ -133,7 +148,7 @@
          <choice>
             <element ref="byMethodDecl" minOccurs="0" maxOccurs="unbounded"/>
          </choice>
-         <attribute name="superType" type="string" use="default" value="">
+         <attribute name="superType" type="string">
             <annotation>
                <documentation>
                   
@@ -148,7 +163,7 @@
          <choice>
             <element ref="byMethodCall" minOccurs="0" maxOccurs="unbounded"/>
          </choice>
-         <attribute name="subsignature" type="string" use="default" value="">
+         <attribute name="subsignature" type="string">
             <annotation>
                <documentation>
                   

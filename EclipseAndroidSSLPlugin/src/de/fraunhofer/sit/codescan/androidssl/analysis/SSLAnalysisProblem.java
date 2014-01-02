@@ -29,7 +29,7 @@ import soot.jimple.ParameterRef;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.internal.JimpleLocal;
-import de.fraunhofer.sit.codescan.framework.AbstractIFDSAnalysisProblem;
+import de.fraunhofer.sit.codescan.sootbridge.AbstractIFDSAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 
 public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
