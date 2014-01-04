@@ -20,6 +20,7 @@ import soot.SceneTransformer;
 import soot.SootMethod;
 import soot.Transform;
 import soot.Unit;
+import soot.Value;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.BackwardsInterproceduralCFG;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
@@ -55,7 +56,7 @@ public class SootRunner {
 					return new BriefUnitGraph(body);
 				}
 			};
-			final MustAlias mustAliasManager = new MustAlias(icfg);
+			final AliasAnalysisManager aliasAnalysisManager = new AliasAnalysisManager(icfg);
 
 			for(Map.Entry<C, Set<String>> analysisAndMethodSignatures: analysisToEntryMethodSignatures.entrySet()) {
 				for(final String methodSignature: analysisAndMethodSignatures.getValue()) {
@@ -95,7 +96,7 @@ public class SootRunner {
 
 						@Override
 						public boolean mustAlias(Stmt stmt, Local l1, Stmt stmt2, Local l2) {
-							return mustAliasManager.mustAlias(stmt, l1, stmt2, l2);
+							return aliasAnalysisManager.mustAlias(stmt, l1, stmt2, l2);
 						}
 
 						@Override
@@ -104,6 +105,11 @@ public class SootRunner {
 							if(bicfg==null)
 								bicfg = new BackwardsInterproceduralCFG();
 							return bicfg;
+						}
+
+						@Override
+						public Set<Value> mayAliasesAtExit(Value v, SootMethod owner) {
+							return aliasAnalysisManager.mayAliasesAtExit(v, owner);
 						}
 					});
 					

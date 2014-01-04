@@ -8,6 +8,7 @@ import heros.flowfunc.Identity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 import soot.SootMethod;
@@ -121,9 +122,9 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 				if(callSite!=null) {
 					Stmt stmt = (Stmt) callSite;
 					InvokeExpr ie = stmt.getInvokeExpr();
-					List<Value> toValues = ie.getArgs();
-					//FIXME must also map back all may-aliases
-					List<Value> fromValues = ICFG.getParameterRefs(callee);
+					List<Value> toValues = new ArrayList<Value>(ie.getArgs());
+					List<Value> fromValues = new ArrayList<Value>(ICFG.getParameterRefs(callee));
+					addAliases(callee, toValues, fromValues);
 					if(exitStmt instanceof ReturnStmt && callSite instanceof DefinitionStmt) {
 						DefinitionStmt definitionStmt = (DefinitionStmt) callSite;
 						ReturnStmt returnStmt = (ReturnStmt) exitStmt;
@@ -138,6 +139,19 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 				} else {
 					//we have an unbalanced problem and the callsite is null; hence there is no caller to map back to
 					return new ApplyReturnRules(callSite, callee);
+				}
+			}
+
+			private void addAliases(final SootMethod callee, List<Value> toValues, List<Value> fromValues) {
+				for(ListIterator<Value> fromIter=fromValues.listIterator(), toIter=toValues.listIterator(); fromIter.hasNext();) {
+					Value fromValue = fromIter.next();
+					Value toValue = toIter.next();
+					for(Value fromValueAlias: context.mayAliasesAtExit(fromValue, callee)) {
+						if(fromValue==fromValueAlias) continue;
+						//we also want to replace the alias by the same to-value
+						fromIter.add(fromValueAlias);
+						toIter.add(toValue);
+					}
 				}
 			}
 		};
