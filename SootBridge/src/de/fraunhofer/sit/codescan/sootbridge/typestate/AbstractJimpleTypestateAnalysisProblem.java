@@ -122,9 +122,9 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 				if(callSite!=null) {
 					Stmt stmt = (Stmt) callSite;
 					InvokeExpr ie = stmt.getInvokeExpr();
-					List<Value> toValues = new ArrayList<Value>(ie.getArgs());
 					List<Value> fromValues = new ArrayList<Value>(ICFG.getParameterRefs(callee));
-					addAliases(callee, toValues, fromValues);
+					List<Value> toValues = new ArrayList<Value>(ie.getArgs());
+					addAliases(callee, fromValues, toValues);
 					if(exitStmt instanceof ReturnStmt && callSite instanceof DefinitionStmt) {
 						DefinitionStmt definitionStmt = (DefinitionStmt) callSite;
 						ReturnStmt returnStmt = (ReturnStmt) exitStmt;
@@ -142,11 +142,14 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 				}
 			}
 
-			private void addAliases(final SootMethod callee, List<Value> toValues, List<Value> fromValues) {
+			/**
+			 * Adds from/to mappings also for all aliases of from-values.
+			 */
+			private void addAliases(final SootMethod fromMethod, List<Value> fromValues, List<Value> toValues) {
 				for(ListIterator<Value> fromIter=fromValues.listIterator(), toIter=toValues.listIterator(); fromIter.hasNext();) {
 					Value fromValue = fromIter.next();
 					Value toValue = toIter.next();
-					for(Value fromValueAlias: context.mayAliasesAtExit(fromValue, callee)) {
+					for(Value fromValueAlias: context.mayAliasesAtExit(fromValue, fromMethod)) {
 						if(fromValue==fromValueAlias) continue;
 						//we also want to replace the alias by the same to-value
 						fromIter.add(fromValueAlias);
