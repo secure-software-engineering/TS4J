@@ -23,6 +23,7 @@ import soot.Unit;
 import soot.Value;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.BackwardsInterproceduralCFG;
+import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.DirectedGraph;
@@ -76,7 +77,7 @@ public class SootRunner {
 							return m;
 						}
 						
-						public JimpleBasedInterproceduralCFG getICFG() {
+						public BiDiInterproceduralCFG<Unit,SootMethod> getICFG() {
 							return icfg;
 						}
 						
@@ -100,10 +101,10 @@ public class SootRunner {
 						}
 
 						@Override
-						public JimpleBasedInterproceduralCFG getBackwardICFG() {
+						public BiDiInterproceduralCFG<Unit,SootMethod> getBackwardICFG() {
 							//FIXME implement BackwardsInterproceduralCFG() such that it simply decorates the original ICFG;
 							if(bicfg==null)
-								bicfg = new BackwardsInterproceduralCFG();
+								bicfg = new BackwardsInterproceduralCFG(icfg);
 							return bicfg;
 						}
 

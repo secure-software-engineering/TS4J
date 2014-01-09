@@ -1,11 +1,13 @@
 package de.fraunhofer.sit.codescan.sootbridge;
 
-import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
+import soot.SootMethod;
+import soot.Unit;
+import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 
 public interface IIFDSAnalysisContext extends IAnalysisContext {
 	
-	JimpleBasedInterproceduralCFG getICFG();
+	BiDiInterproceduralCFG<Unit,SootMethod> getICFG();
 	
-	JimpleBasedInterproceduralCFG getBackwardICFG();
+	BiDiInterproceduralCFG<Unit,SootMethod> getBackwardICFG();
 
 }

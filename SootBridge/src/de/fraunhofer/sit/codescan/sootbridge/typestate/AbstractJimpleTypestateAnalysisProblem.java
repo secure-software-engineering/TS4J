@@ -18,7 +18,7 @@ import soot.jimple.DefinitionStmt;
 import soot.jimple.InvokeExpr;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
-import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
+import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 import de.fraunhofer.sit.codescan.sootbridge.AbstractIFDSAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
@@ -36,7 +36,7 @@ import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
 public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> extends
 		AbstractIFDSAnalysisProblem<Abstraction<Var, Value, State, StmtID>> {
 
-	protected final JimpleBasedInterproceduralCFG ICFG;
+	protected final BiDiInterproceduralCFG<Unit,SootMethod> ICFG;
 
 	public AbstractJimpleTypestateAnalysisProblem(IIFDSAnalysisContext context) {
 		super(context);
