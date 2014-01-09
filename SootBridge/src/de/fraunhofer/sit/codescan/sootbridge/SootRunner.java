@@ -24,7 +24,6 @@ import soot.Value;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.BackwardsInterproceduralCFG;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
-import soot.jimple.toolkits.ide.icfg.UnitGraphCreator;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.DirectedGraph;
 
@@ -49,13 +48,14 @@ public class SootRunner {
 
 		@Override
 		protected void internalTransform(String phaseName, Map<String, String> options) {
-			icfg = new JimpleBasedInterproceduralCFG(new UnitGraphCreator() {
-				public DirectedGraph<Unit> makeGraph(Body body) {
+			icfg = new JimpleBasedInterproceduralCFG() {
+				@Override
+				protected synchronized DirectedGraph<Unit> makeGraph(Body body) {
 					//we use brief unit graphs such that we warn in situations where
 					//the code only might be safe due to some exceptional flows
 					return new BriefUnitGraph(body);
 				}
-			});
+			};
 			final AliasAnalysisManager aliasAnalysisManager = new AliasAnalysisManager(icfg);
 
 			for(Map.Entry<C, Set<String>> analysisAndMethodSignatures: analysisToEntryMethodSignatures.entrySet()) {
