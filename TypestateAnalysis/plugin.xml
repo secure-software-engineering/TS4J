@@ -4,13 +4,17 @@
    <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
       <analysisPack
-            id="SSLAnalysis">
+            id="CollectionAnalysis">
          <ifdsAnalysis
-               class="de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisPlugin"
-               id="TypeStateAnalysisIFDS">
+               class="de.fraunhofer.sit.codescan.typestate.collectionanalysis.CollectionIteratorAnalysisPlugin"
+               direction="forward"
+               id="CollectionAnalysisIFDS">
             <filter>
                <bySuperType>
-	               <byMethodDecl subsignature="void main()">
+	               <byMethodDecl>
+                   <byMethodCall
+                         subsignature="java.util.Iterator iterator()">
+                   </byMethodCall>
 	               </byMethodDecl>
                </bySuperType>
             </filter>
