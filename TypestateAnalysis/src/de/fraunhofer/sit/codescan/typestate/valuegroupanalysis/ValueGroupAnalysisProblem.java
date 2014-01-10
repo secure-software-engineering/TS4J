@@ -1,21 +1,21 @@
-package de.fraunhofer.sit.codescan.typestate.analysis;
+package de.fraunhofer.sit.codescan.typestate.valuegroupanalysis;
 
-import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State.FLUSHED;
-import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State.TAINTED;
-import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId.MODEL_VALUE_UPDATE;
-import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId.VALUE_GROUP_CREATED;
-import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var.MODEL_VALUE;
-import static de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var.VALUE_GROUP;
+import static de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.State.FLUSHED;
+import static de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.State.TAINTED;
+import static de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.StatementId.MODEL_VALUE_UPDATE;
+import static de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.StatementId.VALUE_GROUP_CREATED;
+import static de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.Var.MODEL_VALUE;
+import static de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.Var.VALUE_GROUP;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
-import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.State;
-import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.StatementId;
-import de.fraunhofer.sit.codescan.typestate.analysis.TypestateAnalysisProblem.Var;
+import de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.State;
+import de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.StatementId;
+import de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.Var;
 
-public class TypestateAnalysisProblem extends AbstractJimpleTypestateAnalysisProblem<Var,State,StatementId> {
+public class ValueGroupAnalysisProblem extends AbstractJimpleTypestateAnalysisProblem<Var,State,StatementId> {
 	
 	private static final String MODEL_VALUE_CLASS_NAME = "example1.ModelValue";
 	private static final String MODEL_VALUE_ADD_SIG = "<example1.ValueGroup: void add(example1.ModelValue)>";
@@ -26,7 +26,7 @@ public class TypestateAnalysisProblem extends AbstractJimpleTypestateAnalysisPro
 	enum State { FLUSHED, TAINTED };
 	enum StatementId { VALUE_GROUP_CREATED, MODEL_VALUE_UPDATE };
 
-	public TypestateAnalysisProblem(IIFDSAnalysisContext context) {
+	public ValueGroupAnalysisProblem(IIFDSAnalysisContext context) {
 		super(context);
 	}
 
