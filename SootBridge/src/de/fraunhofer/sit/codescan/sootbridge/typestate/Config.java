@@ -93,6 +93,7 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 
 		if(invokeStmt!=null) {
 			SootMethod calledMethod = invokeStmt.getInvokeExpr().getMethod();
+			//TODO should allow for fuzzy matching of declaring type
 			if(calledMethod.getSignature().equals(signature)) {
 				method = calledMethod;
 				return this;
@@ -144,7 +145,7 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 		return this;
 	}
 
-	public VarContext<Var,State,StmtID> as(Var var) {
+	public CallContext<Var, State, StmtID> as(Var var) {
 		if(abstractions.isEmpty()) return this;
 		
 		Value addedValue = extractValue();
@@ -175,6 +176,7 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 			} else {
 				return null;
 			}
+			break;
 		default:
 			val = ie.getArg(currSlot);
 			break;
@@ -326,7 +328,21 @@ EqualsContext<Var,State,StmtID>, IfCheckContext<Var,State,StmtID>, AtReturn<Var,
 				context.reportError(new ErrorMarker(errorMessage,className,stmt.getJavaSourceStartLineNumber()));
 			}
 		}
-		return null;
+		return this;
+	}
+
+	@Override
+	public Done<Var, State, StmtID> here() {
+		if(abstractions.isEmpty()) return this;
+		Unit stmt = invokeStmt;
+		String className = context.getICFG().getMethodOf(stmt).getDeclaringClass().getName();
+		context.reportError(new ErrorMarker(errorMessage,className,stmt.getJavaSourceStartLineNumber()));
+		return this;
+	}
+
+	@Override
+	public Done<Var, State, StmtID> doNothing() {
+		return this;
 	}
 }
 
