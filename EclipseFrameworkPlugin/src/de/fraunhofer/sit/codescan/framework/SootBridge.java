@@ -128,9 +128,15 @@ public class SootBridge {
 
 	private static String resolveName(IMethod iMethod, String simpleName) throws JavaModelException {
 		String readableName = Signature.toString(simpleName);
+		String arraySuffix = "";
+		if(readableName.contains("[]")) {
+			int arraySuffixStart = readableName.indexOf("[]");
+			arraySuffix = readableName.substring(arraySuffixStart);
+			readableName = readableName.substring(0,arraySuffixStart);
+		}
 		if(!PRIMITIVE_TYPE_NAMES.contains(readableName)) {
 			String[][] fqTypes = iMethod.getDeclaringType().resolveType(readableName);
-			if(fqTypes.length==0) {
+			if(fqTypes==null || fqTypes.length==0) {
 				LOGGER.debug("Failed to resolve type "+readableName+" in "+iMethod.getDeclaringType().getFullyQualifiedName());  
 				return null;
 			} else if(fqTypes.length>1) {
@@ -144,7 +150,7 @@ public class SootBridge {
 			String className = fqTypes[0][1];
 			readableName = pkg+"."+className;
 		}
-		return readableName;
+		return readableName+arraySuffix;
 	}
 	
 	private static URL[] projectClassPath(IJavaProject javaProject) {
