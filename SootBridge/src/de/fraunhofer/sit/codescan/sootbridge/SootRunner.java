@@ -39,6 +39,7 @@ public class SootRunner {
 		private final Map<C, Set<String>> analysisToEntryMethodSignatures;
 		private JimpleBasedInterproceduralCFG icfg;
 		private BackwardsInterproceduralCFG bicfg;
+		private AliasAnalysisManager aliasAnalysisManager;
 
 		private Transformer(
 				Map<C, Set<ErrorMarker>> analysisConfigToResultingErrorMarkers,
@@ -49,15 +50,6 @@ public class SootRunner {
 
 		@Override
 		protected void internalTransform(String phaseName, Map<String, String> options) {
-			icfg = new JimpleBasedInterproceduralCFG() {
-				@Override
-				protected synchronized DirectedGraph<Unit> makeGraph(Body body) {
-					//we use brief unit graphs such that we warn in situations where
-					//the code only might be safe due to some exceptional flows
-					return new BriefUnitGraph(body);
-				}
-			};
-			final AliasAnalysisManager aliasAnalysisManager = new AliasAnalysisManager(icfg);
 
 			for(Map.Entry<C, Set<String>> analysisAndMethodSignatures: analysisToEntryMethodSignatures.entrySet()) {
 				for(final String methodSignature: analysisAndMethodSignatures.getValue()) {
@@ -78,7 +70,7 @@ public class SootRunner {
 						}
 						
 						public BiDiInterproceduralCFG<Unit,SootMethod> getICFG() {
-							return icfg;
+							return getOrCreateICFG();
 						}
 						
 						public IAnalysisConfiguration getAnalysisConfiguration() {
@@ -97,26 +89,51 @@ public class SootRunner {
 
 						@Override
 						public boolean mustAlias(Stmt stmt, Local l1, Stmt stmt2, Local l2) {
-							return aliasAnalysisManager.mustAlias(stmt, l1, stmt2, l2);
+							return getOrCreateAnalysisManager().mustAlias(stmt, l1, stmt2, l2);
 						}
 
 						@Override
 						public BiDiInterproceduralCFG<Unit,SootMethod> getBackwardICFG() {
-							//FIXME implement BackwardsInterproceduralCFG() such that it simply decorates the original ICFG;
-							if(bicfg==null)
-								bicfg = new BackwardsInterproceduralCFG(icfg);
-							return bicfg;
+							return getOrCreateBackwardsICFG();
 						}
 
 						@Override
 						public Set<Value> mayAliasesAtExit(Value v, SootMethod owner) {
-							return aliasAnalysisManager.mayAliasesAtExit(v, owner);
+							return getOrCreateAnalysisManager().mayAliasesAtExit(v, owner);
+						}
+
+						private BiDiInterproceduralCFG<Unit, SootMethod> getOrCreateBackwardsICFG() {
+							if(bicfg==null)
+								bicfg = new BackwardsInterproceduralCFG(getOrCreateICFG());
+							return bicfg;
+						}
+
+						private AliasAnalysisManager getOrCreateAnalysisManager() {
+							if(aliasAnalysisManager==null) {
+								new AliasAnalysisManager(getOrCreateICFG());
+							}
+							return aliasAnalysisManager;
+						}
+						
+						private JimpleBasedInterproceduralCFG getOrCreateICFG() {
+							if(icfg ==null) {
+								icfg = new JimpleBasedInterproceduralCFG() {
+									@Override
+									protected synchronized DirectedGraph<Unit> makeGraph(Body body) {
+										//we use brief unit graphs such that we warn in situations where
+										//the code only might be safe due to some exceptional flows
+										return new BriefUnitGraph(body);
+									}
+								};
+							}
+							return icfg;
 						}
 					});
 					
 				}
 			}
 		}
+
 	}
 
 
