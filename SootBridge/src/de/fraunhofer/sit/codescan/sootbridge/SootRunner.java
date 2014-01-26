@@ -146,6 +146,7 @@ public class SootRunner {
 		String[] args = (staticSootArgs+" -cp "+sootClassPath+" "+Joiner.on(" ").join(classNames)).split(" ");
 		G.v().out = new PrintStream(new LoggingOutputStream(LOGGER, false), true);
 		try {
+			LOGGER.trace("SOOT ARGS:"+Joiner.on(" ").join(args));
 			soot.Main.main(args);
 		} catch(Throwable t) {
 			LOGGER.error("Error executing Soot",t);
