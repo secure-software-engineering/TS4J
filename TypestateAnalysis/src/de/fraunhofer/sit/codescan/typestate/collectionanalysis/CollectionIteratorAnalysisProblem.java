@@ -6,6 +6,7 @@ import static de.fraunhofer.sit.codescan.typestate.collectionanalysis.Collection
 import static de.fraunhofer.sit.codescan.typestate.collectionanalysis.CollectionIteratorAnalysisProblem.Var.ITERATOR;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateAnalysisProblem;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateForwardAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
@@ -13,7 +14,7 @@ import de.fraunhofer.sit.codescan.typestate.collectionanalysis.CollectionIterato
 import de.fraunhofer.sit.codescan.typestate.collectionanalysis.CollectionIteratorAnalysisProblem.StatementId;
 import de.fraunhofer.sit.codescan.typestate.collectionanalysis.CollectionIteratorAnalysisProblem.Var;
 
-public class CollectionIteratorAnalysisProblem extends AbstractJimpleTypestateAnalysisProblem<Var,State,StatementId> {
+public class CollectionIteratorAnalysisProblem extends AbstractJimpleTypestateForwardAnalysisProblem<Var,State,StatementId> {
 	
 	private static final String COLLECTION_ADD = "<java.util.Collection: boolean add(java.lang.Object)>";
 	private static final String NEW_ITERATOR = "<java.util.Collection: java.util.Iterator iterator()>";

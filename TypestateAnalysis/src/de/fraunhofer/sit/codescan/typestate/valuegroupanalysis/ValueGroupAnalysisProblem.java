@@ -8,6 +8,7 @@ import static de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroup
 import static de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.Var.VALUE_GROUP;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateAnalysisProblem;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateForwardAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
@@ -15,7 +16,7 @@ import de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysi
 import de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.StatementId;
 import de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.Var;
 
-public class ValueGroupAnalysisProblem extends AbstractJimpleTypestateAnalysisProblem<Var,State,StatementId> {
+public class ValueGroupAnalysisProblem extends AbstractJimpleTypestateForwardAnalysisProblem<Var,State,StatementId> {
 	
 	private static final String MODEL_VALUE_CLASS_NAME = "example1.ModelValue";
 	private static final String MODEL_VALUE_ADD_SIG = "<example1.ValueGroup: void add(example1.ModelValue)>";

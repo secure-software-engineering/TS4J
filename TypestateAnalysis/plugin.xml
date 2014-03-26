@@ -4,21 +4,37 @@
    <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
       <analysisPack
-            id="CollectionAnalysis">
+            id="HardCodedKeyAnalysis">
          <ifdsAnalysis
-               class="de.fraunhofer.sit.codescan.typestate.collectionanalysis.CollectionIteratorAnalysisPlugin"
-               direction="forward"
-               id="CollectionAnalysisIFDS">
+               class="de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisPlugin"
+               direction="backward"
+               id="TypestateAnalysis.ifdsAnalysis1">
             <filter>
                <bySuperType>
-	               <byMethodDecl>
-                   <byMethodCall
-                         subsignature="java.util.Iterator iterator()">
-                   </byMethodCall>
-	               </byMethodDecl>
+                  <byMethodDecl></byMethodDecl>
                </bySuperType>
             </filter>
          </ifdsAnalysis>
       </analysisPack>
    </extension>
+       <extension
+          point="de.fraunhofer.sit.codescan.framework.analysis">
+       <analysisPack id="CollectionAnalysis">
+          <ifdsAnalysis
+               class="de.fraunhofer.sit.codescan.typestate.collectionanalysis.CollectionIteratorAnalysisPlugin"
+               direction="forward"
+               id="CollectionAnalysisIFDS">
+             <filter>
+                <bySuperType>
+	               <byMethodDecl>
+                 <byMethodCall
+                        subsignature="java.util.Iterator iterator()">
+                  </byMethodCall>
+	               </byMethodDecl>
+                </bySuperType>
+             </filter>
+          </ifdsAnalysis>
+       </analysisPack>
+    </extension>
+   
 </plugin>

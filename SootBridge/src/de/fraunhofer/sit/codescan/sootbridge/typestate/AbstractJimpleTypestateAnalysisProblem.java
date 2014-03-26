@@ -36,11 +36,13 @@ import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
 public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> extends
 		AbstractIFDSAnalysisProblem<Abstraction<Var, Value, State, StmtID>> {
 
+	final IIFDSAnalysisContext context;
 	protected final BiDiInterproceduralCFG<Unit,SootMethod> ICFG;
 
-	public AbstractJimpleTypestateAnalysisProblem(IIFDSAnalysisContext context) {
-		super(context);
-		ICFG = context.getICFG();
+	public AbstractJimpleTypestateAnalysisProblem(IIFDSAnalysisContext context, BiDiInterproceduralCFG<Unit,SootMethod> graph) {
+		super(graph);
+		this.context = context;
+		ICFG = graph;
 	}
 
 	protected Abstraction<Var,Value,State,StmtID> createZeroValue() {
@@ -67,105 +69,14 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 	 */
 	protected abstract Done<Var,State,StmtID> atReturn(AtReturn<Var,State,StmtID> atReturn);
 
-	@Override
-	protected FlowFunctions<Unit, Abstraction<Var,Value,State,StmtID>, SootMethod> createFlowFunctionsFactory() {
-		
-		return new FlowFunctions<Unit, Abstraction<Var,Value,State,StmtID>, SootMethod>() {
 
-			/**
-			 * On calls, replace arguments by formal parameters.
-			 */
-			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getCallFlowFunction(Unit src, final SootMethod dest) {
-				Stmt stmt = (Stmt) src;
-				InvokeExpr ie = stmt.getInvokeExpr();
-				List<Value> callArgs = ie.getArgs();
-				List<Value> parameterRefs = ICFG.getParameterRefs(dest);
-				return new ReplaceValues(callArgs, parameterRefs);				
-			}
 
-			/**
-			 * On call-to-return, apply the appropriate rules.
-			 */
-			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getCallToReturnFlowFunction(Unit curr, Unit succ) {
-				final Stmt s = (Stmt) curr;
-				return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
-					public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
-						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,s,context);
-						atCallToReturn(config);
-						return config.getAbstractions();
-					}
-				};
-			}
-
-			/**
-			 * On normal flows we simply track assignments.
-			 * TODO may need to configure rules for arithmetic operations.
-			 */
-			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getNormalFlowFunction(Unit curr,Unit succ) {
-				if(curr instanceof DefinitionStmt) {
-					final DefinitionStmt assign = (DefinitionStmt) curr;
-					return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
-						public Set<Abstraction<Var,Value,State,StmtID>> computeTargets(final Abstraction<Var,Value,State,StmtID> source) {
-							return twoElementSet(source, source.replaceValue(assign.getRightOp(),assign.getLeftOp()));
-						}
-					};
-				}
-				return Identity.v();
-			}
-
-			/**
-			 * On returns, apply the appropriate rules and replace formal parameters by arguments, as well as return locals by
-			 * LHS of the assignment of the call (if any).
-			 */
-			@SuppressWarnings("unchecked")
-			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getReturnFlowFunction(final Unit callSite, final SootMethod callee, final Unit exitStmt, Unit retSite) {
-				if(callSite!=null) {
-					Stmt stmt = (Stmt) callSite;
-					InvokeExpr ie = stmt.getInvokeExpr();
-					List<Value> fromValues = new ArrayList<Value>(ICFG.getParameterRefs(callee));
-					List<Value> toValues = new ArrayList<Value>(ie.getArgs());
-					addAliases(callee, fromValues, toValues);
-					if(exitStmt instanceof ReturnStmt && callSite instanceof DefinitionStmt) {
-						DefinitionStmt definitionStmt = (DefinitionStmt) callSite;
-						ReturnStmt returnStmt = (ReturnStmt) exitStmt;
-						fromValues = new ArrayList<Value>(fromValues);
-						fromValues.add(returnStmt.getOp());
-						toValues = new ArrayList<Value>(toValues);
-						toValues.add(definitionStmt.getLeftOp());
-					}
-					FlowFunction<Abstraction<Var,Value,State,StmtID>> applyRules = new ApplyReturnRules(callSite, callee);
-					FlowFunction<Abstraction<Var,Value,State,StmtID>> mapFormalsToActuals = new ReplaceValues(fromValues, toValues);
-					return Compose.compose(applyRules,mapFormalsToActuals);
-				} else {
-					//we have an unbalanced problem and the callsite is null; hence there is no caller to map back to
-					return new ApplyReturnRules(callSite, callee);
-				}
-			}
-
-			/**
-			 * Adds from/to mappings also for all aliases of from-values.
-			 */
-			private void addAliases(final SootMethod fromMethod, List<Value> fromValues, List<Value> toValues) {
-				for(ListIterator<Value> fromIter=fromValues.listIterator(), toIter=toValues.listIterator(); fromIter.hasNext();) {
-					Value fromValue = fromIter.next();
-					Value toValue = toIter.next();
-					for(Value fromValueAlias: context.mayAliasesAtExit(fromValue, fromMethod)) {
-						if(fromValue==fromValueAlias) continue;
-						//we also want to replace the alias by the same to-value
-						fromIter.add(fromValueAlias);
-						toIter.add(toValue);
-					}
-				}
-			}
-		};
-	}
-
-	private final class ApplyReturnRules implements
+	protected final class ApplyReturnRules implements
 			FlowFunction<Abstraction<Var, Value, State, StmtID>> {
 		private final Unit callSite;
 		private final SootMethod callee;
 
-		private ApplyReturnRules(Unit callSite, SootMethod callee) {
+		 ApplyReturnRules(Unit callSite, SootMethod callee) {
 			this.callSite = callSite;
 			this.callee = callee;
 		}
@@ -178,11 +89,11 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 		}
 	}
 
-	private class ReplaceValues implements FlowFunction<Abstraction<Var, Value, State, StmtID>> {
+	protected class ReplaceValues implements FlowFunction<Abstraction<Var, Value, State, StmtID>> {
 		private final List<Value> fromValues;
 		private final List<Value> toValues;
 
-		private ReplaceValues(List<Value> fromValues, List<Value> toValues) {
+		 ReplaceValues(List<Value> fromValues, List<Value> toValues) {
 			this.fromValues = fromValues;
 			this.toValues = toValues;
 		}
