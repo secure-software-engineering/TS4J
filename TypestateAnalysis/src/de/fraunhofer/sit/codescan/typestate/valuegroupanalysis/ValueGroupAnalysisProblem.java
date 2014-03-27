@@ -10,6 +10,7 @@ import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateForwardAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtNormalEdge;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
 import de.fraunhofer.sit.codescan.typestate.valuegroupanalysis.ValueGroupAnalysisProblem.State;
@@ -42,6 +43,13 @@ public class ValueGroupAnalysisProblem extends AbstractJimpleTypestateForwardAna
 	@Override
 	protected Done<Var, State, StatementId> atReturn(AtReturn<Var, State, StatementId> d) {
 		return d.atReturnFromMethodOfStmt(VALUE_GROUP_CREATED).ifInState(TAINTED).reportError("ERROR!").atStmt(MODEL_VALUE_UPDATE);
+	}
+
+	@Override
+	protected Done<Var, State, StatementId> atNormalEdge(
+			AtNormalEdge<Var, State, StatementId> d) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

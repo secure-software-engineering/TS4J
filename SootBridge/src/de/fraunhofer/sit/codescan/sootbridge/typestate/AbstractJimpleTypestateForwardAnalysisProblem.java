@@ -59,6 +59,8 @@ AbstractJimpleTypestateAnalysisProblem<Var, State, StmtID> {
 
 				Stmt stmt = (Stmt) src;
 				InvokeExpr ie = stmt.getInvokeExpr();
+				if(!ie.getMethod().equals(dest))
+					return Identity.v();
 				List<Value> callArgs = ie.getArgs();
 				List<Value> parameterRefs = ICFG.getParameterRefs(dest);
 				return new ReplaceValues(callArgs, parameterRefs);				
@@ -88,7 +90,9 @@ AbstractJimpleTypestateAnalysisProblem<Var, State, StmtID> {
 					final DefinitionStmt assign = (DefinitionStmt) curr;
 					return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
 						public Set<Abstraction<Var,Value,State,StmtID>> computeTargets(final Abstraction<Var,Value,State,StmtID> source) {
-							return twoElementSet(source, source.replaceValue(assign.getRightOp(), assign.getLeftOp()));
+							Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(twoElementSet(source, source.replaceValue(assign.getRightOp(), assign.getLeftOp())),assign,context, null);
+							atNormalEdge(config);
+							return config.getAbstractions();
 						}
 					};
 				}
@@ -105,6 +109,8 @@ AbstractJimpleTypestateAnalysisProblem<Var, State, StmtID> {
 				if(callSite!=null) {
 					Stmt stmt = (Stmt) callSite;
 					InvokeExpr ie = stmt.getInvokeExpr();
+					if(!ie.getMethod().equals(callee))
+						return Identity.v();
 					List<Value> fromValues = new ArrayList<Value>(ICFG.getParameterRefs(callee));
 					List<Value> toValues = new ArrayList<Value>(ie.getArgs());
 					addAliases(callee, fromValues, toValues);

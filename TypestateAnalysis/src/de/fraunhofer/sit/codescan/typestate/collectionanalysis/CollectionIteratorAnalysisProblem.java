@@ -8,6 +8,7 @@ import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateForwardAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtNormalEdge;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
 import de.fraunhofer.sit.codescan.typestate.collectionanalysis.CollectionIteratorAnalysisProblem.State;
@@ -39,6 +40,13 @@ public class CollectionIteratorAnalysisProblem extends AbstractJimpleTypestateFo
 	@Override
 	protected Done<Var, State, StatementId> atReturn(AtReturn<Var, State, StatementId> d) {
 		return d.doNothing();
+	}
+
+	@Override
+	protected Done<Var, State, StatementId> atNormalEdge(
+			AtNormalEdge<Var, State, StatementId> atNormalEdge) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -1,27 +1,19 @@
 package de.fraunhofer.sit.codescan.sootbridge.typestate;
 
-import static heros.TwoElementSet.twoElementSet;
 import heros.FlowFunction;
-import heros.FlowFunctions;
-import heros.flowfunc.Compose;
-import heros.flowfunc.Identity;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.DefinitionStmt;
-import soot.jimple.InvokeExpr;
-import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 import de.fraunhofer.sit.codescan.sootbridge.AbstractIFDSAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtNormalEdge;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
 
@@ -69,7 +61,13 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 	 */
 	protected abstract Done<Var,State,StmtID> atReturn(AtReturn<Var,State,StmtID> atReturn);
 
-
+	/**
+	 * Clients must call methods on the parameter object to configure rules that should apply at
+	 * call-to-return flow functions. The client must then return the final reference returned
+	 * by the fluent API.
+	 * @param atCallToReturn reference to the fluent API
+	 */
+	protected abstract Done<Var,State,StmtID> atNormalEdge(AtNormalEdge<Var,State,StmtID> atNormalEdge);
 
 	protected final class ApplyReturnRules implements
 			FlowFunction<Abstraction<Var, Value, State, StmtID>> {

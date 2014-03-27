@@ -4,4 +4,5 @@ public interface EqualsContext<Var extends Enum<Var>,State extends Enum<State>,S
 	public CallContext<Var,State,StmtID> equalsThis();
 	public CallContext<Var,State,StmtID> equalsReturnValue();
 	public CallContext<Var,State,StmtID> equalsParameter(int paramIndex);
+	public CallContext<Var,State,StmtID> equalsConstant();
 }

@@ -13,6 +13,11 @@ CallToReturnRules ::=
 CallToReturnRule ::=
 	LocationFilters [AbstractionFilter] Actions
 	
+AtNormalEdgeRules ::= 
+	AtNormalEdgeRule [orElse AtNormalEdgeRules]
+AtNormalEdgeRule ::=
+	[AbstractionFilter] Actions
+	
 LocationFilters ::=
 	LocationFilter [or LocationFilters]
 
@@ -31,6 +36,7 @@ EqualsSpec ::=
 	equalsThis
   |	equalsReturn
   |	equalsParameter(index)
+  | equalsConstant()
 StateFilter ::=
 	ifInState(stateName)
 	
