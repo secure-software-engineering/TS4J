@@ -110,7 +110,7 @@ public class SootRunner {
 
 						private AliasAnalysisManager getOrCreateAnalysisManager() {
 							if(aliasAnalysisManager==null) {
-								new AliasAnalysisManager(getOrCreateICFG());
+								aliasAnalysisManager = new AliasAnalysisManager(getOrCreateICFG());
 							}
 							return aliasAnalysisManager;
 						}
