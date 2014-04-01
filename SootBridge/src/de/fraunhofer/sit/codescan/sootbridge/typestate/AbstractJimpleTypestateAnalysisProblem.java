@@ -63,9 +63,9 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 
 	/**
 	 * Clients must call methods on the parameter object to configure rules that should apply at
-	 * call-to-return flow functions. The client must then return the final reference returned
+	 * normal flow functions. The client must then return the final reference returned
 	 * by the fluent API.
-	 * @param atCallToReturn reference to the fluent API
+	 * @param atNormalEdge reference to the fluent API
 	 */
 	protected abstract Done<Var,State,StmtID> atNormalEdge(AtNormalEdge<Var,State,StmtID> atNormalEdge);
 

@@ -53,7 +53,6 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 			/**
 			 * On calls, replace arguments by formal parameters.
 			 */
-			@SuppressWarnings("unchecked")
 			public FlowFunction<Abstraction<Var, Value, State, StmtID>> getCallFlowFunction(
 					Unit callSite, final SootMethod dest) {
 				if (callSite != null) {
@@ -75,16 +74,9 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 						toValues = new ArrayList<Value>(toValues);
 						toValues.add(returnStmt.getOp());
 					}
-					FlowFunction<Abstraction<Var, Value, State, StmtID>> applyRules = new ApplyReturnRules(
-							callSite, dest);
-					FlowFunction<Abstraction<Var, Value, State, StmtID>> mapFormalsToActuals = new ReplaceValues(
-							fromValues, toValues);
-					return Compose.compose(applyRules, mapFormalsToActuals);
-				} else {
-					// we have an unbalanced problem and the callsite is null;
-					// hence there is no caller to map back to
-					return new ApplyReturnRules(callSite, dest);
-				}
+					return new ReplaceValues(fromValues, toValues);
+				} 
+				return Identity.v();
 			}
 
 			/**
@@ -136,27 +128,31 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 			 * parameters by arguments, as well as return locals by LHS of the
 			 * assignment of the call (if any).
 			 */
+			@SuppressWarnings("unchecked")
 			public FlowFunction<Abstraction<Var, Value, State, StmtID>> getReturnFlowFunction(
 					final Unit callSite, final SootMethod callee,
 					final Unit exitStmt, Unit retSite) {
-				if (!callee.isConcrete()) {
-					return Identity.v();
-				}
 				if (callSite != null) {
 					Stmt stmt = (Stmt) callSite;
 					if (!stmt.containsInvokeExpr())
-						return Identity.v();
+						return new ApplyReturnRules(callSite, callee);
 					InvokeExpr ie = stmt.getInvokeExpr();
 					if (!ie.getMethod().equals(callee))
-						return Identity.v();
+						return new ApplyReturnRules(callSite, callee);
 					List<Value> callArgs = ie.getArgs();
 					List<Value> paramLocals = new ArrayList<Value>();
-					for(int i = 0; i < callee.getParameterCount(); i++){
-						paramLocals.add(callee.getActiveBody().getParameterLocal(i));
+					for (int i = 0; i < callee.getParameterCount(); i++) {
+						paramLocals.add(callee.getActiveBody()
+								.getParameterLocal(i));
 					}
-					return new ReplaceValues(paramLocals, callArgs);
+					FlowFunction<Abstraction<Var, Value, State, StmtID>> applyRules = new ApplyReturnRules(
+							callSite, callee);
+					FlowFunction<Abstraction<Var, Value, State, StmtID>> mapFormalsToActuals = new ReplaceValues(
+							paramLocals, callArgs);
+					return Compose.compose(applyRules, mapFormalsToActuals);
+				} else {
+					return new ApplyReturnRules(callSite, callee);
 				}
-				return Identity.v();
 			}
 		};
 	}

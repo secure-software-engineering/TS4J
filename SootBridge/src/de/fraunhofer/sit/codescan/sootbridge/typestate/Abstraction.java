@@ -150,6 +150,9 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	}
 
 	protected Val getBoundValue(int index) {
+		if(boundValues == null){
+			return null;
+		}
 		return boundValues[index];
 	}
 
