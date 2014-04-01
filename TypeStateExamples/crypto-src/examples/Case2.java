@@ -4,18 +4,16 @@ import java.security.SecureRandom;
 
 import javax.crypto.spec.SecretKeySpec;
 
-public class Main {
+public class Case2 {
 	public static void main(String[] args) {
-		String a = "dssaasasssass";
-		String b = "sss";
-		b+="2";
-		byte[] keyBytes = b.getBytes();
+		byte[] keyBytes = getString().getBytes();
 		SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
 		
 	}
 
 	private static String getString() {
-		// TODO Auto-generated method stub
-		return "test";
+		String c = "testestt";
+		String a = "testestt";
+		return a;
 	}
 }
