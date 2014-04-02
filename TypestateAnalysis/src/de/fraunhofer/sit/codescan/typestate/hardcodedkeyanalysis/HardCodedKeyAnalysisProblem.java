@@ -1,19 +1,20 @@
 package de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis;
 
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.State.BYTESINVOKED;
+import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.State.FINALLY_APPENDED;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.State.INIT;
-import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.State.TO_STRING;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.State.SB_APPENDED;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.State.SB_CONSTRUCTED;
-import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.State.FINALLY_APPENDED;
+import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.State.TO_STRING;
+import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.State.NOT_STATIC_KEY;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.StatementId.SECRET_KEY_INVOKED;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.KEYBYTES;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.KEYSTRING;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.SB_APPENDSTRING_ARG1;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.SB_APPENDSTRING_ARG2;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.SB_APPENDSTRING_BASE;
-import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.TO_STRING_BASE;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.SB_INIT_ARG;
+import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.TO_STRING_BASE;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateBackwardsAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
@@ -34,7 +35,7 @@ public class HardCodedKeyAnalysisProblem extends AbstractJimpleTypestateBackward
 	private static final String SB_VALUE_OF = "<java.lang.String: java.lang.String valueOf(java.lang.Object)>";
 
 	enum Var { KEYBYTES, KEYSTRING, SB_APPENDSTRING_ARG2, SB_APPENDSTRING_ARG1, SB_APPENDSTRING_BASE, TO_STRING_BASE, SB_INIT_ARG };
-	enum State { INIT, BYTESINVOKED, TO_STRING, SB_APPENDED, SB_CONSTRUCTED, FINALLY_APPENDED };
+	enum State { INIT, BYTESINVOKED, TO_STRING, SB_APPENDED, SB_CONSTRUCTED, FINALLY_APPENDED, NOT_STATIC_KEY };
 	enum StatementId { KEYBYTES_CREATED, SECRET_KEY_INVOKED  };
 
 	public HardCodedKeyAnalysisProblem(IIFDSAnalysisContext context) {
@@ -49,18 +50,22 @@ public class HardCodedKeyAnalysisProblem extends AbstractJimpleTypestateBackward
 				orElse().atCallTo(SB_APPEND_SIG).ifValueBoundTo(TO_STRING_BASE).equalsReturnValue().trackParameter(0).as(SB_APPENDSTRING_ARG2).
 				and().always().trackThis().as(SB_APPENDSTRING_BASE).and().ifInState(TO_STRING).toState(SB_APPENDED).
 				orElse().atCallTo(SB_CONSTRUCTOR).ifValueBoundTo(SB_APPENDSTRING_BASE).equalsThis().and().always().trackParameter(0).as(SB_INIT_ARG).and().ifInState(SB_APPENDED).toState(SB_CONSTRUCTED).
-				orElse().atCallTo(SB_VALUE_OF).ifValueBoundTo(SB_INIT_ARG).equalsReturnValue().trackParameter(0).as(SB_APPENDSTRING_ARG1).and().ifInState(SB_CONSTRUCTED).toState(FINALLY_APPENDED);
+				orElse().atCallTo(SB_VALUE_OF).ifValueBoundTo(SB_INIT_ARG).equalsReturnValue().trackParameter(0).as(SB_APPENDSTRING_ARG1).and().ifInState(SB_CONSTRUCTED).toState(FINALLY_APPENDED).
+				orElse().atCallTo(SB_TO_STRING_SIG).ifValueBoundTo(SB_APPENDSTRING_ARG1).equalsReturnValue().trackThis().as(TO_STRING_BASE).and().ifInState(FINALLY_APPENDED).toState(TO_STRING);
 	}
 
 	@Override
 	protected Done<Var, State, StatementId> atReturn(AtReturn<Var, State, StatementId> d) {
-		return d.doNothing();
+		return d.atAnyReturn().ifValueBoundTo(SB_APPENDSTRING_ARG1).not().equalsStringConstant().toState(NOT_STATIC_KEY).
+				orElse().atAnyReturn().ifValueBoundTo(SB_APPENDSTRING_ARG2).not().equalsStringConstant().toState(NOT_STATIC_KEY).
+				orElse().atAnyReturn().ifValueBoundTo(KEYSTRING).not().equalsStringConstant().toState(NOT_STATIC_KEY);
 	}
 
 	@Override
 	protected Done<Var, State, StatementId> atNormalEdge(
 			AtNormalEdge<Var, State, StatementId> d) {
 		return d.atAssignTo(KEYSTRING).ifInState(BYTESINVOKED).and().ifValueBoundTo(KEYSTRING).equalsStringConstant().
+				reportError("Should not use a constant as private Key").here().
 				orElse().atAssignTo(SB_APPENDSTRING_ARG1).ifInState(FINALLY_APPENDED).and().ifValueBoundTo(SB_APPENDSTRING_ARG2).equalsStringConstant().
 				and().ifValueBoundTo(SB_APPENDSTRING_ARG1).equalsStringConstant().
 				orElse().atAssignTo(SB_APPENDSTRING_ARG2).ifInState(FINALLY_APPENDED).and().ifValueBoundTo(SB_APPENDSTRING_ARG2).equalsStringConstant().

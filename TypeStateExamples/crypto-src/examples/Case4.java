@@ -7,9 +7,10 @@ import javax.crypto.spec.SecretKeySpec;
 public class Case4 {
 	public static void main(String[] args) {
 		int necessaryStmt;
-		String keyString = "Diessser Schsaluessel ist geheimss";
-		keyString +="und jetzt" ;
-		keyString += randomPart();
+		String keyString = "Dieser Schluessel wird mit einem Random Part aufgefuellt";
+		
+		String c = randomPart();
+		keyString = keyString + c;
 		byte[] bytes = keyString.getBytes();
 		SecretKeySpec key = new SecretKeySpec(bytes, "AES");
 	}

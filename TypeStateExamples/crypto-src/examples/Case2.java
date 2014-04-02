@@ -13,7 +13,7 @@ public class Case2 {
 
 	private static String getString() {
 		int necessaryStmt = 0;
-		String a = "tsestestt";
+		String a = "A static return value should be tracked as well";
 		return a;
 	}
 }

@@ -50,6 +50,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	Set<Abstraction<Var, Value, State, StmtID>> originalAbstractions;
 	Set<Abstraction<Var, Value, State, StmtID>> abstractions;
 	boolean filteredOut = false;
+	boolean not = false;
 	Config<Var, State, StmtID> next;
 	private final SootMethod calleeAtReturnFlow;
 	private final IIFDSAnalysisContext context;
@@ -254,7 +255,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		return filteredOut && nextFilteredOut;
 	}
 
-	public AtCallToReturn<Var, State, StmtID> orElse() {
+	public AtCollection<Var, State, StmtID> orElse() {
 		assert (next == null);
 		next = new Config<Var, State, StmtID>(originalAbstractions, invokeStmt,
 				context, calleeAtReturnFlow);
@@ -295,7 +296,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		return computeEquals();
 	}
 
-	public CallContext<Var, State, StmtID> equalsConstant() {
+	public CallContext<Var, State, StmtID> equalsStringConstant() {
 		if (abstractions.isEmpty())
 			return this;
 		// TODO should we do non-destructive updates here?
@@ -303,8 +304,12 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 				.iterator(); i.hasNext();) {
 			Abstraction<Var, Value, State, StmtID> abs = i.next();
 			Value v = abs.getValue(eqCheckVar);
-			if (v == null
-					|| !(v instanceof StringConstant)) {
+			boolean filter = (v == null || !(v instanceof StringConstant));
+			if(not){
+				filter = !filter;
+				not = false;
+			}
+			if (filter) {
 				i.remove();
 			}
 		}
@@ -321,8 +326,14 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
 				.iterator(); i.hasNext();) {
 			Abstraction<Var, Value, State, StmtID> abs = i.next();
-			if (abs.getValue(eqCheckVar) == null
-					|| !abs.getValue(eqCheckVar).equals(extractValue())) {
+
+			Value checkValue = abs.getValue(eqCheckVar);
+			boolean filter = (checkValue == null || !checkValue.equals(v));
+			if(not){
+				filter = !filter;
+				not = false;
+			}
+			if (filter) {
 				i.remove();
 			}
 		}
@@ -445,6 +456,12 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if(abstractions.isEmpty())
 			noMatch();
 
+		return this;
+	}
+
+	@Override
+	public EqualsContext<Var, State, StmtID> not() {
+		not = true;
 		return this;
 	}
 
