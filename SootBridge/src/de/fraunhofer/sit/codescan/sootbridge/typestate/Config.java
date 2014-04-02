@@ -15,9 +15,11 @@ import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
 import soot.jimple.InvokeStmt;
 import soot.jimple.Stmt;
+import soot.jimple.StringConstant;
 import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
+import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCollection;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtNormalEdge;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.CallContext;
@@ -29,7 +31,7 @@ import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.ValueContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.VarContext;
 
 public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID extends Enum<StmtID>>
-		implements AtCallToReturn<Var, State, StmtID>,
+		implements AtCallToReturn<Var, State, StmtID>,AtCollection<Var, State, StmtID>,
 		CallContext<Var, State, StmtID>, ValueContext<Var, State, StmtID>,
 		VarContext<Var, State, StmtID>, Done<Var, State, StmtID>,
 		EqualsContext<Var, State, StmtID>, IfCheckContext<Var, State, StmtID>,
@@ -189,27 +191,29 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	}
 
 	private Value extractValue() {
-		if(!invokeStmt.containsInvokeExpr()){
-			if(currSlot == CONSTANT && invokeStmt instanceof DefinitionStmt) {
+		if (!invokeStmt.containsInvokeExpr()) {
+			if (currSlot == CONSTANT && invokeStmt instanceof DefinitionStmt) {
 				DefinitionStmt defnStmt = (DefinitionStmt) invokeStmt;
 				return defnStmt.getRightOp();
 			}
-		
+
 		}
 		Value val;
 		InvokeExpr ie = invokeStmt.getInvokeExpr();
-		switch(currSlot) {
+		switch (currSlot) {
 		case THIS:
-			val = ((InstanceInvokeExpr)ie).getBase();
+			val = ((InstanceInvokeExpr) ie).getBase();
 			break;
 		case RETURN:
-			if(invokeStmt instanceof DefinitionStmt) {
+			if (invokeStmt instanceof DefinitionStmt) {
 				DefinitionStmt defnStmt = (DefinitionStmt) invokeStmt;
 				val = defnStmt.getLeftOp();
 			} else {
 				return null;
 			}
 			break;
+		case CONSTANT:
+			return null;
 		default:
 			val = ie.getArg(currSlot);
 			break;
@@ -294,8 +298,19 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	public CallContext<Var, State, StmtID> equalsConstant() {
 		if (abstractions.isEmpty())
 			return this;
-		currSlot = CONSTANT;
-		return computeEquals();
+		// TODO should we do non-destructive updates here?
+		for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
+				.iterator(); i.hasNext();) {
+			Abstraction<Var, Value, State, StmtID> abs = i.next();
+			Value v = abs.getValue(eqCheckVar);
+			if (v == null
+					|| !(v instanceof StringConstant)) {
+				i.remove();
+			}
+		}
+		if (abstractions.isEmpty())
+			noMatch();
+		return this;
 	}
 
 	private CallContext<Var, State, StmtID> computeEquals() {

@@ -12,8 +12,8 @@ public class Case2 {
 	}
 
 	private static String getString() {
-		String c = "testestt";
-		String a = "testestt";
+		int necessaryStmt = 0;
+		String a = "tsestestt";
 		return a;
 	}
 }
