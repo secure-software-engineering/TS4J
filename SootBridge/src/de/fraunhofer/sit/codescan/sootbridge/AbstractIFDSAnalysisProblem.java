@@ -18,7 +18,9 @@ public abstract class AbstractIFDSAnalysisProblem<D> extends DefaultIFDSTabulati
 	public AbstractIFDSAnalysisProblem(InterproceduralCFG<Unit, SootMethod> icfg) {
 		super(icfg);
 	}
-
+	public AbstractIFDSAnalysisProblem(IIFDSAnalysisContext context) {
+		super(context.getICFG());
+	}
 	public boolean autoAddZero() {
 		return false;
 	}

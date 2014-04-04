@@ -35,10 +35,12 @@ import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
 	
 	//we assume a method to be vulnerable unless proven otherwise 
-	private boolean isVulnerable = true; 
+	private boolean isVulnerable = true;
+	private IIFDSAnalysisContext context; 
 	
 	public SSLAnalysisProblem(IIFDSAnalysisContext context) {
 		super(context);
+		this.context = context;
 	}
 
 	private class FlowFunctionFactory implements FlowFunctions<Unit, Local, SootMethod> {
@@ -217,6 +219,11 @@ public class SSLAnalysisProblem extends AbstractIFDSAnalysisProblem<Local> {
 	
 	public boolean isVulnerable() {
 		return isVulnerable;
+	}
+
+	@Override
+	protected Set<Unit> getStartSeed() {
+		return Collections.singleton(context.getSootMethod().getActiveBody().getUnits().getFirst());
 	}
 
 }
