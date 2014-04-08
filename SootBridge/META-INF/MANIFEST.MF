@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: de.fraunhofer.sit.codescan.sootbridge
-Bundle-SymbolicName: de.fraunhofer.sit.codescan.sootbridge
+Bundle-SymbolicName: de.fraunhofer.sit.codescan.sootbridge;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ClassPath: soot-trunk.jar,
@@ -160,3 +160,4 @@ Export-Package: com.google.common.annotations,
  soot.util.dot,
  soot.util.queue,
  soot.xml
+Import-Package: org.eclipse.core.runtime

@@ -8,6 +8,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtensionRegistry;
+import org.eclipse.core.runtime.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,10 +141,19 @@ public class SootRunner {
 
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(SootRunner.class);
+	private static String TRANSFORMER_EXTENSION_POINT_ID ="de.fraunhofer.sit.codescan.sootrunnertransformer";
 	
 	public static <C extends IAnalysisConfiguration> Map<C, Set<ErrorMarker>> runSoot(final Map<C, Set<String>> analysisToEntryMethodSignatures, String staticSootArgs, String sootClassPath) {
 		final Map<C,Set<ErrorMarker>> analysisConfigToResultingErrorMarkers = new HashMap<C, Set<ErrorMarker>>();
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new Transformer<C>(analysisConfigToResultingErrorMarkers, analysisToEntryMethodSignatures)));	
+
+
+	    IExtensionRegistry reg = Platform.getExtensionRegistry();
+	    IConfigurationElement[] elements = reg.getConfigurationElementsFor(TRANSFORMER_EXTENSION_POINT_ID);
+	    for(IConfigurationElement element : elements){
+	    	PluggableTransformer transformer = new PluggableTransformer(element);
+	    	PackManager.v().getPack(transformer.getPack()).add(new Transform(transformer.getPackageName(), transformer.getInstance()));
+	    }
 		Set<String> classNames = extractClassNames(analysisToEntryMethodSignatures.values());					
 		String[] args = (staticSootArgs+" -cp "+sootClassPath+" "+Joiner.on(" ").join(classNames)).split(" ");
 		G.v().out = new PrintStream(new LoggingOutputStream(LOGGER, false), true);

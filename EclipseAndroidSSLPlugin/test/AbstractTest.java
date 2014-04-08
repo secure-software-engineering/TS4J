@@ -1,100 +1,58 @@
+import static org.mockito.Mockito.*;
+
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
 
 import junit.framework.TestCase;
 
-import org.junit.Assert;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.swt.widgets.Display;
 
 import soot.G;
-import soot.PackManager;
-import soot.Scene;
-import soot.SceneTransformer;
-import soot.SootClass;
-import soot.SootMethod;
-import soot.Transform;
-import soot.tagkit.AnnotationTag;
-import soot.tagkit.VisibilityAnnotationTag;
 
 import com.google.common.base.Joiner;
 
-import de.fraunhofer.sit.codescan.androidssl.analysis.SSLAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.IAnalysisPack;
-import de.fraunhofer.sit.codescan.framework.IIFDSAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.IMethodBasedAnalysisPlugin;
-import de.fraunhofer.sit.codescan.framework.SootBridge;
-import de.fraunhofer.sit.codescan.framework.VulnerableMethodTag;
+import de.fraunhofer.sit.codescan.framework.internal.analysis.AnalysisDispatcher;
 
 public class AbstractTest extends TestCase {
 
 	protected static final String SUPER_CLASS = "android.webkit.WebViewClient";
 	protected static final String SUB_SIG = "void onReceivedSslError(android.webkit.WebView,android.webkit.SslErrorHandler,android.net.http.SslError)";
 	protected Set<String> actual, expected;
-	
-	protected final void setUp() throws Exception {
-		actual = new HashSet<String>();
-		expected = new HashSet<String>();
-		PackManager.v().getPack("wjap").add(new Transform("wjap.sslanalysis.reporter", new SceneTransformer() {
-			@Override
-			protected void internalTransform(String phaseName, Map<String, String> options) {
-				for(SootClass c: Scene.v().getApplicationClasses()) {
-					if(!Scene.v().getFastHierarchy().isSubclass(c, Scene.v().getSootClass(SUPER_CLASS))) continue;
-					if(!c.declaresMethod(SUB_SIG)) continue;
-
-					SootMethod m = c.getMethod(SUB_SIG);
-
-					if(m.hasTag(VulnerableMethodTag.class.getName())) {
-						actual.add(m.getDeclaringClass().getName());
-					}
-					if(m.hasTag("VisibilityAnnotationTag")) {
-						VisibilityAnnotationTag tag = (VisibilityAnnotationTag) m.getTag("VisibilityAnnotationTag");
-						for(AnnotationTag annTag: tag.getAnnotations()) {
-							if(annTag.getType().equals("Lannotation/DefinitelyVulnerable;")) {
-								expected.add(m.getDeclaringClass().getName());
-								break;
-							}
-						}
-					}
-				}
-			}
-
-		}));
-		super.setUp();
-	}
 
 	protected final void tearDown() throws Exception {
 		G.reset();
 		super.tearDown();
 	}
 
-	protected void run(String... files) {
-		String args = "-f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp -cp . "+Joiner.on(" ").join(Arrays.asList(files));
+	@SuppressWarnings("deprecation")
+	protected void run(String... files) throws CoreException {
+		String args = "-f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp -cp . "
+				+ Joiner.on(" ").join(Arrays.asList(files));
 		String[] argsArray = args.split(" ");
-		SootBridge.registerAnalysisPack(
-			new HashSet<String>(Arrays.asList(files)),
-			new IAnalysisPack() {
-				public String getMethodSubSignature() {
-					return SUB_SIG;
-				}
-				public String getSuperClassName() {
-					return SUPER_CLASS;
-				}
-				public IIFDSAnalysisPlugin[] getIFDSAnalysisPlugins() {
-					return new IIFDSAnalysisPlugin[]{ new SSLAnalysisPlugin() };
-				}
-				@Override
-				public IMethodBasedAnalysisPlugin[] getMethodBasedAnalysisPlugins() {
-					return new IMethodBasedAnalysisPlugin[0];
-				}
-				@Override
-				public String getErrorMessage() {										
-					return "error";
-				}
-			}
-		);
-		soot.Main.main(argsArray);		
-		Assert.assertEquals(expected, actual);
+		
+		IProject project = mock(IProject.class);        
+		final IProjectDescription description = mock(IProjectDescription.class);
+		when(project.getType()).thenReturn(project.PROJECT);
+		when(project.getDescription()).thenReturn(description);
+		
+		//when(project.hasNature(PMDNature.ID)).thenReturn(false);
+	        when(description.getNatureIds()).thenReturn(new String[] {});
+		ArrayList<IJavaProject> javaProjects = new ArrayList<IJavaProject>();
+			IJavaProject javaProject = JavaCore.create(project);
+			javaProjects.add(javaProject);
+		IJavaProject[] javaProjectArray = javaProjects
+				.toArray(new IJavaProject[0]);
+
+		AnalysisDispatcher.searchAndAnalyze(javaProjectArray);
 	}
+
 
 }

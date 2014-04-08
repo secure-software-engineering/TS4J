@@ -12,5 +12,6 @@ Require-Bundle: org.eclipse.ui;bundle-version="3.8.0",
  de.fraunhofer.sit.codescan.sootbridge;bundle-version="1.0.0";visibility:=reexport
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .
-Export-Package: de.fraunhofer.sit.codescan.framework
+Export-Package: de.fraunhofer.sit.codescan.framework,
+ de.fraunhofer.sit.codescan.framework.internal.analysis
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
