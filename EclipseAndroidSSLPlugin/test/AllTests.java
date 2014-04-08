@@ -4,10 +4,10 @@ import org.junit.Test;
 public class AllTests extends AbstractTest {
 
 	@Test
-	public void testAliasing() {
+	public void testAliasing() throws InterruptedException {
 		run("test.Aliasing");
 	}
-	
+	/*
 	@Test
 	public void testExceptions() {
 		run("test.ExceptionHandling");
@@ -51,5 +51,5 @@ public class AllTests extends AbstractTest {
 	@Test
 	public void testVirtualDispatchAllProceed() {
 		run("test.VirtualDispatchAllProceed");
-	}
+	}*/
 }

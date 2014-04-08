@@ -37,7 +37,7 @@ public class SootBridge {
 	private final static Logger LOGGER = LoggerFactory.getLogger(SootBridge.class);
 	
 	private static final Set<String> PRIMITIVE_TYPE_NAMES;
-	
+	private Map<AnalysisConfiguration, Set<ErrorMarker>> result;
 	static {
 		PRIMITIVE_TYPE_NAMES = new HashSet<String>();
 		PRIMITIVE_TYPE_NAMES.add("void");
@@ -50,7 +50,7 @@ public class SootBridge {
 		PRIMITIVE_TYPE_NAMES.add("double");
 	}
 
-	public static void runSootAnalysis(IJavaProject project, Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
+	public static Map<AnalysisConfiguration, Set<ErrorMarker>> runSootAnalysis(IJavaProject project, Map<AnalysisConfiguration, Set<IMethod>> analysisToRelevantMethods) {
 		Map<AnalysisConfiguration,Set<String>> analysisToMethodSignatures = new HashMap<AnalysisConfiguration, Set<String>>();
 		for(Map.Entry<AnalysisConfiguration, Set<IMethod>> analysisAndMethods: analysisToRelevantMethods.entrySet()) {
 			Set<String> signatures = new HashSet<String>(analysisAndMethods.getValue().size());
@@ -82,6 +82,7 @@ public class SootBridge {
 				}
 			}
 		}
+		return results;
 	}
 	
 	private static String getSootMethodSignature(IMethod iMethod)

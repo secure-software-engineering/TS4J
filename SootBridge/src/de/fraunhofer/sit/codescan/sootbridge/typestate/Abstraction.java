@@ -137,12 +137,13 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	}
 	
 	public Set<Abstraction<Var,Val,State,StmtID>> bindValue(Val addedValue, Var var) {
-	//	if(getBoundValue(var)==null) {
+		if(getBoundValue(var)==null) {
 			final Abstraction<Var,Val,State,StmtID> copy = copy();
 			copy.setBoundVal(addedValue, var);
-			return singleton(copy); 
-//		}
-	//	return singleton(this);
+			return twoElementSet(this, copy); 
+		}
+		this.setBoundVal(addedValue, var);
+		return singleton(this);
 	}
 
 	protected Val getBoundValue(Var var) {

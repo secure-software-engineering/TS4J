@@ -1,25 +1,20 @@
-import static org.mockito.Mockito.*;
-
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Timer;
 
 import junit.framework.TestCase;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.swt.widgets.Display;
 
 import soot.G;
-
-import com.google.common.base.Joiner;
-
+import de.fraunhofer.sit.codescan.framework.AnalysisConfiguration;
 import de.fraunhofer.sit.codescan.framework.internal.analysis.AnalysisDispatcher;
+import de.fraunhofer.sit.codescan.framework.internal.analysis.AnalysisJob;
+import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
 
 public class AbstractTest extends TestCase {
 
@@ -32,27 +27,30 @@ public class AbstractTest extends TestCase {
 		super.tearDown();
 	}
 
-	@SuppressWarnings("deprecation")
-	protected void run(String... files) throws CoreException {
-		String args = "-f none -p cg all-reachable:true -no-bodies-for-excluded -w -pp -cp . "
-				+ Joiner.on(" ").join(Arrays.asList(files));
-		String[] argsArray = args.split(" ");
-		
-		IProject project = mock(IProject.class);        
-		final IProjectDescription description = mock(IProjectDescription.class);
-		when(project.getType()).thenReturn(project.PROJECT);
-		when(project.getDescription()).thenReturn(description);
-		
-		//when(project.hasNature(PMDNature.ID)).thenReturn(false);
-	        when(description.getNatureIds()).thenReturn(new String[] {});
+	protected void run(String... files) throws InterruptedException{
+
+		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot()
+				.getProjects();
 		ArrayList<IJavaProject> javaProjects = new ArrayList<IJavaProject>();
-			IJavaProject javaProject = JavaCore.create(project);
+		for (IProject p : projects) {
+			IJavaProject javaProject = JavaCore.create(p);
 			javaProjects.add(javaProject);
+		}
 		IJavaProject[] javaProjectArray = javaProjects
 				.toArray(new IJavaProject[0]);
+		AnalysisJob job = AnalysisDispatcher.searchAndAnalyze(javaProjectArray);
+		
+		job.join();
 
-		AnalysisDispatcher.searchAndAnalyze(javaProjectArray);
+		
+		
+		Map<AnalysisConfiguration, Set<ErrorMarker>> results= job.getResults();
+		for (Entry<AnalysisConfiguration, Set<ErrorMarker>> analysisAndErrorMarkers : results.entrySet()) {
+			//AnalysisConfiguration analysisConfiguration = analysisAndErrorMarkers.getKey();
+			Set<ErrorMarker> errorMarkers = analysisAndErrorMarkers.getValue();
+			for (ErrorMarker errorMarker : errorMarkers) {
+			}
+		}
 	}
-
 
 }

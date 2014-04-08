@@ -2,7 +2,10 @@ package examples;
 
 import javax.crypto.spec.SecretKeySpec;
 
+import annotation.DefinitelyVulnerable;
+
 public class Case3 {
+	@DefinitelyVulnerable
 	public static void main(String[] args) {
 		int necsesssssaseryStmt;
 		String keyString = "Dieser Schlsuessesl ist geheim";

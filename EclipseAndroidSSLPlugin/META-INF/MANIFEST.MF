@@ -6,11 +6,13 @@ Bundle-Version: 1.0.0.qualifier
 Require-Bundle: de.fraunhofer.sit.codescan.framework;bundle-version="0.9.0",
  org.eclipse.core.runtime;bundle-version="3.9.100",
  org.eclipse.pde.junit.runtime;bundle-version="3.4.300",
- org.junit;bundle-version="4.11.0"
+ org.junit;bundle-version="4.11.0",
+ org.eclipse.core.jobs
 Export-Package: de.fraunhofer.sit.codescan.androidssl.analysis
 Bundle-Vendor: %Bundle-Vendor
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
-Import-Package: org.eclipse.core.resources,
+Import-Package: de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis,
+ org.eclipse.core.resources,
  org.eclipse.jdt.core,
  org.eclipse.jdt.internal.core.search.processing,
  org.eclipse.swt.widgets

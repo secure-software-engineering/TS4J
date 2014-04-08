@@ -1,10 +1,11 @@
 package examples;
 
-import java.security.SecureRandom;
-
 import javax.crypto.spec.SecretKeySpec;
 
+import annotation.DefinitelyVulnerable;
+
 public class Case5 {
+	@DefinitelyVulnerable
 	public static void main(String[] args) {
 		int necessaryStmt;
 		String keyString = "Dieser Schsaluesssel";
