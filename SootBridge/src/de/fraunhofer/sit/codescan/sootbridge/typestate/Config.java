@@ -414,9 +414,10 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			Unit stmt = abs.getStatement(sid);
 			// TODO what if stmt==null? do we allow this to happen?
 			if (stmt != null) {
+				String methodSignature = context.getICFG().getMethodOf(stmt).getSignature();
 				String className = context.getICFG().getMethodOf(stmt)
 						.getDeclaringClass().getName();
-				context.reportError(new ErrorMarker(errorMessage, className,
+				context.reportError(new ErrorMarker(errorMessage, className, methodSignature, 
 						stmt.getJavaSourceStartLineNumber()));
 			}
 		}
@@ -428,9 +429,11 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (abstractions.isEmpty())
 			return this;
 		Unit stmt = invokeStmt;
+
+		String methodSignature = context.getICFG().getMethodOf(stmt).getSignature();
 		String className = context.getICFG().getMethodOf(stmt)
 				.getDeclaringClass().getName();
-		context.reportError(new ErrorMarker(errorMessage, className, stmt
+		context.reportError(new ErrorMarker(errorMessage, className, methodSignature, stmt
 				.getJavaSourceStartLineNumber()));
 		return this;
 	}

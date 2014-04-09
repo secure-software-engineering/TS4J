@@ -59,13 +59,6 @@
                </appinfo>
             </annotation>
          </attribute>
-         <attribute name="pack" type="string" use="required">
-            <annotation>
-               <documentation>
-                  
-               </documentation>
-            </annotation>
-         </attribute>
          <attribute name="packagename" type="string" use="required">
             <annotation>
                <documentation>

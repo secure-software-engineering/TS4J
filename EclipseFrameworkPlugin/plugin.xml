@@ -61,14 +61,6 @@
             class="de.fraunhofer.sit.codescan.framework.internal.PreferencesInitializer">
       </initializer>
    </extension>
-   <extension
-         point="de.fraunhofer.sit.codescan.sootrunnertransformer">
-      <Transformer
-            TransformerClass="de.fraunhofer.sit.codescan.sootbridge.test.TestSceneTransformer"
-            class="de.fraunhofer.sit.codescan.sootbridge.test.TestSceneTransformer"
-            pack="wjtp"
-            packagename="wjtp.testingtransformer">
-      </Transformer>
-   </extension>
+   
 
 </plugin>

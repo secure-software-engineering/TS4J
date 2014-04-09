@@ -24,7 +24,10 @@ public abstract class AnalysisConfiguration implements IAnalysisConfiguration {
 	public String getErrorMessage() {
 		return analysisConfigElement.getAttribute("errorMessage");
 	}
-		
+
+	public String getAnalysisClass() {
+		return analysisConfigElement.getAttribute("class");
+	}
 	public abstract void runAnalysis(IAnalysisContext context);
 
 }

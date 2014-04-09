@@ -4,14 +4,19 @@ public class ErrorMarker {
 	
 	protected final String errorMessage;		
 	protected final String className;	
-	protected final int lineNumber;	
+	protected final int lineNumber;
+	protected final String methodSignature;	
 
-	public ErrorMarker(String errorMessage, String className, int lineNumber) {
+	public ErrorMarker(String errorMessage, String className, String methodSignature, int lineNumber) {
 		this.errorMessage = errorMessage;
 		this.className = className;
 		this.lineNumber = lineNumber;
+		this.methodSignature = methodSignature; 
 	}
 
+	public String getMethodSignature() {
+		return methodSignature;
+	}
 	public String getErrorMessage() {
 		return errorMessage;
 	}

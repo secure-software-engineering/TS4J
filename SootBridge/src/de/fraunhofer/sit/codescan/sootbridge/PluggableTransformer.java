@@ -13,7 +13,8 @@ public class PluggableTransformer {
 		transformerConfigElement = config;
 	}
 	public String getPack(){
-		return transformerConfigElement.getAttribute("pack");
+		String packagename =transformerConfigElement.getAttribute("packagename");
+		return packagename.substring(0, packagename.indexOf("."));
 	}
 	public String getPackageName() {
 		return transformerConfigElement.getAttribute("packagename");
