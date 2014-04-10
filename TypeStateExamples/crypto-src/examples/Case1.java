@@ -3,6 +3,7 @@ package examples;
 import javax.crypto.spec.SecretKeySpec;
 
 import de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisPlugin;
+import de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem;
 import annotation.DefinitelyVulnerable;
 
 public class Case1 {
