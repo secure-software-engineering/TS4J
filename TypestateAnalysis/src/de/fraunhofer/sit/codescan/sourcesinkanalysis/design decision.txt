@@ -1,0 +1,2 @@
+For an analysis specify sinks and sources as @Sink and @Source. A sink is a function call which should not be called with a not sanitized source
+	as a parameter. So there will be an annotation @sanitize, marking to be able to flow into a sink. 

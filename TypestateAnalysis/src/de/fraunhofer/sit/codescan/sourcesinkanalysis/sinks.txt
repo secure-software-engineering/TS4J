@@ -1,0 +1,13 @@
+<java.sql.Statement: boolean execute(!java.lang.String)>
+<java.sql.Statement: boolean execute(!java.lang.String[,*]*)> <--See Docu
+<java.sql.Statement: boolean executeQuery(!java.lang.String)>
+<java.sql.Statement: boolean executeUpdate(!java.lang.String[,*]*)> <--See Docu
+
+<javax.servlet.ServletResponse: void setHeader(!java.lang.String,!java.lang.String)>
+<javax.servlet.ServletResponse: void setDateHeader(!java.lang.String,long)>
+<javax.servlet.ServletResponse: void setIntHeader(!java.lang.String,int)>
+<javax.servlet.ServletResponse: void addHeader(!java.lang.String,!java.lang.String)>
+<javax.servlet.ServletResponse: void addDateHeader(!java.lang.String,long)>
+<javax.servlet.ServletResponse: void addIntHeader(!java.lang.String,int)>
+
+@Sink(sensitiveArgs=[0])

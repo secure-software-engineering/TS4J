@@ -1,0 +1,69 @@
+HTTP
+<javax.servlet.http.Cookie: java.lang.String getValue()>
+<javax.servlet.http.HttpServletRequest: java.lang.String getHeader(java.lang.String)>
+<javax.servlet.ServletRequest: java.lang.String getParameter(java.lang.String)>
+<javax.servlet.ServletRequest: java.lang.String[] getParameterValues(java.lang.String)>
+
+IO
+<javax.io.Console: java.lang.String readLine()>
+<javax.io.Console: java.lang.String readLine(java.lang.String,java.lang.Object)>
+<javax.io.Console: char[] readPassword(java.lang.String,java.lang.Object)>
+<javax.io.Console: char[] readPassword()>
+
+<javax.io.BufferedReader: java.lang.String readLine()>
+#<javax.io.BufferedReader: int read()>
+#<javax.io.BufferedReader: int read(char[],int,int)>
+
+<java.util.Scanner: java.lang.String findInLine(java.util.regex.Pattern)>
+<java.util.Scanner: java.lang.String findInLine(java.lang.String)>
+<java.util.Scanner: java.lang.String findWithinHorizon(java.lang.String,int)>
+<java.util.Scanner: java.lang.String findWithinHorizon(java.util.regex.Pattern,int)>
+<java.util.Scanner: java.lang.String next(java.util.regex.Pattern)>
+<java.util.Scanner: java.lang.String next(java.lang.String)>
+<java.util.Scanner: java.lang.String next()>
+
+<java.io.DataInputStream: java.lang.String readUTF()>
+<java.io.DataInputStream: java.lang.String readUTF(java.io.DataInput)>
+
+<java.io.LineNumberReader: java.lang.String readLine()>
+
+SQL
+<java.sql.ResultSet: java.lang.String getNString(int)>
+<java.sql.ResultSet: java.lang.String getNString(java.lang.String)>
+<java.sql.ResultSet: java.lang.String getString(int)>
+<java.sql.ResultSet: java.lang.String getString(java.lang.String)>
+##getUrl?getTime?
+
+AWT
+<java.awt.TextComponent: java.lang.String getSelectedText()>
+<java.awt.TextComponent: java.lang.String getText()>
+<java.awt.event.KeyEvent: char getKeyChar()>
+
+SWING
+<javax.swing.text.JTextComponent: java.lang.String getSelectedText()>
+<javax.swing.text.JTextComponent: java.lang.String getText()>
+<javax.swing.text.JTextComponent: java.lang.String getText(int,int)>
+<javax.swing.text.JOptionPane: java.lang.String showInputDialog(java.awt.Component,java.lang.Object)>
+<javax.swing.text.JOptionPane: java.lang.String showInputDialog(java.awt.Component,java.lang.Object,java.lang.Object)>
+<javax.swing.text.JOptionPane: java.lang.String showInputDialog(java.awt.Component,java.lang.Object,java.lang.String,int)>
+<javax.swing.text.JOptionPane: java.lang.String showInputDialog(java.awt.Component,java.lang.Object,java.lang.String,int,javax.swing.Icon,java.lang.Object[],java.lang.Object)>
+<javax.swing.text.JOptionPane: java.lang.String showInputDialog(java.lang.Object)>
+<javax.swing.text.JOptionPane: java.lang.String showInputDialog(java.lang.Object,java.lang.Object)>
+
+SWT
+<org.eclipse.swt.custom.CCombo: java.lang.String getItem(int)>
+<org.eclipse.swt.custom.CCombo: java.lang.String[] getItems()>
+<org.eclipse.swt.custom.CCombo: java.lang.String getText()>
+<org.eclipse.swt.widgets.Combo: java.lang.String getText()>
+<org.eclipse.swt.widgets.Combo: java.lang.String getItem(int)>
+<org.eclipse.swt.widgets.Combo: java.lang.String[] getItems()>
+<org.eclipse.swt.browser.Browser: java.lang.String getCookie(java.lang.String,java.lang.String)>
+<org.eclipse.swt.widgets.List: java.lang.String[] getItems()>
+<org.eclipse.swt.widgets.List: java.lang.String getItem(int)>
+<org.eclipse.swt.widgets.List: java.lang.String[] getSelection()>
+
+<org.eclipse.swt.widgets.Text: java.lang.String getSelectionText()>
+<org.eclipse.swt.widgets.Text: java.lang.String getText()>
+<org.eclipse.swt.widgets.Text: java.lang.String getText(int,int)>
+<org.eclipse.swt.widgets.Text: char[] getTextChars()>
+## Could be a source as well: org.eclipse.swt.events.KeyEvent.keyCode
