@@ -6,7 +6,9 @@ public class ErrorMarker {
 	protected final String className;	
 	protected final int lineNumber;
 	protected final String methodSignature;	
-
+	public ErrorMarker(String errorMessage, String className, int lineNumber){
+		this(errorMessage, className, null, lineNumber);
+	}
 	public ErrorMarker(String errorMessage, String className, String methodSignature, int lineNumber) {
 		this.errorMessage = errorMessage;
 		this.className = className;
