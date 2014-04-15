@@ -66,6 +66,21 @@
                </documentation>
             </annotation>
          </attribute>
+         <attribute name="executionTime" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+            <simpleType>
+               <restriction base="string">
+                  <enumeration value="beforeAnalysis">
+                  </enumeration>
+                  <enumeration value="afterAnalysis">
+                  </enumeration>
+               </restriction>
+            </simpleType>
+         </attribute>
       </complexType>
    </element>
 

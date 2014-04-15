@@ -4,7 +4,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 
 import soot.SceneTransformer;
-import soot.Transformer;
 
 public class PluggableTransformer {
 	protected IConfigurationElement transformerConfigElement;
@@ -12,19 +11,31 @@ public class PluggableTransformer {
 	public PluggableTransformer(IConfigurationElement config) {
 		transformerConfigElement = config;
 	}
-	public String getPack(){
-		String packagename =transformerConfigElement.getAttribute("packagename");
-		return packagename.substring(0, packagename.indexOf("."));
+
+	public String getPack() {
+		String name = transformerConfigElement.getAttribute("packagename");
+		try{
+			name = name.substring(0, name.indexOf("."));
+		} catch (StringIndexOutOfBoundsException ex){
+			throw new RuntimeException("The packagename of the SootTransformer must contain a dot(.)!");
+		}
+		return name;
 	}
+
 	public String getPackageName() {
 		return transformerConfigElement.getAttribute("packagename");
 	}
 
 	public SceneTransformer getInstance() {
 		try {
-			return (SceneTransformer) transformerConfigElement.createExecutableExtension("class");
+			return (SceneTransformer) transformerConfigElement
+					.createExecutableExtension("class");
 		} catch (CoreException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	public boolean executeBeforeAnalysis(){
+		String executionTime = transformerConfigElement.getAttribute("executionTime");
+		return executionTime.equals("beforeAnalysis");
 	}
 }

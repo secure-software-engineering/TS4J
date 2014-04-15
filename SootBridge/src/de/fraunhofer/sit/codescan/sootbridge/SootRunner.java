@@ -1,10 +1,12 @@
 package de.fraunhofer.sit.codescan.sootbridge;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -145,15 +147,32 @@ public class SootRunner {
 	
 	public static <C extends IAnalysisConfiguration> Map<C, Set<ErrorMarker>> runSoot(final Map<C, Set<String>> analysisToEntryMethodSignatures, String staticSootArgs, String sootClassPath) {
 		final Map<C,Set<ErrorMarker>> analysisConfigToResultingErrorMarkers = new HashMap<C, Set<ErrorMarker>>();
-		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new Transformer<C>(analysisConfigToResultingErrorMarkers, analysisToEntryMethodSignatures)));	
-
 
 	    IExtensionRegistry reg = Platform.getExtensionRegistry();
 	    IConfigurationElement[] elements = reg.getConfigurationElementsFor(TRANSFORMER_EXTENSION_POINT_ID);
+	    List<PluggableTransformer> transformersBefore = new ArrayList<PluggableTransformer>();
+	    List<PluggableTransformer> transformersAfter = new ArrayList<PluggableTransformer>();
 	    for(IConfigurationElement element : elements){
 	    	PluggableTransformer transformer = new PluggableTransformer(element);
+	    	if(transformer.executeBeforeAnalysis()){
+	    		transformersBefore.add(transformer);
+	    	} else{
+	    		transformersAfter.add(transformer);
+	    	}
+	    }
+	    for(PluggableTransformer transformer : transformersBefore){
+	    	@SuppressWarnings("rawtypes")
+			SceneTransformer instance =  transformer.getInstance();
+	    	Transform transform = new Transform(transformer.getPackageName(), instance);
+	    	System.out.println(transform);
+	    	PackManager.v().getPack(transformer.getPack()).add(transform);
+	    }
+		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new Transformer<C>(analysisConfigToResultingErrorMarkers, analysisToEntryMethodSignatures)));	
+
+	    for(PluggableTransformer transformer : transformersAfter){
 	    	PackManager.v().getPack(transformer.getPack()).add(new Transform(transformer.getPackageName(), transformer.getInstance()));
 	    }
+
 		Set<String> classNames = extractClassNames(analysisToEntryMethodSignatures.values());					
 		String[] args = (staticSootArgs+" -cp "+sootClassPath+" "+Joiner.on(" ").join(classNames)).split(" ");
 		G.v().out = new PrintStream(new LoggingOutputStream(LOGGER, false), true);

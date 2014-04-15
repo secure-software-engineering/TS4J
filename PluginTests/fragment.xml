@@ -6,6 +6,8 @@
       <Transformer
             TransformerClass="de.fraunhofer.sit.codescan.sootbridge.test.TestSceneTransformer"
             class="de.fraunhofer.sit.codescan.plugintests.ExpectedSceneTransformer"
+            executeBeforeAnalysis="false"
+            executionTime="afterAnalysis"
             pack="wjtp"
             packagename="wjtp.testingtransformer">
       </Transformer>
