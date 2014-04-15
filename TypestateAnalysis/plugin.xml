@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-  <!-- <extension
+   <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
       <analysisPack
+            active="false"
             id="HardCodedKeyAnalysis">
          <ifdsAnalysis
                class="de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisPlugin"
@@ -19,7 +20,9 @@
    </extension>
        <extension
           point="de.fraunhofer.sit.codescan.framework.analysis">
-       <analysisPack id="CollectionAnalysis">
+       <analysisPack
+             active="false"
+             id="CollectionAnalysis">
           <ifdsAnalysis
                class="de.fraunhofer.sit.codescan.typestate.collectionanalysis.CollectionIteratorAnalysisPlugin"
                direction="forward"
@@ -35,10 +38,11 @@
              </filter>
           </ifdsAnalysis>
        </analysisPack>
-    </extension>-->
+    </extension>
        <extension
              point="de.fraunhofer.sit.codescan.framework.analysis">
           <analysisPack
+            	 active="true"
                 id="SourceToSinkAnalysis">
              <ifdsAnalysis
                    class="de.fraunhofer.sit.codescan.sourcesinkanalysis.SourceToSinkAnalysisPlugin"

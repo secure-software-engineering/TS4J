@@ -125,7 +125,7 @@ public class AnalysisJob extends Job {
 		for (Map.Entry<IJavaProject, Map<AnalysisConfiguration, Set<IMethod>>> entry : projectToAnalysisAndMethods
 				.entrySet()) {
 			IJavaProject project = entry.getKey();
-			LOGGER.trace("Analyzing project " + project.getProject().getName());
+			LOGGER.trace("Analyzing project " + project.getProject().getName() + " with analysis packs " + analysisPacks.toString());
 			Map<AnalysisConfiguration, Set<IMethod>> analysisAndMethodsInProject = entry
 					.getValue();
 			G.reset();
@@ -389,31 +389,36 @@ public class AnalysisJob extends Job {
 	private static Set<IAnalysisPack> createAnalysisConfigurations(IConfigurationElement[] packs) {
 		Set<IAnalysisPack> configs = new HashSet<IAnalysisPack>();
 		for (final IConfigurationElement pack : packs) {
-			configs.add(new IAnalysisPack() {
-				public IFDSAnalysisConfiguration[] getIFDSAnalysisConfigs() {
-					IConfigurationElement[] analyses = pack.getChildren("ifdsAnalysis");
-					IFDSAnalysisConfiguration[] res = new IFDSAnalysisConfiguration[analyses.length];
-					int i=0;
-					for (IConfigurationElement analysisInfo : analyses) {
-						res[i++] = new IFDSAnalysisConfiguration(analysisInfo);
+			if(Boolean.parseBoolean(pack.getAttribute("active"))){
+				configs.add(new IAnalysisPack() {
+					public IFDSAnalysisConfiguration[] getIFDSAnalysisConfigs() {
+						IConfigurationElement[] analyses = pack.getChildren("ifdsAnalysis");
+						IFDSAnalysisConfiguration[] res = new IFDSAnalysisConfiguration[analyses.length];
+						int i=0;
+						for (IConfigurationElement analysisInfo : analyses) {
+							res[i++] = new IFDSAnalysisConfiguration(analysisInfo);
+						}
+						return res;
 					}
-					return res;
-				}
-				public MethodBasedAnalysisConfiguration[] getMethodBasedAnalysisConfigs() {
-					IConfigurationElement[] analyses = pack.getChildren("methodBasedAnalysis");
-					MethodBasedAnalysisConfiguration[] res = new MethodBasedAnalysisConfiguration[analyses.length];
-					int i=0;
-					for (IConfigurationElement analysisInfo : analyses) {
-						res[i++] = new MethodBasedAnalysisConfiguration(analysisInfo);
+					public MethodBasedAnalysisConfiguration[] getMethodBasedAnalysisConfigs() {
+						IConfigurationElement[] analyses = pack.getChildren("methodBasedAnalysis");
+						MethodBasedAnalysisConfiguration[] res = new MethodBasedAnalysisConfiguration[analyses.length];
+						int i=0;
+						for (IConfigurationElement analysisInfo : analyses) {
+							res[i++] = new MethodBasedAnalysisConfiguration(analysisInfo);
+						}
+						return res;
 					}
-					return res;
-				}
-				public String getNatureFilter() {
-					String attribute = pack.getAttribute("natureFilter");
-					if(attribute==null) return "";
-					else return attribute;
-				}
-			});
+					public String getNatureFilter() {
+						String attribute = pack.getAttribute("natureFilter");
+						if(attribute==null) return "";
+						else return attribute;
+					}
+					public String toString(){
+						return pack.getAttribute("id");
+					}
+				});
+			}
 		}
 		return configs;
 	}

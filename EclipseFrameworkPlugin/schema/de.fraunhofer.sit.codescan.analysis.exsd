@@ -67,6 +67,13 @@
                </documentation>
             </annotation>
          </attribute>
+         <attribute name="active" type="boolean" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
       </complexType>
    </element>
 
