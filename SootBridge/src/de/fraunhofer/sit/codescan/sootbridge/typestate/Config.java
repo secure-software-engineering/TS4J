@@ -9,13 +9,13 @@ import soot.Scene;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.Constant;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
-import soot.jimple.InvokeStmt;
 import soot.jimple.Stmt;
 import soot.jimple.StringConstant;
+import soot.tagkit.AnnotationTag;
+import soot.tagkit.VisibilityAnnotationTag;
 import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
@@ -55,7 +55,6 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	private final SootMethod calleeAtReturnFlow;
 	private final IIFDSAnalysisContext context;
 	private String errorMessage;
-	private Constant assignmetValue;
 
 	public Config(final Abstraction<Var, Value, State, StmtID> abstraction,
 			Stmt invokeStmt, IIFDSAnalysisContext context) {
@@ -465,6 +464,27 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	@Override
 	public EqualsContext<Var, State, StmtID> not() {
 		not = true;
+		return this;
+	}
+	@Override
+	public IfCheckContext<Var, State, StmtID> atReturnFromMethodWithAnnotation(
+			String annotation) {	
+
+
+		if(calleeAtReturnFlow != null){
+			if (calleeAtReturnFlow.hasTag("VisibilityAnnotationTag")) {
+				VisibilityAnnotationTag tag = (VisibilityAnnotationTag) calleeAtReturnFlow
+						.getTag("VisibilityAnnotationTag");
+				for (AnnotationTag annTag : tag.getAnnotations()) {
+					if(annTag.getType().equals(annotation)){
+						method = calleeAtReturnFlow;
+						return this;
+					}
+
+				}
+			}
+		}
+		noMatch();
 		return this;
 	}
 

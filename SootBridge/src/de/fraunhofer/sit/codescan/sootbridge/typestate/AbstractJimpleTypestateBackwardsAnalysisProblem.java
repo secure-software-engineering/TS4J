@@ -15,6 +15,7 @@ import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.DefinitionStmt;
+import soot.jimple.IdentityStmt;
 import soot.jimple.InvokeExpr;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
@@ -49,8 +50,9 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 		return new FlowFunctions<Unit, Abstraction<Var, Value, State, StmtID>, SootMethod>() {
 
 			/**
-			 * On calls, replace arguments by formal parameters.
+			 * On calls, replace returned values are mapped to internal variables.
 			 */
+			@SuppressWarnings("unchecked")
 			public FlowFunction<Abstraction<Var, Value, State, StmtID>> getCallFlowFunction(
 					Unit callSite, final SootMethod dest) {
 				if (callSite != null) {
@@ -67,12 +69,12 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 							&& callSite instanceof DefinitionStmt) {
 						DefinitionStmt definitionStmt = (DefinitionStmt) callSite;
 						ReturnStmt returnStmt = (ReturnStmt) calleeExit;
-						fromValues = new ArrayList<Value>(fromValues);
 						fromValues.add(definitionStmt.getLeftOp());
-						toValues = new ArrayList<Value>(toValues);
 						toValues.add(returnStmt.getOp());
 					}
-					return new ReplaceValues(fromValues, toValues);
+					FlowFunction<Abstraction<Var,Value,State, StmtID>> applyReturnRules = new ApplyReturnRules(callSite, dest);
+					FlowFunction<Abstraction<Var,Value,State, StmtID>> mapFormalsToActuals = new ReplaceValues(fromValues, toValues);
+					return Compose.compose(applyReturnRules,mapFormalsToActuals);
 				} 
 				return Identity.v();
 			}
@@ -96,7 +98,7 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 			}
 
 			/**
-			 * On normal flows we simply track assignments. TODO may need to
+			 * On normal flows we simply track assignments and apply atNormalEdge TODO may need to
 			 * configure rules for arithmetic operations.
 			 */
 			public FlowFunction<Abstraction<Var, Value, State, StmtID>> getNormalFlowFunction(
@@ -106,6 +108,9 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 					return new FlowFunction<Abstraction<Var, Value, State, StmtID>>() {
 						public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(
 								final Abstraction<Var, Value, State, StmtID> source) {
+							if(assign instanceof IdentityStmt){
+								return Collections.singleton(source.replaceValue(assign.getLeftOp(), assign.getRightOp()));
+							}
 							Config<Var, State, StmtID> config = new Config<Var, State, StmtID>(
 									twoElementSet(
 											source,
@@ -123,33 +128,35 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 
 			/**
 			 * On returns, apply the appropriate rules and replace formal
-			 * parameters by arguments, as well as return locals by LHS of the
-			 * assignment of the call (if any).
+			 * parameters by arguments, as well as LHS locals by appropriate return values of the callee (if any).
 			 */
-			@SuppressWarnings("unchecked")
 			public FlowFunction<Abstraction<Var, Value, State, StmtID>> getReturnFlowFunction(
 					final Unit callSite, final SootMethod callee,
 					final Unit exitStmt, Unit retSite) {
 				if (callSite != null) {
 					Stmt stmt = (Stmt) callSite;
 					if (!stmt.containsInvokeExpr())
-						return new ApplyReturnRules(callSite, callee);
+						return Identity.v();
 					InvokeExpr ie = stmt.getInvokeExpr();
 					if (!ie.getMethod().equals(callee))
-						return new ApplyReturnRules(callSite, callee);
+						return Identity.v();
 					List<Value> callArgs = ie.getArgs();
-					List<Value> paramLocals = new ArrayList<Value>();
-					for (int i = 0; i < callee.getParameterCount(); i++) {
-						paramLocals.add(callee.getActiveBody()
-								.getParameterLocal(i));
+					List<Value> paramLocals = callee.getActiveBody().getParameterRefs();
+
+					Unit calleeExit = callee.getActiveBody().getUnits().getLast();
+					if (calleeExit instanceof ReturnStmt
+							&& callSite instanceof DefinitionStmt) {
+						DefinitionStmt definitionStmt = (DefinitionStmt) callSite;
+						ReturnStmt returnStmt = (ReturnStmt) calleeExit;
+						paramLocals = new ArrayList<Value>(paramLocals);
+						callArgs = new ArrayList<Value>(callArgs);
+						callArgs.add(definitionStmt.getLeftOp());
+						paramLocals.add(returnStmt.getOp());
 					}
-					FlowFunction<Abstraction<Var, Value, State, StmtID>> applyRules = new ApplyReturnRules(
-							callSite, callee);
-					FlowFunction<Abstraction<Var, Value, State, StmtID>> mapFormalsToActuals = new ReplaceValues(
-							paramLocals, callArgs);
-					return Compose.compose(applyRules, mapFormalsToActuals);
+					FlowFunction<Abstraction<Var, Value, State, StmtID>> mapFormalsToActuals = new ReplaceValues(paramLocals, callArgs);
+					return mapFormalsToActuals;
 				} else {
-					return new ApplyReturnRules(callSite, callee);
+					return Identity.v();
 				}
 			}
 		};

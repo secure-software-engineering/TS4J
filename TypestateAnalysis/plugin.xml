@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-   <extension
+  <!-- <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
       <analysisPack
             id="HardCodedKeyAnalysis">
@@ -35,6 +35,22 @@
              </filter>
           </ifdsAnalysis>
        </analysisPack>
-    </extension>
+    </extension>-->
+       <extension
+             point="de.fraunhofer.sit.codescan.framework.analysis">
+          <analysisPack
+                id="SourceToSinkAnalysis">
+             <ifdsAnalysis
+                   class="de.fraunhofer.sit.codescan.sourcesinkanalysis.SourceToSinkAnalysisPlugin"
+                   direction="forward"
+                   id="SourceToSinkAnalysisPlugin">
+                <filter>
+                   <bySuperType>
+                      <byMethodDecl></byMethodDecl>
+                   </bySuperType>
+                </filter>
+             </ifdsAnalysis>
+          </analysisPack>
+       </extension>
    
 </plugin>

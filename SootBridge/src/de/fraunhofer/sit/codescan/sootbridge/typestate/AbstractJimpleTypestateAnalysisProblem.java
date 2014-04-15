@@ -2,6 +2,7 @@ package de.fraunhofer.sit.codescan.sootbridge.typestate;
 
 import heros.FlowFunction;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -97,7 +98,7 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 		}
 
 		public Set<Abstraction<Var,Value,State,StmtID>> computeTargets(Abstraction<Var,Value,State,StmtID> source) {
-			return source.replaceValues(fromValues,toValues);
+			return Collections.singleton(source.replaceValues(fromValues,toValues));
 		}
 	}
 }

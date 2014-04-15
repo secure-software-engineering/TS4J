@@ -120,7 +120,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	 * the from-value has been replaced by the corresponding to-value from the other list.
 	 * If an entry is <code>null</code> in the from or to list, then this entry is not processed.   
 	 */
-	public Set<Abstraction<Var,Val,State,StmtID>> replaceValues(List<Val> from, List<Val> to) {
+	public Set<Abstraction<Var,Val,State,StmtID>> replaceValuesAndCopy(List<Val> from, List<Val> to) {
 		assert(from.size()==to.size());
 		Set<Abstraction<Var,Val,State,StmtID>> res = new HashSet<Abstraction<Var,Val,State,StmtID>>();
 		for(int i=0; i<from.size(); i++) {
@@ -134,6 +134,39 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 			}
 		}
 		return res;
+	}
+	
+	/**
+	 * This method is called to replace all values in the from List to the appropriate values in the to List.
+	 * But in contrast to the <code>Method replaceValuesAndCopy</code> it will do the replace in place.
+	 * @param from
+	 * @param to
+	 * @return
+	 */
+	public Abstraction<Var, Val, State, StmtID> replaceValues(
+			List<Val> from, List<Val> to) {
+		assert (from.size() == to.size());
+		boolean didReplace = false;
+		Abstraction<Var, Val, State, StmtID> copy = copy();
+
+		if (boundValues == null)
+			return this;
+		for (int l = 0; l < from.size(); l++) {
+			Val fromVal = from.get(l);
+			Val toVal = to.get(l);
+
+			for (int i = 0; i < boundValues.length; i++) {
+				Val val = getBoundValue(i);
+				if (val != null && val.equals(fromVal)) {
+					didReplace = true;
+					copy.setBoundVal(toVal, i);
+				}
+			}
+		}
+		if (didReplace) {
+			return copy;
+		}
+		return this;
 	}
 	
 	public Set<Abstraction<Var,Val,State,StmtID>> bindValue(Val addedValue, Var var) {
