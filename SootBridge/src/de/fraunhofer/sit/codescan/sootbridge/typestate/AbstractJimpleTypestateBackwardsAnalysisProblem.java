@@ -7,6 +7,7 @@ import heros.flowfunc.Compose;
 import heros.flowfunc.Identity;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -63,14 +64,15 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 						return Identity.v();
 					List<Value> fromValues = new ArrayList<Value>();
 					List<Value> toValues = new ArrayList<Value>();
-					Unit calleeExit = dest.getActiveBody().getUnits().getLast();
-					// addAliases(callee, fromValues, toValues);
-					if (calleeExit instanceof ReturnStmt
-							&& callSite instanceof DefinitionStmt) {
+					if(callSite instanceof DefinitionStmt){
 						DefinitionStmt definitionStmt = (DefinitionStmt) callSite;
-						ReturnStmt returnStmt = (ReturnStmt) calleeExit;
-						fromValues.add(definitionStmt.getLeftOp());
-						toValues.add(returnStmt.getOp());
+						for(Unit eP : ICFG.getEndPointsOf(dest)){
+							if (eP instanceof ReturnStmt) {
+									ReturnStmt returnStmt = (ReturnStmt) eP;
+									fromValues.add(definitionStmt.getLeftOp());
+									toValues.add(returnStmt.getOp());
+							}
+						}
 					}
 					FlowFunction<Abstraction<Var,Value,State, StmtID>> applyReturnRules = new ApplyReturnRules(callSite, dest);
 					FlowFunction<Abstraction<Var,Value,State, StmtID>> mapFormalsToActuals = new ReplaceValues(fromValues, toValues);
@@ -143,15 +145,17 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 					List<Value> callArgs = ie.getArgs();
 					List<Value> paramLocals = callee.getActiveBody().getParameterRefs();
 
-					Unit calleeExit = callee.getActiveBody().getUnits().getLast();
-					if (calleeExit instanceof ReturnStmt
-							&& callSite instanceof DefinitionStmt) {
-						DefinitionStmt definitionStmt = (DefinitionStmt) callSite;
-						ReturnStmt returnStmt = (ReturnStmt) calleeExit;
+					if(callSite instanceof DefinitionStmt){
 						paramLocals = new ArrayList<Value>(paramLocals);
 						callArgs = new ArrayList<Value>(callArgs);
-						callArgs.add(definitionStmt.getLeftOp());
-						paramLocals.add(returnStmt.getOp());
+						DefinitionStmt definitionStmt = (DefinitionStmt) callSite;
+						for(Unit eP : ICFG.getEndPointsOf(callee)){
+							if (eP instanceof ReturnStmt) {
+									ReturnStmt returnStmt = (ReturnStmt) eP;
+									paramLocals.add(definitionStmt.getLeftOp());
+									callArgs.add(returnStmt.getOp());
+							}
+						}
 					}
 					FlowFunction<Abstraction<Var, Value, State, StmtID>> mapFormalsToActuals = new ReplaceValues(paramLocals, callArgs);
 					return mapFormalsToActuals;

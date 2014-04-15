@@ -161,11 +161,7 @@ public class SootRunner {
 	    	}
 	    }
 	    for(PluggableTransformer transformer : transformersBefore){
-	    	@SuppressWarnings("rawtypes")
-			SceneTransformer instance =  transformer.getInstance();
-	    	Transform transform = new Transform(transformer.getPackageName(), instance);
-	    	System.out.println(transform);
-	    	PackManager.v().getPack(transformer.getPack()).add(transform);
+	    	PackManager.v().getPack(transformer.getPack()).add(new Transform(transformer.getPackageName(), transformer.getInstance()));
 	    }
 		PackManager.v().getPack("wjtp").add(new Transform("wjtp.vulnanalysis", new Transformer<C>(analysisConfigToResultingErrorMarkers, analysisToEntryMethodSignatures)));	
 

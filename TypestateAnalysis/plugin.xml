@@ -56,5 +56,13 @@
              </ifdsAnalysis>
           </analysisPack>
        </extension>
+       <extension
+             point="de.fraunhofer.sit.codescan.sootrunnertransformer">
+          <Transformer
+                class="de.fraunhofer.sit.codescan.sourcesinkanalysis.InsertAnnotationTransformer"
+                executionTime="beforeAnalysis"
+                packagename="wjtp.insertannotation">
+          </Transformer>
+       </extension>
    
 </plugin>

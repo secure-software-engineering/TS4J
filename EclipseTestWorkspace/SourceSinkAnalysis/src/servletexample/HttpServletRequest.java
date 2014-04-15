@@ -1,9 +1,11 @@
 package servletexample;
 
 public class HttpServletRequest {
-	//@Source
 	public String getParam(String param) {
-		int nul;
+		long nul = System.currentTimeMillis();
+		if(nul < System.currentTimeMillis()){
+			return "TEssST";
+		}
 		return param;
 	}
 
