@@ -5,10 +5,9 @@ import java.security.SecureRandom;
 import javax.crypto.spec.SecretKeySpec;
 
 import annotation.FalseNegative;
-import de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisPlugin;
 
 public class Case4 {
-	@FalseNegative(HardCodedKeyAnalysisPlugin.class)
+	@FalseNegative("HardCodedKeyAnalysisPlugin")
 	public static void main(String[] args) {
 		int necessaryStmt;
 		String keyString = "Dieser Schluessel wird mit einem Random Part aufgefuellt";

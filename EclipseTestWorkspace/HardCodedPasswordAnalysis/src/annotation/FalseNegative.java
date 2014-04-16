@@ -4,5 +4,5 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 public @interface FalseNegative {
-	  Class<?> value();
+	  String value();
 }

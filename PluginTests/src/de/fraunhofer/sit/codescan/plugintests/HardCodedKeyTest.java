@@ -3,7 +3,7 @@ package de.fraunhofer.sit.codescan.plugintests;
 import org.junit.Test;
 
 public class HardCodedKeyTest extends AbstractTest {
-	private static final String HARD_CODED_KEY_CLASS = "de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisPlugin";
+	private static final String HARD_CODED_KEY_CLASS = "HardCodedKeyAnalysisPlugin";
 	
 	@Test
 	public void testCheckHardCodedKeyVulnerables() throws InterruptedException {

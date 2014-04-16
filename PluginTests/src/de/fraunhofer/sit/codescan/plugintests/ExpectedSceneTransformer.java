@@ -11,6 +11,7 @@ import soot.SootClass;
 import soot.SootMethod;
 import soot.tagkit.AnnotationClassElem;
 import soot.tagkit.AnnotationElem;
+import soot.tagkit.AnnotationStringElem;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.VisibilityAnnotationTag;
 
@@ -30,9 +31,9 @@ public class ExpectedSceneTransformer extends SceneTransformer {
 							.getTag("VisibilityAnnotationTag");
 					for (AnnotationTag annTag : tag.getAnnotations()) {
 						for (AnnotationElem elem : annTag.getElems()) {
-							if (elem instanceof AnnotationClassElem) {
-								AnnotationClassElem stringElem = (AnnotationClassElem) elem;
-								String analysisClass = toAnnotationComparableString(stringElem.getDesc());
+							if (elem instanceof AnnotationStringElem) {
+								AnnotationStringElem stringElem = (AnnotationStringElem) elem;
+								String analysisClass = stringElem.getValue();
 								if (!analysisClass.equals("")) {
 									String type = annTag.getType();
 									if (type.equals("Lannotation/DefinitelyVulnerable;")

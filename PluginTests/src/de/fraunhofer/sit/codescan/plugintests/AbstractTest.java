@@ -57,8 +57,9 @@ public class AbstractTest extends TestCase {
 			for (ErrorMarker errorMarker : errorMarkers) {
 				methodSignatureSet.add(errorMarker.getMethodSignature());
 			}
-			analysisToErrorMethodSignatures.put(
-					analysisConfiguration.getAnalysisClass(),
+			String analysisClass = analysisConfiguration.getAnalysisClass();
+			analysisToErrorMethodSignatures.put(analysisClass.substring(analysisClass.lastIndexOf(".")+1,analysisClass.length())
+					,
 					methodSignatureSet);
 		}
 		expectedAnalaysisClassToErrorTypes = ExpectedSceneTransformer
