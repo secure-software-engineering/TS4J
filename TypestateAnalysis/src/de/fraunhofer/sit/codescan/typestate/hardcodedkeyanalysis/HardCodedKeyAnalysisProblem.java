@@ -15,6 +15,7 @@ import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCode
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.SB_APPENDSTRING_BASE;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.SB_INIT_ARG;
 import static de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisProblem.Var.TO_STRING_BASE;
+import soot.jimple.StringConstant;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateBackwardsAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
@@ -56,20 +57,20 @@ public class HardCodedKeyAnalysisProblem extends AbstractJimpleTypestateBackward
 
 	@Override
 	protected Done<Var, State, StatementId> atReturn(AtReturn<Var, State, StatementId> d) {
-		return d.atAnyReturn().ifValueBoundTo(SB_APPENDSTRING_ARG1).not().equalsStringConstant().toState(NOT_STATIC_KEY).
-				orElse().atAnyReturn().ifValueBoundTo(SB_APPENDSTRING_ARG2).not().equalsStringConstant().toState(NOT_STATIC_KEY).
-				orElse().atAnyReturn().ifValueBoundTo(KEYSTRING).not().equalsStringConstant().toState(NOT_STATIC_KEY);
+		return d.atAnyReturn().ifValueBoundTo(SB_APPENDSTRING_ARG1).not().equalsConstant(StringConstant.class).toState(NOT_STATIC_KEY).
+				orElse().atAnyReturn().ifValueBoundTo(SB_APPENDSTRING_ARG2).not().equalsConstant(StringConstant.class).toState(NOT_STATIC_KEY).
+				orElse().atAnyReturn().ifValueBoundTo(KEYSTRING).not().equalsConstant(StringConstant.class).toState(NOT_STATIC_KEY);
 	}
 
 	@Override
 	protected Done<Var, State, StatementId> atNormalEdge(
 			AtNormalEdge<Var, State, StatementId> d) {
-		return d.atAssignTo(KEYSTRING).ifInState(BYTESINVOKED).and().ifValueBoundTo(KEYSTRING).equalsStringConstant().
+		return d.atAssignTo(KEYSTRING).ifInState(BYTESINVOKED).and().ifValueBoundTo(KEYSTRING).equalsConstant(StringConstant.class).
 				reportError("Should not use a constant as private Key").here().
-				orElse().atAssignTo(SB_APPENDSTRING_ARG1).ifInState(FINALLY_APPENDED).and().ifValueBoundTo(SB_APPENDSTRING_ARG2).equalsStringConstant().
-				and().ifValueBoundTo(SB_APPENDSTRING_ARG1).equalsStringConstant().
-				orElse().atAssignTo(SB_APPENDSTRING_ARG2).ifInState(FINALLY_APPENDED).and().ifValueBoundTo(SB_APPENDSTRING_ARG2).equalsStringConstant().
-				and().ifValueBoundTo(SB_APPENDSTRING_ARG1).equalsStringConstant().
+				orElse().atAssignTo(SB_APPENDSTRING_ARG1).ifInState(FINALLY_APPENDED).and().ifValueBoundTo(SB_APPENDSTRING_ARG2).equalsConstant(StringConstant.class).
+				and().ifValueBoundTo(SB_APPENDSTRING_ARG1).equalsConstant(StringConstant.class).
+				orElse().atAssignTo(SB_APPENDSTRING_ARG2).ifInState(FINALLY_APPENDED).and().ifValueBoundTo(SB_APPENDSTRING_ARG2).equalsConstant(StringConstant.class).
+				and().ifValueBoundTo(SB_APPENDSTRING_ARG1).equalsConstant(StringConstant.class).
 				reportError("Should not use a constant as private Key").here();
 	}
 }

@@ -3,12 +3,18 @@ package de.fraunhofer.sit.codescan.sootbridge.typestate;
 import static heros.TwoElementSet.twoElementSet;
 import static java.util.Collections.singleton;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import soot.ArrayType;
 import soot.Unit;
+import soot.Value;
+import soot.jimple.ArrayRef;
 
 /**
  * A generic typestate abstraction that can be used to track multiple correlated objects whose pointer values
@@ -28,12 +34,14 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	protected Unit[] stmtTrace;
 	/** The internal state. */
 	protected State state;
+	protected Map<Val, List<Val>> boundValuesToEntries;
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private final static Abstraction ZERO = new Abstraction() {
 		{
 			boundValues = new Object[0];
 			stmtTrace = new Unit[0];
+			boundValuesToEntries = new HashMap();
 		}
 		public String toString() { return "<ZERO>"; };
 		public Object getValue(Enum e) { return null; };
@@ -57,7 +65,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	}
 	
 	private Abstraction() {
-		//only used for ZERO
+		boundValuesToEntries = new HashMap<Val, List<Val>>();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -66,6 +74,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		boundValues = (Val[]) new Object[size];
 		boundValues[e.ordinal()] = v;
 		state = s;
+		boundValuesToEntries = new HashMap<Val, List<Val>>();
 	}
 	
 	public Val getValue(Var e) {
@@ -73,6 +82,12 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		return boundValues[e.ordinal()];
 	}
 
+	
+	public List<Val> getValueMap(Var e) {
+		if(boundValues==null || boundValuesToEntries == null) return null;
+		return boundValuesToEntries.get(boundValues[e.ordinal()]);
+	}
+	
 	public Unit getStatement(StmtID sid) {
 		if(stmtTrace==null) return null;
 		else return stmtTrace[sid.ordinal()];
@@ -90,6 +105,10 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 			Val val = getBoundValue(i);
 			if(val!=null && val.equals(fromVal)) {
 				if(copy==null) copy = copy();
+				if(boundValuesToEntries.containsKey(fromVal)){
+					copy.boundValuesToEntries.put(toVal, boundValuesToEntries.get(fromVal));
+					copy.boundValuesToEntries.remove(fromVal);
+				}
 				copy.setBoundVal(toVal, i);
 			}
 		}
@@ -220,6 +239,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 			Abstraction<Var,Val,State,StmtID> clone = (Abstraction<Var,Val,State,StmtID>) super.clone();
 			if(boundValues!=null) clone.boundValues = boundValues.clone();
 			if(stmtTrace!=null) clone.stmtTrace = stmtTrace.clone();
+			if(boundValuesToEntries!=null) clone.boundValuesToEntries = new HashMap<Val, List<Val>>(boundValuesToEntries);
 			return clone;
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException(e);
@@ -261,8 +281,25 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	@Override
 	public String toString() {
 		return "Abstraction [boundValues=" + Arrays.toString(boundValues)
+				+ ", boundValuesMap=" + boundValuesToEntries.toString()
 				+ ", stmtTrace=" + Arrays.toString(stmtTrace)
 				+ ", state=" + state + "]";
+	}
+
+	public  Abstraction<Var,Val,State,StmtID> pushToValue(Val base, Val rOp) {
+		if(boundValues==null) return this;
+		for (int i = 0; i < boundValues.length; i++) {
+			Val val = getBoundValue(i);
+			if(val!=null && val.equals(base)) {
+				List<Val> set = boundValuesToEntries.get(val);
+				if(set == null){
+					set = new ArrayList<Val>();
+				}
+				set.add(rOp);
+				boundValuesToEntries.put(val, set);
+			}
+		}
+		return this;
 	}
 
 }

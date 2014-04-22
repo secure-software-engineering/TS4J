@@ -1,0 +1,37 @@
+public class examples.Case1 extends java.lang.Object
+{
+
+    public static void main(java.lang.String[])
+    {
+        java.lang.String[] args;
+        java.lang.String a, b, temp$1;
+        java.lang.StringBuffer temp$0;
+        byte[] keyBytes, temp$2;
+        javax.crypto.spec.SecretKeySpec key, temp$3;
+
+        args := @parameter0: java.lang.String[];
+        a = "Schluessel Part 1";
+        b = "Schslssuessssssel Part 2";
+        temp$0 = new java.lang.StringBuffer;
+        specialinvoke temp$0.<java.lang.StringBuffer: void <init>()>();
+        virtualinvoke temp$0.<java.lang.StringBuffer: java.lang.StringBuffer append(java.lang.Object)>(a);
+        virtualinvoke temp$0.<java.lang.StringBuffer: java.lang.StringBuffer append(java.lang.Object)>(b);
+        temp$1 = virtualinvoke temp$0.<java.lang.StringBuffer: java.lang.String toString()>();
+        b = temp$1;
+        temp$2 = virtualinvoke b.<java.lang.String: byte[] getBytes()>();
+        keyBytes = temp$2;
+        temp$3 = new javax.crypto.spec.SecretKeySpec;
+        specialinvoke temp$3.<javax.crypto.spec.SecretKeySpec: void <init>(byte[],java.lang.String)>(keyBytes, "AES");
+        key = temp$3;
+        return;
+    }
+
+    public void <init>()
+    {
+        examples.Case1 this;
+
+        this := @this: examples.Case1;
+        specialinvoke this.<java.lang.Object: void <init>()>();
+        return;
+    }
+}

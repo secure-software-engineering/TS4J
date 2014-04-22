@@ -1,14 +1,17 @@
 package de.fraunhofer.sit.codescan.sootbridge.typestate;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import soot.Scene;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
+import soot.jimple.AssignStmt;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
@@ -29,6 +32,7 @@ import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.IfCheckContext
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.ReportError;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.ValueContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.VarContext;
+import de.fraunhofer.sit.codescan.sootbridge.util.SinkMethod;
 
 public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID extends Enum<StmtID>>
 		implements AtCallToReturn<Var, State, StmtID>,AtCollection<Var, State, StmtID>,
@@ -55,6 +59,8 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	private final SootMethod calleeAtReturnFlow;
 	private final IIFDSAnalysisContext context;
 	private String errorMessage;
+	private ArrayList<Integer> currSlotArray = null;
+	private boolean each = false;
 
 	public Config(final Abstraction<Var, Value, State, StmtID> abstraction,
 			Stmt invokeStmt, IIFDSAnalysisContext context) {
@@ -177,16 +183,30 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	public CallContext<Var, State, StmtID> as(Var var) {
 		if (abstractions.isEmpty())
 			return this;
-
-		Value addedValue = extractValue();
-		if (addedValue == null)
-			return this;
-
 		Set<Abstraction<Var, Value, State, StmtID>> newAbstractions = new HashSet<Abstraction<Var, Value, State, StmtID>>();
-		for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
-			newAbstractions.addAll(abs.bindValue(addedValue, var));
+		
+		if(currSlotArray != null){
+			for (int a : currSlotArray){
+				InvokeExpr ie = invokeStmt.getInvokeExpr();
+				Value addedValue = ie.getArg(a);
+
+				for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
+					newAbstractions.addAll(abs.bindValue(addedValue, var));
+				}
+			}
+			currSlotArray= null;
+		}else{
+			Value addedValue = extractValue();
+			System.out.println(addedValue);
+			if (addedValue == null)
+				return this;
+	
+			for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
+				newAbstractions.addAll(abs.bindValue(addedValue, var));
+			}
 		}
 		abstractions = newAbstractions;
+		
 		return this;
 	}
 
@@ -295,28 +315,59 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		return computeEquals();
 	}
 
-	public CallContext<Var, State, StmtID> equalsStringConstant() {
+	public CallContext<Var, State, StmtID> equalsConstant(Class<?> instance) {
 		if (abstractions.isEmpty())
 			return this;
-		// TODO should we do non-destructive updates here?
+		
 		for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
 				.iterator(); i.hasNext();) {
 			Abstraction<Var, Value, State, StmtID> abs = i.next();
-			Value v = abs.getValue(eqCheckVar);
-			boolean filter = (v == null || !(v instanceof StringConstant));
-			if(not){
-				filter = !filter;
+			if(each){
+				List<Value> list = abs.getValueMap(eqCheckVar);
+				if(list == null){
+					noMatch();
+					return this;
+				}
+				boolean remove = false;
+				for(Value v : list){
+					if(v == null){
+						//i.remove();
+					} else{
+						boolean filter = !instance.isInstance(v);
+						if(not){
+							filter = !filter;
+						}
+						if (filter) {
+							remove = true;
+						}
+					}
+				}
+				if(remove){
+					i.remove();
+				}
 				not = false;
-			}
-			if (filter) {
-				i.remove();
+				each = false;
+			}else{
+				Value v = abs.getValue(eqCheckVar);
+				if(v == null){
+					i.remove();
+				} else{
+					boolean filter = !instance.isInstance(v);
+					if(not){
+						filter = !filter;
+						not = false;
+					}
+					if (filter) {
+						i.remove();
+					}
+				}
 			}
 		}
+		
 		if (abstractions.isEmpty())
 			noMatch();
 		return this;
 	}
-
 	private CallContext<Var, State, StmtID> computeEquals() {
 		Value v = extractValue();
 		if (v == null)
@@ -447,15 +498,20 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 
 		if (abstractions.isEmpty())
 			return this;
-		for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
-				.iterator(); i.hasNext();) {
-			Abstraction<Var, Value, State, StmtID> abs = i.next();
-			if (abs.getBoundValue(var) == null) {
-				i.remove();
+		if(invokeStmt instanceof AssignStmt){
+			AssignStmt as = (AssignStmt) invokeStmt;
+			for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
+					.iterator(); i.hasNext();) {
+				Abstraction<Var, Value, State, StmtID> abs = i.next();
+				Value boundValue = abs.getBoundValue(var);
+				if (boundValue == null || !boundValue.equals(as.getLeftOp())) {
+					i.remove();
+				}
 			}
+			
 		}
 
-		if(abstractions.isEmpty())
+		if (abstractions.isEmpty())
 			noMatch();
 
 		return this;
@@ -467,7 +523,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		return this;
 	}
 	@Override
-	public IfCheckContext<Var, State, StmtID> atReturnFromMethodWithAnnotation(
+	public IfCheckContext<Var, State, StmtID> atCallToMethodWithAnnotation(
 			String annotation) {	
 
 
@@ -485,6 +541,46 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			}
 		}
 		noMatch();
+		return this;
+	}
+
+	@Override
+	public IfCheckContext<Var, State, StmtID> atMethodFromList(Set<String> methodSet) { 
+		if(calleeAtReturnFlow != null){
+			if (methodSet.contains(calleeAtReturnFlow.getSignature())) {
+				method = calleeAtReturnFlow;
+				
+				return this;	
+			}
+		}
+		noMatch();
+		return this;
+	}
+
+	@Override
+	public ValueContext<Var, State, StmtID> atMethodFromListWithParameter(Set<SinkMethod> sources){
+		if(calleeAtReturnFlow != null){
+			for(SinkMethod m : sources) {
+				ArrayList<Integer> sinkIndices = m.getSinkIndices();
+				if(sinkIndices.size() > 0){
+					if(m.getMethodSignature().equals(calleeAtReturnFlow.getSignature())){
+						method = calleeAtReturnFlow;
+						if(sinkIndices.size() == 1){
+							return trackParameter(sinkIndices.get(0));	
+						}
+						currSlotArray = sinkIndices;
+						return this;
+					}	
+				}
+			}
+		}
+		noMatch();
+		return this;
+	}
+
+	@Override
+	public EqualsContext<Var, State, StmtID> each() {
+		each  = true;
 		return this;
 	}
 

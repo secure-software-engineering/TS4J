@@ -15,9 +15,11 @@ import java.util.Set;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
+import soot.jimple.ArrayRef;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.IdentityStmt;
 import soot.jimple.InvokeExpr;
+import soot.jimple.InvokeStmt;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
@@ -53,7 +55,6 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 			/**
 			 * On calls, replace returned values are mapped to internal variables.
 			 */
-			@SuppressWarnings("unchecked")
 			public FlowFunction<Abstraction<Var, Value, State, StmtID>> getCallFlowFunction(
 					Unit callSite, final SootMethod dest) {
 				if (callSite != null) {
@@ -74,9 +75,8 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 							}
 						}
 					}
-					FlowFunction<Abstraction<Var,Value,State, StmtID>> applyReturnRules = new ApplyReturnRules(callSite, dest);
 					FlowFunction<Abstraction<Var,Value,State, StmtID>> mapFormalsToActuals = new ReplaceValues(fromValues, toValues);
-					return Compose.compose(applyReturnRules,mapFormalsToActuals);
+					return mapFormalsToActuals;
 				} 
 				return Identity.v();
 			}
@@ -91,8 +91,12 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 				return new FlowFunction<Abstraction<Var, Value, State, StmtID>>() {
 					public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(
 							Abstraction<Var, Value, State, StmtID> source) {
+						SootMethod callee =null;
+						if(s.containsInvokeExpr()){
+							callee = s.getInvokeExpr().getMethod();
+						}
 						Config<Var, State, StmtID> config = new Config<Var, State, StmtID>(
-								source, s, context);
+								source, s, context, callee);
 						atCallToReturn(config);
 						return config.getAbstractions();
 					}
@@ -110,8 +114,14 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 					return new FlowFunction<Abstraction<Var, Value, State, StmtID>>() {
 						public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(
 								final Abstraction<Var, Value, State, StmtID> source) {
+							Value lOp = assign.getLeftOp();
+							Value rOp = assign.getRightOp();
 							if(assign instanceof IdentityStmt){
-								return Collections.singleton(source.replaceValue(assign.getLeftOp(), assign.getRightOp()));
+								return Collections.singleton(source.replaceValue(lOp, rOp));
+							}
+							if(lOp instanceof ArrayRef){
+								ArrayRef aR = (ArrayRef) lOp;
+								return Collections.singleton(source.pushToValue(aR.getBase(),rOp));
 							}
 							Config<Var, State, StmtID> config = new Config<Var, State, StmtID>(
 									twoElementSet(
@@ -132,6 +142,7 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 			 * On returns, apply the appropriate rules and replace formal
 			 * parameters by arguments, as well as LHS locals by appropriate return values of the callee (if any).
 			 */
+			@SuppressWarnings("unchecked")
 			public FlowFunction<Abstraction<Var, Value, State, StmtID>> getReturnFlowFunction(
 					final Unit callSite, final SootMethod callee,
 					final Unit exitStmt, Unit retSite) {
@@ -157,8 +168,9 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 							}
 						}
 					}
+					FlowFunction<Abstraction<Var,Value,State, StmtID>> applyReturnRules = new ApplyReturnRules(callSite, callee);
 					FlowFunction<Abstraction<Var, Value, State, StmtID>> mapFormalsToActuals = new ReplaceValues(paramLocals, callArgs);
-					return mapFormalsToActuals;
+					return Compose.compose(applyReturnRules,mapFormalsToActuals);
 				} else {
 					return Identity.v();
 				}

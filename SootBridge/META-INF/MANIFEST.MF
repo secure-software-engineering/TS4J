@@ -22,6 +22,7 @@ Export-Package: com.google.common.annotations,
  de.fraunhofer.sit.codescan.sootbridge,
  de.fraunhofer.sit.codescan.sootbridge.typestate,
  de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces,
+ de.fraunhofer.sit.codescan.sootbridge.util,
  heros,
  heros.edgefunc,
  heros.flowfunc,
@@ -161,3 +162,4 @@ Export-Package: com.google.common.annotations,
  soot.util.queue,
  soot.xml
 Import-Package: org.eclipse.core.runtime
+Require-Bundle: de.fraunhofer.sit.codescan.sootbridge

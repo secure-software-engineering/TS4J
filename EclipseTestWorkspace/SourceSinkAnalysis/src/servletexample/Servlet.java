@@ -5,12 +5,9 @@ public class Servlet {
 	public void doGet(HttpServletRequest request){
 		int nece = 10;
 		nece++;
-		String user = request.getParam("ss");
+		String user = request.getParam("test");
 		
 		ServletResponse resp = new ServletResponse();
-		resp.addHeader("here",user);
+		resp.addHeader(user, user);
 	}
-	
-
-
 }

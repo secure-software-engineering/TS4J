@@ -1,0 +1,43 @@
+public class ivexamples.Case1 extends java.lang.Object
+{
+
+    public static void main(java.lang.String[])
+    {
+        java.lang.String[] args;
+        byte[] iv, temp$0;
+        javax.crypto.spec.IvParameterSpec ivParamesaterSpec, temp$1;
+
+        args := @parameter0: java.lang.String[];
+        temp$0 = newarray (byte)[16];
+        temp$0[0] = 0;
+        temp$0[1] = 2;
+        temp$0[2] = 0;
+        temp$0[3] = 2;
+        temp$0[4] = 1;
+        temp$0[5] = 9;
+        temp$0[6] = 8;
+        temp$0[7] = 8;
+        temp$0[8] = 1;
+        temp$0[9] = 6;
+        temp$0[10] = 1;
+        temp$0[11] = 2;
+        temp$0[12] = 1;
+        temp$0[13] = 9;
+        temp$0[14] = 9;
+        temp$0[15] = 0;
+        iv = temp$0;
+        temp$1 = new javax.crypto.spec.IvParameterSpec;
+        specialinvoke temp$1.<javax.crypto.spec.IvParameterSpec: void <init>(byte[])>(iv);
+        ivParamesaterSpec = temp$1;
+        return;
+    }
+
+    public void <init>()
+    {
+        ivexamples.Case1 this;
+
+        this := @this: ivexamples.Case1;
+        specialinvoke this.<java.lang.Object: void <init>()>();
+        return;
+    }
+}

@@ -15,6 +15,7 @@ public class Case2 {
 	public static String getString() {
 		int necessaryStmt = 0;
 		String a = "A static return value should be tracked as well";
-		return a;
+		String b = a.substring(2);
+		return b;
 	}
 }

@@ -4,7 +4,7 @@
    <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
       <analysisPack
-            active="true"
+            active="false"
             id="HardCodedKeyAnalysis">
          <ifdsAnalysis
                class="de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisPlugin"
@@ -42,7 +42,7 @@
        <extension
              point="de.fraunhofer.sit.codescan.framework.analysis">
           <analysisPack
-            	 active="true"
+            	 active="false"
                 id="SourceToSinkAnalysis">
              <ifdsAnalysis
                    class="de.fraunhofer.sit.codescan.sourcesinkanalysis.SourceToSinkAnalysisPlugin"
@@ -63,6 +63,23 @@
                 executionTime="beforeAnalysis"
                 packagename="wjtp.insertannotation">
           </Transformer>
+       </extension>
+       <extension
+             point="de.fraunhofer.sit.codescan.framework.analysis">
+          <analysisPack
+                active="true"
+                id="IvAnalysis">
+             <ifdsAnalysis
+                   class="de.fraunhofer.sit.codescan.ivanalysis.IvAnalysisPlugin"
+                   direction="forward"
+                   id="IvAnalysisPlugin">
+                <filter>
+                   <bySuperType>
+                      <byMethodDecl></byMethodDecl>
+                   </bySuperType>
+                </filter>
+             </ifdsAnalysis>
+          </analysisPack>
        </extension>
    
 </plugin>

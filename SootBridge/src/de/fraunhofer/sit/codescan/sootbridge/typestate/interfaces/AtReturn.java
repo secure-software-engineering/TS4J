@@ -4,6 +4,5 @@ public interface AtReturn<Var extends Enum<Var>,State extends Enum<State>,StmtID
 	public IfCheckContext<Var, State, StmtID> atReturnFromMethodOfStmt(StmtID sid);
 	public IfCheckContext<Var,State,StmtID> atReturnFrom(String methodSignature);
 	public IfCheckContext<Var, State, StmtID> atAnyReturn();
-	public IfCheckContext<Var,State,StmtID> atReturnFromMethodWithAnnotation(String annotation);
 	public Done<Var, State, StmtID> doNothing();
 }
