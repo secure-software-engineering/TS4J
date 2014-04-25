@@ -119,10 +119,6 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 							if(assign instanceof IdentityStmt){
 								return Collections.singleton(source.replaceValue(lOp, rOp));
 							}
-							if(lOp instanceof ArrayRef){
-								ArrayRef aR = (ArrayRef) lOp;
-								return Collections.singleton(source.pushToValue(aR.getBase(),rOp));
-							}
 							Config<Var, State, StmtID> config = new Config<Var, State, StmtID>(
 									twoElementSet(
 											source,

@@ -4,15 +4,11 @@ import javax.crypto.spec.SecretKeySpec;
 
 import annotation.DefinitelyVulnerable;
 
-public class Case5 {
-
-
+public class IntraproceduralWithIf {
 	@DefinitelyVulnerable("HardCodedKeyAnalysisPlugin")
 	public static void main(String[] args) {
-		int necessaryStmt;
-		String keyString = "Dieser Schsaluesssel";
-		String b = " ist geheim";
-		keyString += b;
+		int nsec;
+		String keyString = "Dieser Schluessesl ist geheim";
 		byte[] bytes = keyString.getBytes();
 		SecretKeySpec key = new SecretKeySpec(bytes, "AES");
 	}

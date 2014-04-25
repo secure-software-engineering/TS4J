@@ -60,7 +60,6 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	private final IIFDSAnalysisContext context;
 	private String errorMessage;
 	private ArrayList<Integer> currSlotArray = null;
-	private boolean each = false;
 
 	public Config(final Abstraction<Var, Value, State, StmtID> abstraction,
 			Stmt invokeStmt, IIFDSAnalysisContext context) {
@@ -197,7 +196,6 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			currSlotArray= null;
 		}else{
 			Value addedValue = extractValue();
-			System.out.println(addedValue);
 			if (addedValue == null)
 				return this;
 	
@@ -322,32 +320,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
 				.iterator(); i.hasNext();) {
 			Abstraction<Var, Value, State, StmtID> abs = i.next();
-			if(each){
-				List<Value> list = abs.getValueMap(eqCheckVar);
-				if(list == null){
-					noMatch();
-					return this;
-				}
-				boolean remove = false;
-				for(Value v : list){
-					if(v == null){
-						//i.remove();
-					} else{
-						boolean filter = !instance.isInstance(v);
-						if(not){
-							filter = !filter;
-						}
-						if (filter) {
-							remove = true;
-						}
-					}
-				}
-				if(remove){
-					i.remove();
-				}
-				not = false;
-				each = false;
-			}else{
+			
 				Value v = abs.getValue(eqCheckVar);
 				if(v == null){
 					i.remove();
@@ -362,7 +335,6 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 					}
 				}
 			}
-		}
 		
 		if (abstractions.isEmpty())
 			noMatch();
@@ -504,7 +476,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 					.iterator(); i.hasNext();) {
 				Abstraction<Var, Value, State, StmtID> abs = i.next();
 				Value boundValue = abs.getBoundValue(var);
-				if (boundValue == null || !boundValue.equals(as.getLeftOp())) {
+				if (boundValue == null || !boundValue.equals(as.getRightOp())) {
 					i.remove();
 				}
 			}
@@ -578,11 +550,6 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		return this;
 	}
 
-	@Override
-	public EqualsContext<Var, State, StmtID> each() {
-		each  = true;
-		return this;
-	}
 
 }
 

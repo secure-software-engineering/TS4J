@@ -4,7 +4,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import annotation.DefinitelyVulnerable;
 
-public class Case2 {
+public class SimpleInterprocedural {
 	public static void main(String[] args) {
 		int nex;
 		byte[] keyBytes = getString().getBytes();
@@ -14,8 +14,7 @@ public class Case2 {
 	@DefinitelyVulnerable("HardCodedKeyAnalysisPlugin")
 	public static String getString() {
 		int necessaryStmt = 0;
-		String a = "A static return value should be tracked as well";
-		String b = a.substring(2);
-		return b;
+		String a = "A static te value should be tracked as well";
+		return a;
 	}
 }

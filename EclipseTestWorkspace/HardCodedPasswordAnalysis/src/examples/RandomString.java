@@ -6,7 +6,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import annotation.FalseNegative;
 
-public class Case4 {
+public class RandomString {
 	@FalseNegative("HardCodedKeyAnalysisPlugin")
 	public static void main(String[] args) {
 		int necessaryStmt;
