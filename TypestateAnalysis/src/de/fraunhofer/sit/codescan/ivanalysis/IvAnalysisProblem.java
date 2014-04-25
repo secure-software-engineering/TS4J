@@ -35,7 +35,7 @@ public class IvAnalysisProblem extends AbstractJimpleTypestateBackwardsAnalysisP
 	protected Done<Var, State, StmtID> atNormalEdge(
 			AtNormalEdge<Var, State, StmtID> d) {
 		// TODO Auto-generated method stub
-		return d.atAssignTo(IV_VALUE).ifValueBoundTo(IV_VALUE).each().equalsConstant(soot.jimple.IntConstant.class).reportError("HERE").here();
+		return d.atAssignTo(IV_VALUE).ifValueBoundTo(IV_VALUE).equalsConstant(soot.jimple.IntConstant.class).reportError("HERE").here();
 	};
 	
 }

@@ -8,12 +8,7 @@ public class Intraprocedural {
 	@DefinitelyVulnerable("HardCodedKeyAnalysisPlugin")
 	public static void main(String[] args) {
 		int nsec;
-		String keyString = null;
-		if(args[0].equals("nicht")){
-			keyString = "Dieser Schluessesl ist geheim"; 
-		} else {
-			keyString = "und trotzdem";
-		}
+		String keyString = "Dieser Schluessel ist geheim";
 		byte[] bytes = keyString.getBytes();
 		SecretKeySpec key = new SecretKeySpec(bytes, "AES");
 	}

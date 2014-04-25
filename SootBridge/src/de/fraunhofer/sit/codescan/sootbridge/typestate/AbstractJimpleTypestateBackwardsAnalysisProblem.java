@@ -116,15 +116,15 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 								final Abstraction<Var, Value, State, StmtID> source) {
 							Value lOp = assign.getLeftOp();
 							Value rOp = assign.getRightOp();
+							ArrayList<Value> fromList = new ArrayList<Value>();
+							fromList.add(lOp);
+							ArrayList<Value> toList = new ArrayList<Value>();
+							toList.add(rOp);
 							if(assign instanceof IdentityStmt){
 								return Collections.singleton(source.replaceValue(lOp, rOp));
 							}
 							Config<Var, State, StmtID> config = new Config<Var, State, StmtID>(
-									twoElementSet(
-											source,
-											source.replaceValue(
-													assign.getLeftOp(),
-													assign.getRightOp())),
+									source.replaceValuesAndCopy(fromList, toList),
 									assign, context, null);
 							atNormalEdge(config);
 							return config.getAbstractions();

@@ -69,6 +69,7 @@ public class HardCodedKeyAnalysisProblem extends AbstractJimpleTypestateBackward
 				reportError("Should not use a constant as private Key").here().
 				orElse().atAssignTo(SB_APPENDSTRING_ARG1).ifInState(FINALLY_APPENDED).and().ifValueBoundTo(SB_APPENDSTRING_ARG2).equalsConstant(StringConstant.class).
 				and().ifValueBoundTo(SB_APPENDSTRING_ARG1).equalsConstant(StringConstant.class).
+				reportError("Should not use a constant as private Key").here().
 				orElse().atAssignTo(SB_APPENDSTRING_ARG2).ifInState(FINALLY_APPENDED).and().ifValueBoundTo(SB_APPENDSTRING_ARG2).equalsConstant(StringConstant.class).
 				and().ifValueBoundTo(SB_APPENDSTRING_ARG1).equalsConstant(StringConstant.class).
 				reportError("Should not use a constant as private Key").here();

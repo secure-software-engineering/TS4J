@@ -92,7 +92,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	 * Otherwise it returns <code>this</code>.
 	 */
 	public Abstraction<Var,Val,State,StmtID> replaceValue(Val fromVal, Val toVal) {
-		if(boundValues==null) return this;
+		if(boundValues==null) return ZERO;
 		Abstraction<Var,Val,State,StmtID> copy = null;
 		for (int i = 0; i < boundValues.length; i++) {
 			Val val = getBoundValue(i);
@@ -130,7 +130,12 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	 */
 	public Set<Abstraction<Var,Val,State,StmtID>> replaceValuesAndCopy(List<Val> from, List<Val> to) {
 		assert(from.size()==to.size());
+		
 		Set<Abstraction<Var,Val,State,StmtID>> res = new HashSet<Abstraction<Var,Val,State,StmtID>>();
+		if(this.equals(ZERO)){
+			 res.add(this);
+			 return res;
+		}
 		for(int i=0; i<from.size(); i++) {
 			Val fromVal = from.get(i);
 			Val toVal = to.get(i);
@@ -140,6 +145,9 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 					res.add(derived);
 				}
 			}
+		}
+		if(res.isEmpty()){
+			res.add(this);
 		}
 		return res;
 	}
@@ -158,7 +166,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		Abstraction<Var, Val, State, StmtID> copy = copy();
 
 		if (boundValues == null)
-			return this;
+			return ZERO;
 		for (int l = 0; l < from.size(); l++) {
 			Val fromVal = from.get(l);
 			Val toVal = to.get(l);
