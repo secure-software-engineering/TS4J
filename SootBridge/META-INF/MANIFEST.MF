@@ -162,4 +162,3 @@ Export-Package: com.google.common.annotations,
  soot.util.queue,
  soot.xml
 Import-Package: org.eclipse.core.runtime
-Require-Bundle: de.fraunhofer.sit.codescan.sootbridge

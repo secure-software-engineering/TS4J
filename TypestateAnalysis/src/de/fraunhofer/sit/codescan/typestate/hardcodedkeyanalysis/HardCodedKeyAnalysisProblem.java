@@ -57,9 +57,7 @@ public class HardCodedKeyAnalysisProblem extends AbstractJimpleTypestateBackward
 
 	@Override
 	protected Done<Var, State, StatementId> atReturn(AtReturn<Var, State, StatementId> d) {
-		return d.atAnyReturn().ifValueBoundTo(SB_APPENDSTRING_ARG1).not().equalsConstant(StringConstant.class).toState(NOT_STATIC_KEY).
-				orElse().atAnyReturn().ifValueBoundTo(SB_APPENDSTRING_ARG2).not().equalsConstant(StringConstant.class).toState(NOT_STATIC_KEY).
-				orElse().atAnyReturn().ifValueBoundTo(KEYSTRING).not().equalsConstant(StringConstant.class).toState(NOT_STATIC_KEY);
+		return null;
 	}
 
 	@Override

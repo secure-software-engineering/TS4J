@@ -81,5 +81,13 @@
              </ifdsAnalysis>
           </analysisPack>
        </extension>
+       <extension
+             point="de.fraunhofer.sit.codescan.sootrunnertransformer">
+          <Transformer
+                class="de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.NopTransformer"
+                executionTime="beforeAnalysis"
+                packagename="wjtp.noptransformer">
+          </Transformer>
+       </extension>
    
 </plugin>

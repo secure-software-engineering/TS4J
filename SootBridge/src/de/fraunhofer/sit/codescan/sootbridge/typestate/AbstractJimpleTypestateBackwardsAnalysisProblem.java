@@ -1,27 +1,26 @@
 package de.fraunhofer.sit.codescan.sootbridge.typestate;
 
-import static heros.TwoElementSet.twoElementSet;
 import heros.FlowFunction;
 import heros.FlowFunctions;
 import heros.flowfunc.Compose;
 import heros.flowfunc.Identity;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.ArrayRef;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.IdentityStmt;
 import soot.jimple.InvokeExpr;
-import soot.jimple.InvokeStmt;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
+import soot.jimple.ThisRef;
+import soot.jimple.VirtualInvokeExpr;
 import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 
@@ -75,6 +74,7 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 							}
 						}
 					}
+					//addAliases(dest, fromValues, toValues);
 					FlowFunction<Abstraction<Var,Value,State, StmtID>> mapFormalsToActuals = new ReplaceValues(fromValues, toValues);
 					return mapFormalsToActuals;
 				} 
@@ -116,13 +116,19 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 								final Abstraction<Var, Value, State, StmtID> source) {
 							Value lOp = assign.getLeftOp();
 							Value rOp = assign.getRightOp();
+							
+							if(assign instanceof IdentityStmt){
+							
+								if(rOp instanceof ThisRef){
+									return Collections.singleton(source);
+								}
+								return Collections.singleton(source.replaceValue(lOp, rOp));
+							}
+
 							ArrayList<Value> fromList = new ArrayList<Value>();
 							fromList.add(lOp);
 							ArrayList<Value> toList = new ArrayList<Value>();
 							toList.add(rOp);
-							if(assign instanceof IdentityStmt){
-								return Collections.singleton(source.replaceValue(lOp, rOp));
-							}
 							Config<Var, State, StmtID> config = new Config<Var, State, StmtID>(
 									source.replaceValuesAndCopy(fromList, toList),
 									assign, context, null);
@@ -149,23 +155,31 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 					InvokeExpr ie = stmt.getInvokeExpr();
 					if (!ie.getMethod().equals(callee))
 						return Identity.v();
-					List<Value> callArgs = ie.getArgs();
-					List<Value> paramLocals = callee.getActiveBody().getParameterRefs();
+					List<Value> to = ie.getArgs();
+					List<Value> from = callee.getActiveBody().getParameterRefs();
 
 					if(callSite instanceof DefinitionStmt){
-						paramLocals = new ArrayList<Value>(paramLocals);
-						callArgs = new ArrayList<Value>(callArgs);
+						from = new ArrayList<Value>(from);
+						to = new ArrayList<Value>(to);
 						DefinitionStmt definitionStmt = (DefinitionStmt) callSite;
 						for(Unit eP : ICFG.getEndPointsOf(callee)){
 							if (eP instanceof ReturnStmt) {
 									ReturnStmt returnStmt = (ReturnStmt) eP;
-									paramLocals.add(definitionStmt.getLeftOp());
-									callArgs.add(returnStmt.getOp());
+									from.add(definitionStmt.getLeftOp());
+									to.add(returnStmt.getOp());
 							}
 						}
 					}
+					
+					if(ie instanceof VirtualInvokeExpr){
+						VirtualInvokeExpr vie = (VirtualInvokeExpr) ie;
+						to.add(vie.getBase());
+						from.add(callee.getActiveBody().getThisLocal());
+						System.out.println("VirtualI");
+						System.out.println(callee.getActiveBody().getThisLocal());
+					}
 					FlowFunction<Abstraction<Var,Value,State, StmtID>> applyReturnRules = new ApplyReturnRules(callSite, callee);
-					FlowFunction<Abstraction<Var, Value, State, StmtID>> mapFormalsToActuals = new ReplaceValues(paramLocals, callArgs);
+					FlowFunction<Abstraction<Var, Value, State, StmtID>> mapFormalsToActuals = new ReplaceValues(from, to);
 					return Compose.compose(applyReturnRules,mapFormalsToActuals);
 				} else {
 					return Identity.v();
