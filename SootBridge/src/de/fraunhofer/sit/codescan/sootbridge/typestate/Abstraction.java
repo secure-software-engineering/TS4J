@@ -96,11 +96,19 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		Abstraction<Var,Val,State,StmtID> copy = null;
 		for (int i = 0; i < boundValues.length; i++) {
 			Val val = getBoundValue(i);
-			if(val!=null && val.equals(fromVal)) {
+			if(val != null){
+			if(val instanceof Value){
+				Value v =(Value) val;
+				if(v.equivTo(fromVal)) {
 				if(copy==null) copy = copy();
 				copy.setBoundVal(toVal, i);
 			}
-		}
+			}else{
+			if(val.equals(fromVal)) {
+				if(copy==null) copy = copy();
+				copy.setBoundVal(toVal, i);
+			}}
+		}}
 		if(copy==null) return this;
 		else return copy;
 	}
