@@ -4,6 +4,7 @@
    <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
       <analysisPack
+      		active="true"
             id="SSLAnalysis"
             natureFilter="com.android.ide.eclipse.adt.AndroidNature">
          <ifdsAnalysis

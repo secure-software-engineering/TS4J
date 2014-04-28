@@ -35,6 +35,8 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	protected Unit[] stmtTrace;
 	/** The internal state. */
 	protected State state;
+	protected List<Val>[] boundArrayValues;
+	private boolean replaceInArray = false;
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private final static Abstraction ZERO = new Abstraction() {
@@ -71,6 +73,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		int size = e.getClass().getEnumConstants().length;		
 		boundValues = (Val[]) new Object[size];
 		boundValues[e.ordinal()] = v;
+		boundArrayValues = (List<Val>[]) new Object[size];
 		state = s;
 	}
 	
@@ -108,6 +111,10 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 				if(copy==null) copy = copy();
 				copy.setBoundVal(toVal, i);
 			}}
+			if(boundArrayValues != null){
+				if(copy==null) copy = copy();
+				replaceInBoundArrrayValues(fromVal, toVal, i, copy);
+			}
 		}}
 		if(copy==null) return this;
 		else return copy;
@@ -162,7 +169,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	
 	/**
 	 * This method is called to replace all values in the from List to the appropriate values in the to List.
-	 * But in contrast to the <code>Method replaceValuesAndCopy</code> it will do the replace in place.
+	 * But in contrast to the <code>Method replaceValuesAndCopy</code> it will do the replace on the object itself.
 	 * @param from
 	 * @param to
 	 * @return
@@ -184,6 +191,11 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 				if (val != null && val.equals(fromVal)) {
 					didReplace = true;
 					copy.setBoundVal(toVal, i);
+					
+				}
+				if(boundArrayValues != null){
+					replaceInBoundArrrayValues(fromVal, toVal, i,copy);
+					didReplace = didReplace || copy.replaceInArray;
 				}
 			}
 		}
@@ -193,6 +205,15 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		return this;
 	}
 	
+	private void replaceInBoundArrrayValues(Val fromVal, Val toVal, int i,
+			Abstraction<Var, Val, State, StmtID> copy) {
+		while(boundArrayValues[i].contains(fromVal)){
+			copy.boundArrayValues[i].remove(fromVal);
+			copy.boundArrayValues[i].add(toVal);
+			copy.replaceInArray = true;
+		}
+	}
+
 	public Set<Abstraction<Var,Val,State,StmtID>> bindValue(Val addedValue, Var var) {
 		if(getBoundValue(var)==null) {
 			final Abstraction<Var,Val,State,StmtID> copy = copy();
@@ -233,7 +254,49 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		copy.state = s;
 		return copy;
 	}
+	public  Abstraction<Var,Val,State,StmtID> initializeArrayValue(Var var){
+		int index = var.ordinal();
+		Abstraction<Var, Val, State, StmtID> res;
+		if(this.equals(ZERO)){
+			res = copy();
+		} else {
+			res = this;
+		}
+		if(res.boundArrayValues==null) {
+			int size = var.getClass().getEnumConstants().length;
+			res.boundArrayValues = new ArrayList[size];
+			for(int i =0; i<size; i++){
+				res.boundArrayValues[i] = new ArrayList<Val>();
+			}
+		}
+		return res;
+	}
 	
+	@SuppressWarnings("unchecked")
+	protected void addOrCreateBoundArrayValue(Val op, int index){
+		List<Val> list = boundArrayValues[index];
+		if(list == null){
+			list = new ArrayList<Val>();
+		}
+		list.add(op);
+		boundArrayValues[index] = list;
+	} 
+	public List<Val> getArrayValues(Var var){
+		if(var == null || boundArrayValues == null){
+			return null;
+		}
+		return boundArrayValues[var.ordinal()];
+	}
+	public  Abstraction<Var,Val,State,StmtID> pushArrayValue(Val rOp,Val arrayBase){
+
+		for (int i = 0; i < boundValues.length; i++) {
+			Val val = getBoundValue(i);
+			if (val != null && val.equals(arrayBase)) {
+				addOrCreateBoundArrayValue(rOp, i);
+			}
+		}
+		return this;
+	}
 	public boolean stateIs(State s) {
 		return state!=null && state.equals(s);
 	}
@@ -244,6 +307,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 			Abstraction<Var,Val,State,StmtID> clone = (Abstraction<Var,Val,State,StmtID>) super.clone();
 			if(boundValues!=null) clone.boundValues = boundValues.clone();
 			if(stmtTrace!=null) clone.stmtTrace = stmtTrace.clone();
+			if(boundArrayValues!=null) clone.boundArrayValues = boundArrayValues.clone();
 			return clone;
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException(e);
@@ -274,6 +338,8 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 			return false;
 		if (!Arrays.equals(boundValues, other.boundValues))
 			return false;
+		if (!boundArrayValues.equals(other.boundArrayValues))
+			return false;
 		if (state == null) {
 			if (other.state != null)
 				return false;
@@ -286,7 +352,16 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	public String toString() {
 		return "Abstraction [boundValues=" + Arrays.toString(boundValues)
 				+ ", stmtTrace=" + Arrays.toString(stmtTrace)
+				+ ", boundArrayValues=" + Arrays.toString(boundArrayValues)
 				+ ", state=" + state + "]";
+	}
+
+	public boolean isReplaceInArray() {
+		return replaceInArray;
+	}
+
+	public void setReplaceInArray(boolean replaceInArray) {
+		this.replaceInArray = replaceInArray;
 	}
 
 

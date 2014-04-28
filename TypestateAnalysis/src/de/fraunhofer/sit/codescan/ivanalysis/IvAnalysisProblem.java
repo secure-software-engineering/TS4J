@@ -24,7 +24,7 @@ public class IvAnalysisProblem extends AbstractJimpleTypestateBackwardsAnalysisP
 	protected Done<Var, State, StmtID> atCallToReturn(
 			AtCallToReturn<Var, State, StmtID> d) {
 		// TODO Auto-generated method stub
-		return d.atCallTo("<javax.crypto.spec.IvParameterSpec: void <init>(byte[])>").always().trackParameter(0).as(IV_VALUE);
+		return d.atCallTo("<javax.crypto.spec.IvParameterSpec: void <init>(byte[])>").always().trackParameter(0).asArray(IV_VALUE);
 	}
 	@Override
 	protected Done<Var, State, StmtID> atReturn(
@@ -35,7 +35,8 @@ public class IvAnalysisProblem extends AbstractJimpleTypestateBackwardsAnalysisP
 	protected Done<Var, State, StmtID> atNormalEdge(
 			AtNormalEdge<Var, State, StmtID> d) {
 		// TODO Auto-generated method stub
-		return d.atAssignTo(IV_VALUE).ifValueBoundTo(IV_VALUE).equalsConstant(soot.jimple.IntConstant.class).reportError("HERE").here();
+		return d.atAssignTo(IV_VALUE).ifValueBoundTo(IV_VALUE).each().equalsConstant(soot.jimple.IntConstant.class).reportError("The Initialization Vector is choosen constant!").here().orElse()
+				.atReplaceInArray(IV_VALUE).ifValueBoundTo(IV_VALUE).each().equalsConstant(soot.jimple.IntConstant.class).reportError("The Initialization Vector will probably be constant!").here();
 	};
 	
 }

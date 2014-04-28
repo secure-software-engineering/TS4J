@@ -27,7 +27,7 @@ import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtNormalEdge;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
-import de.fraunhofer.sit.codescan.sootbridge.util.SinkMethod;
+import de.fraunhofer.sit.codescan.sootbridge.util.MethodWithAnnotatedParameters;
 import de.fraunhofer.sit.codescan.sourcesinkanalysis.SourceToSinkAnalysisProblem.State;
 import de.fraunhofer.sit.codescan.sourcesinkanalysis.SourceToSinkAnalysisProblem.StatementId;
 import de.fraunhofer.sit.codescan.sourcesinkanalysis.SourceToSinkAnalysisProblem.Var;
@@ -38,7 +38,7 @@ public class SourceToSinkAnalysisProblem extends AbstractJimpleTypestateBackward
 	private static final String SOURCE_ANNOTATION = "Lservletexample/Source;";
 	private static final String SINK_ANNOTATION = "Lservletexample/Sink;";
 	private HashSet<String> sources;
-	private HashSet<SinkMethod> sinks;
+	private HashSet<MethodWithAnnotatedParameters> sinks;
 
 	enum Var { INPUT_SINK};
 	enum State { FOUND_SINK, SANITIZED };
@@ -53,7 +53,7 @@ public class SourceToSinkAnalysisProblem extends AbstractJimpleTypestateBackward
 	}
 
 	private void getSinks() {
-		sinks = new HashSet<SinkMethod>();
+		sinks = new HashSet<MethodWithAnnotatedParameters>();
 		try{
 
 			Bundle bundle = FrameworkUtil.getBundle(getClass());
@@ -65,7 +65,7 @@ public class SourceToSinkAnalysisProblem extends AbstractJimpleTypestateBackward
 			String line = "";
 			while((line =  read.readLine()) != null){
 				if(!line.equals(""))
-					sinks.add(new SinkMethod(line));
+					sinks.add(new MethodWithAnnotatedParameters(line));
 			}
 			read.close();
 		} catch(Exception e){

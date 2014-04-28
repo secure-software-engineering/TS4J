@@ -14,6 +14,7 @@ import java.util.Set;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
+import soot.jimple.ArrayRef;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.IdentityStmt;
 import soot.jimple.InvokeExpr;
@@ -125,12 +126,17 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 								return Collections.singleton(source.replaceValue(lOp, rOp));
 							}
 
+							if(lOp instanceof ArrayRef){
+								ArrayRef aR = (ArrayRef) lOp;
+								return Collections.singleton(source.pushArrayValue(rOp,aR.getBase()));
+							} 
 							ArrayList<Value> fromList = new ArrayList<Value>();
 							fromList.add(lOp);
 							ArrayList<Value> toList = new ArrayList<Value>();
 							toList.add(rOp);
-							Config<Var, State, StmtID> config = new Config<Var, State, StmtID>(
-									source.replaceValuesAndCopy(fromList, toList),
+							Set<Abstraction<Var, Value, State, StmtID>> target = source.replaceValuesAndCopy(fromList, toList);
+							
+							Config<Var, State, StmtID> config = new Config<Var, State, StmtID>(target,
 									assign, context, null);
 							atNormalEdge(config);
 							return config.getAbstractions();

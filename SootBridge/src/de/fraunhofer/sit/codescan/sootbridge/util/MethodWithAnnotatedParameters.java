@@ -3,10 +3,10 @@ package de.fraunhofer.sit.codescan.sootbridge.util;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SinkMethod {
+public class MethodWithAnnotatedParameters {
 	private ArrayList<Integer> sinkIndices;
 	private String methodSignature;
-	public SinkMethod(String string){
+	public MethodWithAnnotatedParameters(String string){
 		methodSignature = string.replaceAll("@[A-Za-z]* +", "");
 		string = string.substring(string.indexOf("("), string.indexOf(")"));
 		string = string.replaceAll("[^@,]", "");
@@ -22,9 +22,9 @@ public class SinkMethod {
 		return methodSignature;
 	}
 	public String toString(){
-		return "SinkMethod " + methodSignature + " Parameters: " + getSinkIndices().toString();
+		return "SinkMethod " + methodSignature + " Parameters: " + getAnnotatedParameterIndices().toString();
 	}
-	public ArrayList<Integer> getSinkIndices() {
+	public ArrayList<Integer> getAnnotatedParameterIndices() {
 		return sinkIndices;
 	}
 }

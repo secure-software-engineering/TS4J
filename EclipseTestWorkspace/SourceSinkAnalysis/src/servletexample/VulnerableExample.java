@@ -17,7 +17,7 @@ public class VulnerableExample {
 	}
 	public void updateCoffeeSales(HashMap<String, Integer> salesForWeek, HttpServletRequest request)
 		    throws SQLException, ClassNotFoundException {
-			String username =  request.getParameter("test");
+			String username = getUserName( request);
 			Connection con = DriverManager.getConnection( "test","test","test" );
 		    PreparedStatement updateSales = null;
 		    PreparedStatement updateTotal = null;
