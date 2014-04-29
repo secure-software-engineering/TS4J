@@ -35,7 +35,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	protected Unit[] stmtTrace;
 	/** The internal state. */
 	protected State state;
-	protected List<Val>[] boundArrayValues;
+	protected Object[] boundArrayValues;
 	private boolean replaceInArray = false;
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -207,10 +207,15 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	
 	private void replaceInBoundArrrayValues(Val fromVal, Val toVal, int i,
 			Abstraction<Var, Val, State, StmtID> copy) {
-		while(boundArrayValues[i].contains(fromVal)){
-			copy.boundArrayValues[i].remove(fromVal);
-			copy.boundArrayValues[i].add(toVal);
-			copy.replaceInArray = true;
+		if(boundArrayValues[i] != null){
+			Val[] array = (Val[]) boundArrayValues[i];
+			Val[] copiedarray = (Val[]) copy.boundArrayValues[i];
+			for(int i1 = 0; i1 < array.length; i1++){
+				if(array[i1]!= null && array[i1].equals(fromVal)){
+					copiedarray[i1] = toVal;
+					copy.replaceInArray = true;
+				}
+			}
 		}
 	}
 
@@ -254,7 +259,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		copy.state = s;
 		return copy;
 	}
-	public  Abstraction<Var,Val,State,StmtID> initializeArrayValue(Var var){
+	public  Abstraction<Var,Val,State,StmtID> initializeArrayValue(Var var, int arraySize){
 		int index = var.ordinal();
 		Abstraction<Var, Val, State, StmtID> res;
 		if(this.equals(ZERO)){
@@ -264,35 +269,36 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		}
 		if(res.boundArrayValues==null) {
 			int size = var.getClass().getEnumConstants().length;
-			res.boundArrayValues = new ArrayList[size];
-			for(int i =0; i<size; i++){
-				res.boundArrayValues[i] = new ArrayList<Val>();
-			}
+			res.boundArrayValues = new Object[size];
+		}
+		if(res.boundArrayValues[var.ordinal()] == null){
+			res.boundArrayValues[var.ordinal()] = (Val[]) new Object[arraySize];
 		}
 		return res;
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected void addOrCreateBoundArrayValue(Val op, int index){
-		List<Val> list = boundArrayValues[index];
+	protected void insertAddArrayPosition(Val op, int insertPosition, int index){
+		Object list = boundArrayValues[index];
 		if(list == null){
-			list = new ArrayList<Val>();
+			throw new RuntimeException("Variable is not initialized!");
 		}
-		list.add(op);
-		boundArrayValues[index] = list;
+		Val[] array = (Val[]) list;
+		array[insertPosition] = op;
+		boundArrayValues[index] = array;
 	} 
-	public List<Val> getArrayValues(Var var){
+	public Object getArrayValues(Var var){
 		if(var == null || boundArrayValues == null){
 			return null;
 		}
 		return boundArrayValues[var.ordinal()];
 	}
-	public  Abstraction<Var,Val,State,StmtID> pushArrayValue(Val rOp,Val arrayBase){
+	public  Abstraction<Var,Val,State,StmtID> pushArrayValue(Val rOp,int insertIndex, Val arrayBase){
 
 		for (int i = 0; i < boundValues.length; i++) {
 			Val val = getBoundValue(i);
 			if (val != null && val.equals(arrayBase)) {
-				addOrCreateBoundArrayValue(rOp, i);
+				insertAddArrayPosition(rOp, insertIndex,i);
 			}
 		}
 		return this;
@@ -338,7 +344,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 			return false;
 		if (!Arrays.equals(boundValues, other.boundValues))
 			return false;
-		if (!boundArrayValues.equals(other.boundArrayValues))
+		if (!Arrays.equals(boundArrayValues, other.boundArrayValues))
 			return false;
 		if (state == null) {
 			if (other.state != null)
@@ -350,9 +356,18 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 
 	@Override
 	public String toString() {
+		String boundArrays = "";
+		if(boundArrayValues != null){
+			boundArrays +="[";
+			for(Object o : boundArrayValues){
+				Val[] array = (Val[]) o;
+				boundArrays += Arrays.toString(array);
+			}
+			boundArrays +="]";
+		}
 		return "Abstraction [boundValues=" + Arrays.toString(boundValues)
 				+ ", stmtTrace=" + Arrays.toString(stmtTrace)
-				+ ", boundArrayValues=" + Arrays.toString(boundArrayValues)
+				+ (!boundArrays.equals("") ? ", boundArrayValues=" + boundArrays :"")
 				+ ", state=" + state + "]";
 	}
 

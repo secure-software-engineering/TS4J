@@ -24,7 +24,7 @@ public class IvAnalysisProblem extends AbstractJimpleTypestateBackwardsAnalysisP
 	protected Done<Var, State, StmtID> atCallToReturn(
 			AtCallToReturn<Var, State, StmtID> d) {
 		// TODO Auto-generated method stub
-		return d.atCallTo("<javax.crypto.spec.IvParameterSpec: void <init>(byte[])>").always().trackParameter(0).asArray(IV_VALUE);
+		return d.atCallTo("<javax.crypto.spec.IvParameterSpec: void <init>(byte[])>").always().trackParameter(0).asArray(IV_VALUE,16);
 	}
 	@Override
 	protected Done<Var, State, StmtID> atReturn(

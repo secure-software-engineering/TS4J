@@ -17,6 +17,7 @@ import soot.Value;
 import soot.jimple.ArrayRef;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.IdentityStmt;
+import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
@@ -128,7 +129,13 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 
 							if(lOp instanceof ArrayRef){
 								ArrayRef aR = (ArrayRef) lOp;
-								return Collections.singleton(source.pushArrayValue(rOp,aR.getBase()));
+								Value index = aR.getIndex();
+								if(index instanceof IntConstant){
+									IntConstant ic = (IntConstant) index;
+									return Collections.singleton(source.pushArrayValue(rOp,ic.value, aR.getBase()));
+								} else {
+									return Collections.singleton(source);
+								}
 							} 
 							ArrayList<Value> fromList = new ArrayList<Value>();
 							fromList.add(lOp);
@@ -177,12 +184,12 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 						}
 					}
 					
-					if(ie instanceof VirtualInvokeExpr){
+					if(ie instanceof VirtualInvokeExpr && callee.hasActiveBody()){
+						from = new ArrayList<Value>(from);
+						to = new ArrayList<Value>(to);
 						VirtualInvokeExpr vie = (VirtualInvokeExpr) ie;
 						to.add(vie.getBase());
 						from.add(callee.getActiveBody().getThisLocal());
-						System.out.println("VirtualI");
-						System.out.println(callee.getActiveBody().getThisLocal());
 					}
 					FlowFunction<Abstraction<Var,Value,State, StmtID>> applyReturnRules = new ApplyReturnRules(callSite, callee);
 					FlowFunction<Abstraction<Var, Value, State, StmtID>> mapFormalsToActuals = new ReplaceValues(from, to);

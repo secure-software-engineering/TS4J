@@ -7,7 +7,7 @@ public class ConstantWithVariable {
 		byte va=122;
 		byte sa=12;
 
-		byte[] iv = {1,va,0,2,1,-128,va,va,sa,16,1,2,1,9,0,1};
+		byte[] iv = {1,va,20,2,1,-128,va,va,sa,16,1,2,1,9,1,1};
 		IvParameterSpec ivs = new IvParameterSpec(iv);
 	}
 

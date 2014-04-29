@@ -14,7 +14,9 @@ import soot.Value;
 import soot.jimple.AssignStmt;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.InstanceInvokeExpr;
+import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
+import soot.jimple.NewArrayExpr;
 import soot.jimple.Stmt;
 import soot.jimple.StringConstant;
 import soot.tagkit.AnnotationTag;
@@ -324,17 +326,17 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 				.iterator(); i.hasNext();) {
 			Abstraction<Var, Value, State, StmtID> abs = i.next();
 			if(each){
-				List<Value> list = abs.getArrayValues(eqCheckVar);
-				boolean remove = false;
+				Object list = abs.getArrayValues(eqCheckVar);
 				if(list == null){
+					i.remove();
 					continue;
 				}
-				if(list.isEmpty() && !not){
-					remove = true;
-				}
-				for(Value v : list){
+				Object[] array= (Object[]) list;
+				boolean remove = false;
+				for(Object v : array){
 					if(v == null){
-						//i.remove();
+						remove = true;
+						//TODO How to handle null values in case of not?
 					} else{
 						boolean filter = !instance.isInstance(v);
 						if(not){
@@ -583,13 +585,13 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	}
 
 	@Override
-	public Done<Var, State, StmtID> asArray(Var var) {
+	public Done<Var, State, StmtID> asArray(Var var, int arraySize) {
 		if (abstractions.isEmpty())
 			return this;
 		as(var);
 		
 		for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
-			abs.initializeArrayValue(var);
+			abs.initializeArrayValue(var, arraySize);
 		}
 		
 		return this;
