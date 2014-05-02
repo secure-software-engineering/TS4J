@@ -3,19 +3,13 @@ package de.fraunhofer.sit.codescan.sootbridge.typestate;
 import static heros.TwoElementSet.twoElementSet;
 import static java.util.Collections.singleton;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import soot.ArrayType;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.ArrayRef;
 
 /**
  * A generic typestate abstraction that can be used to track multiple correlated objects whose pointer values
@@ -36,7 +30,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	/** The internal state. */
 	protected State state;
 	protected Object[] boundArrayValues;
-	private boolean replaceInArray = false;
+	protected Val lastReplacedValue;
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private final static Abstraction ZERO = new Abstraction() {
@@ -95,7 +89,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 	 * Otherwise it returns <code>this</code>.
 	 */
 	public Abstraction<Var,Val,State,StmtID> replaceValue(Val fromVal, Val toVal) {
-		if(boundValues==null) return ZERO;
+		if(boundValues==null) return zero();
 		Abstraction<Var,Val,State,StmtID> copy = null;
 		for (int i = 0; i < boundValues.length; i++) {
 			Val val = getBoundValue(i);
@@ -111,10 +105,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 				if(copy==null) copy = copy();
 				copy.setBoundVal(toVal, i);
 			}}
-			if(boundArrayValues != null){
-				if(copy==null) copy = copy();
-				replaceInBoundArrrayValues(fromVal, toVal, i, copy);
-			}
+			replaceInBoundArrrayValues(fromVal, toVal, i);
 		}}
 		if(copy==null) return this;
 		else return copy;
@@ -181,7 +172,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		Abstraction<Var, Val, State, StmtID> copy = copy();
 
 		if (boundValues == null)
-			return ZERO;
+			return zero();
 		for (int l = 0; l < from.size(); l++) {
 			Val fromVal = from.get(l);
 			Val toVal = to.get(l);
@@ -190,13 +181,9 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 				Val val = getBoundValue(i);
 				if (val != null && val.equals(fromVal)) {
 					didReplace = true;
-					copy.setBoundVal(toVal, i);
-					
+					copy.setBoundVal(toVal, i);					
 				}
-				if(boundArrayValues != null){
-					replaceInBoundArrrayValues(fromVal, toVal, i,copy);
-					didReplace = didReplace || copy.replaceInArray;
-				}
+				replaceInBoundArrrayValues(fromVal, toVal, i);
 			}
 		}
 		if (didReplace) {
@@ -204,21 +191,25 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		}
 		return this;
 	}
-	
-	private void replaceInBoundArrrayValues(Val fromVal, Val toVal, int i,
-			Abstraction<Var, Val, State, StmtID> copy) {
-		if(boundArrayValues[i] != null){
-			Val[] array = (Val[]) boundArrayValues[i];
-			Val[] copiedarray = (Val[]) copy.boundArrayValues[i];
-			for(int i1 = 0; i1 < array.length; i1++){
-				if(array[i1]!= null && array[i1].equals(fromVal)){
-					copiedarray[i1] = toVal;
-					copy.replaceInArray = true;
-				}
+
+	@SuppressWarnings("unchecked")
+	public void replaceInBoundArrrayValues(Val fromVal, Val toVal, int i) {
+		if(boundArrayValues != null && boundArrayValues[i] != null){
+			HashSet<Val> array = (HashSet<Val>) boundArrayValues[i];
+			if(array.remove(fromVal)){
+				lastReplacedValue = fromVal;
+				array.add(toVal);
 			}
 		}
 	}
-
+	public boolean removeFromBoundArrrayValues(Val remVal, Var var) {
+		if(boundArrayValues != null && boundArrayValues[var.ordinal()] != null){
+			@SuppressWarnings("unchecked")
+			HashSet<Val> set = (HashSet<Val>) boundArrayValues[var.ordinal()];
+			return set.remove(remVal);				
+		}
+		return false;
+	}
 	public Set<Abstraction<Var,Val,State,StmtID>> bindValue(Val addedValue, Var var) {
 		if(getBoundValue(var)==null) {
 			final Abstraction<Var,Val,State,StmtID> copy = copy();
@@ -259,8 +250,7 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		copy.state = s;
 		return copy;
 	}
-	public  Abstraction<Var,Val,State,StmtID> initializeArrayValue(Var var, int arraySize){
-		int index = var.ordinal();
+	public  Abstraction<Var,Val,State,StmtID> initializeArrayValue(Var var){
 		Abstraction<Var, Val, State, StmtID> res;
 		if(this.equals(ZERO)){
 			res = copy();
@@ -269,36 +259,56 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		}
 		if(res.boundArrayValues==null) {
 			int size = var.getClass().getEnumConstants().length;
-			res.boundArrayValues = new Object[size];
-		}
-		if(res.boundArrayValues[var.ordinal()] == null){
-			res.boundArrayValues[var.ordinal()] = (Val[]) new Object[arraySize];
+			res.boundArrayValues = new HashSet[size];
+			res.boundArrayValues[var.ordinal()] = new HashSet<Val>();
 		}
 		return res;
 	}
+
 	
 	@SuppressWarnings("unchecked")
-	protected void insertAddArrayPosition(Val op, int insertPosition, int index){
-		Object list = boundArrayValues[index];
+	protected void pushToArray(Val op,int index){
+		if(boundArrayValues == null){
+			return;
+			//throw new RuntimeException("initializeArrayValue has to be called first!");
+		}
+		HashSet<Val> list = (HashSet<Val>) boundArrayValues[index];
 		if(list == null){
 			throw new RuntimeException("Variable is not initialized!");
 		}
-		Val[] array = (Val[]) list;
-		array[insertPosition] = op;
-		boundArrayValues[index] = array;
+		if(!list.contains(op)){
+			list.add(op);
+		}
+		boundArrayValues[index] = list;
 	} 
 	public Object getArrayValues(Var var){
-		if(var == null || boundArrayValues == null){
+		if(var == null){
 			return null;
 		}
-		return boundArrayValues[var.ordinal()];
+		return getArrayValues(var.ordinal());
 	}
-	public  Abstraction<Var,Val,State,StmtID> pushArrayValue(Val rOp,int insertIndex, Val arrayBase){
+	
+
+	public Object getArrayValues(int i){
+		if(boundArrayValues == null){
+			return null;
+		}
+		return boundArrayValues[i];
+	}
+	public Object getArrayValues(Val val){
+		for(int i = 0; i < boundValues.length; i++){
+			if(val.equals(boundValues[i])){
+				return getArrayValues(i);
+			}
+		}
+		return null;
+	}
+	public  Abstraction<Var,Val,State,StmtID> pushArrayValue(Val rOp, Val arrayBase){
 
 		for (int i = 0; i < boundValues.length; i++) {
 			Val val = getBoundValue(i);
 			if (val != null && val.equals(arrayBase)) {
-				insertAddArrayPosition(rOp, insertIndex,i);
+				pushToArray(rOp, i);
 			}
 		}
 		return this;
@@ -360,8 +370,8 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 		if(boundArrayValues != null){
 			boundArrays +="[";
 			for(Object o : boundArrayValues){
-				Val[] array = (Val[]) o;
-				boundArrays += Arrays.toString(array);
+				if(o != null)
+					boundArrays += o.toString();
 			}
 			boundArrays +="]";
 		}
@@ -370,14 +380,4 @@ public class Abstraction<Var extends Enum<Var>,Val,State extends Enum<State>,Stm
 				+ (!boundArrays.equals("") ? ", boundArrayValues=" + boundArrays :"")
 				+ ", state=" + state + "]";
 	}
-
-	public boolean isReplaceInArray() {
-		return replaceInArray;
-	}
-
-	public void setReplaceInArray(boolean replaceInArray) {
-		this.replaceInArray = replaceInArray;
-	}
-
-
 }

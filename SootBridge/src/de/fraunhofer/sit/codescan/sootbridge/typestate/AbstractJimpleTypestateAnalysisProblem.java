@@ -87,6 +87,21 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 			return config.getAbstractions();
 		}
 	}
+	protected final class ApplyNormalRules implements
+		FlowFunction<Abstraction<Var, Value, State, StmtID>> {
+		private final Unit callSite;
+		
+		ApplyNormalRules(Unit callSite) {
+			this.callSite = callSite;
+		}
+		
+		public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
+			//first apply rules with abstractions at the callee
+			Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite, context, null);
+			atNormalEdge(config);
+			return config.getAbstractions();
+		}
+	}
 
 	protected class ReplaceValues implements FlowFunction<Abstraction<Var, Value, State, StmtID>> {
 		private final List<Value> fromValues;

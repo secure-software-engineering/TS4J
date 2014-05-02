@@ -1,7 +1,6 @@
 package de.fraunhofer.sit.codescan.sootbridge.typestate;
 
 import static heros.TwoElementSet.twoElementSet;
-import heros.DefaultSeeds;
 import heros.FlowFunction;
 import heros.FlowFunctions;
 import heros.flowfunc.Compose;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Set;
 
 import soot.SootMethod;
@@ -22,13 +20,7 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
-import de.fraunhofer.sit.codescan.sootbridge.AbstractIFDSAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
-import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateAnalysisProblem.ApplyReturnRules;
-import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateAnalysisProblem.ReplaceValues;
-import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
-import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtReturn;
-import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
 
 /**
  * An abstract Jimple-based typestate-analysis problem that can be configured through a set of rules defined

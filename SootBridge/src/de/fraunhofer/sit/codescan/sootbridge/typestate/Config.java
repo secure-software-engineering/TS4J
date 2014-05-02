@@ -4,21 +4,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import soot.Scene;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
+import soot.jimple.ArrayRef;
 import soot.jimple.AssignStmt;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.InstanceInvokeExpr;
-import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
 import soot.jimple.NewArrayExpr;
 import soot.jimple.Stmt;
-import soot.jimple.StringConstant;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.VisibilityAnnotationTag;
 import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
@@ -53,8 +51,10 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	Stmt invokeStmt;
 	int currSlot = -1;
 	Var eqCheckVar;
+	Var asArray;
 	Set<Abstraction<Var, Value, State, StmtID>> originalAbstractions;
 	Set<Abstraction<Var, Value, State, StmtID>> abstractions;
+	Set<Abstraction<Var, Value, State, StmtID>> stillToProve;
 	boolean filteredOut = false;
 	boolean not = false;
 	Config<Var, State, StmtID> next;
@@ -62,7 +62,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	private final IIFDSAnalysisContext context;
 	private String errorMessage;
 	private ArrayList<Integer> currSlotArray = null;
-	private boolean each;
+	private Var replaceInArray;
 
 	public Config(final Abstraction<Var, Value, State, StmtID> abstraction,
 			Stmt invokeStmt, IIFDSAnalysisContext context) {
@@ -87,6 +87,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 				abstractions);
 		this.originalAbstractions = Collections.unmodifiableSet(abstractions);
 		this.invokeStmt = invokeStmt;
+		this.stillToProve = new HashSet<Abstraction<Var, Value, State, StmtID>>();
 	}
 
 	public IfCheckContext<Var, State, StmtID> atAnyCallToClass(String className) {
@@ -264,6 +265,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (fillAbstractions(res)) {
 			res.addAll(originalAbstractions);
 		}
+		res.addAll(stillToProve);
 		return res;
 	}
 
@@ -317,58 +319,68 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		currSlot = paramIndex;
 		return computeEquals();
 	}
+	public CallContext<Var, State, StmtID> eachEqualsInstance(Class<?> instance) {
+		if (abstractions.isEmpty())
+			return this;
 
+		if(invokeStmt instanceof AssignStmt){
+			AssignStmt as = (AssignStmt) invokeStmt;
+			Value lOp = as.getLeftOp();
+			Value rOp = as.getRightOp();
+			for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
+					.iterator(); i.hasNext();) {
+				Abstraction<Var, Value, State, StmtID> abs = i.next();
+					if(abs.lastReplacedValue != null && abs.lastReplacedValue.equals(lOp)){
+						if(instance.isInstance(rOp)){
+							boolean removed = abs.removeFromBoundArrrayValues(rOp,eqCheckVar);
+							@SuppressWarnings("unchecked")
+							HashSet<Value> arrayValues = (HashSet<Value>)abs.getArrayValues(eqCheckVar);
+							if(arrayValues != null && arrayValues.size() == 0 && removed){
+								return this;
+							}
+						}
+					}
+					if(!instance.isInstance(rOp)){
+						if(lOp instanceof ArrayRef){
+							abs.pushArrayValue(as.getRightOp(),((ArrayRef) lOp).getBase());
+						} 
+					} 
+					@SuppressWarnings("unchecked")
+					HashSet<Value> arrayValues = (HashSet<Value>)abs.getArrayValues(rOp);
+					if(arrayValues != null && arrayValues.size() > 0){
+						stillToProve.add(abs);
+					}else if(rOp instanceof NewArrayExpr){
+						return this;
+					}
+				i.remove();
+			}
+		}
+		if (abstractions.isEmpty())
+			noMatch();
+		return this;
+	}
 	public CallContext<Var, State, StmtID> equalsConstant(Class<?> instance) {
 		if (abstractions.isEmpty())
 			return this;
-		
+	
 		for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
 				.iterator(); i.hasNext();) {
 			Abstraction<Var, Value, State, StmtID> abs = i.next();
-			if(each){
-				Object list = abs.getArrayValues(eqCheckVar);
-				if(list == null){
-					i.remove();
-					continue;
+		
+			Value v = abs.getValue(eqCheckVar);
+			if(v == null){
+				i.remove();
+			} else{
+				boolean filter = !instance.isInstance(v);
+				if(not){
+					filter = !filter;
 				}
-				Object[] array= (Object[]) list;
-				boolean remove = false;
-				for(Object v : array){
-					if(v == null){
-						remove = true;
-						//TODO How to handle null values in case of not?
-					} else{
-						boolean filter = !instance.isInstance(v);
-						if(not){
-							filter = !filter;
-						}
-						if (filter) {
-							remove = true;
-							break;
-						}
-					}
-				}
-				if(remove){
+				if (filter) {
 					i.remove();
-				}
-			}else{
-
-				Value v = abs.getValue(eqCheckVar);
-				if(v == null){
-					i.remove();
-				} else{
-					boolean filter = !instance.isInstance(v);
-					if(not){
-						filter = !filter;
-					}
-					if (filter) {
-						i.remove();
-					}
 				}
 			}
 		}
 		not = false;
-		each = false;
 		
 		if (abstractions.isEmpty())
 			noMatch();
@@ -510,7 +522,16 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 					.iterator(); i.hasNext();) {
 				Abstraction<Var, Value, State, StmtID> abs = i.next();
 				Value boundValue = abs.getBoundValue(var);
-				if (boundValue == null || !boundValue.equals(as.getRightOp())) {
+
+				Value lOp = as.getLeftOp();
+				Value rOp = as.getRightOp();
+				if(lOp instanceof ArrayRef){
+					rOp =((ArrayRef)lOp).getBase();
+				}
+				if(abs.lastReplacedValue != null && abs.lastReplacedValue.equals(lOp)){
+					continue;
+				}
+				if ((boundValue == null || !boundValue.equals(rOp))) {
 					i.remove();
 				}
 			}
@@ -522,7 +543,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 
 		return this;
 	}
-
+	
 	@Override
 	public EqualsContext<Var, State, StmtID> not() {
 		not = true;
@@ -585,52 +606,18 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	}
 
 	@Override
-	public Done<Var, State, StmtID> asArray(Var var, int arraySize) {
+	public Done<Var, State, StmtID> asArray(Var var) {
 		if (abstractions.isEmpty())
 			return this;
 		as(var);
 		
 		for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
-			abs.initializeArrayValue(var, arraySize);
-		}
-		
-		return this;
-	}
-
-	@Override
-	public EqualsContext<Var, State, StmtID> each() {
-		each  = true;
-		return this;
-	}
-
-	@Override
-	public IfCheckContext<Var, State, StmtID> atReplaceInArray(Var var) {
-
-		if (abstractions.isEmpty())
-			return this;
-		if(invokeStmt ==null){
-			noMatch();
-			return this;
-		}
-		if(invokeStmt instanceof AssignStmt){
-			AssignStmt as = (AssignStmt) invokeStmt;
-			for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
-					.iterator(); i.hasNext();) {
-				Abstraction<Var, Value, State, StmtID> abs = i.next();
-				if(!abs.isReplaceInArray()){
-					i.remove();
-				}
-				abs.setReplaceInArray(false);
-			}
-		}
+			abs.initializeArrayValue(var);
 			
-
-		if (abstractions.isEmpty())
-			noMatch();
-
+		}
+		asArray = var;
 		return this;
 	}
-
 
 }
 

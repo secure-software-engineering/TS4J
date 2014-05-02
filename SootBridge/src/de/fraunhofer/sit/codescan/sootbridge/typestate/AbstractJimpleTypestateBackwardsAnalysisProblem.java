@@ -8,16 +8,13 @@ import heros.flowfunc.Identity;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.ArrayRef;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.IdentityStmt;
-import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
 import soot.jimple.ReturnStmt;
 import soot.jimple.Stmt;
@@ -109,46 +106,37 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 			 * On normal flows we simply track assignments and apply atNormalEdge TODO may need to
 			 * configure rules for arithmetic operations.
 			 */
+			@SuppressWarnings("unchecked")
 			public FlowFunction<Abstraction<Var, Value, State, StmtID>> getNormalFlowFunction(
 					Unit curr, Unit succ) {
 				if (curr instanceof DefinitionStmt) {
-					final DefinitionStmt assign = (DefinitionStmt) curr;
-					return new FlowFunction<Abstraction<Var, Value, State, StmtID>>() {
-						public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(
-								final Abstraction<Var, Value, State, StmtID> source) {
-							Value lOp = assign.getLeftOp();
-							Value rOp = assign.getRightOp();
-							
-							if(assign instanceof IdentityStmt){
-							
-								if(rOp instanceof ThisRef){
-									return Collections.singleton(source);
-								}
-								return Collections.singleton(source.replaceValue(lOp, rOp));
-							}
+					DefinitionStmt assign = (DefinitionStmt) curr;
+					final Value lOp = assign.getLeftOp();
+					final Value rOp = assign.getRightOp();
+					if (assign instanceof IdentityStmt) {
+						return new FlowFunction<Abstraction<Var, Value, State, StmtID>>() {
+							public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(
+									final Abstraction<Var, Value, State, StmtID> source) {
 
-							if(lOp instanceof ArrayRef){
-								ArrayRef aR = (ArrayRef) lOp;
-								Value index = aR.getIndex();
-								if(index instanceof IntConstant){
-									IntConstant ic = (IntConstant) index;
-									return Collections.singleton(source.pushArrayValue(rOp,ic.value, aR.getBase()));
-								} else {
+								if (rOp instanceof ThisRef) {
 									return Collections.singleton(source);
 								}
-							} 
-							ArrayList<Value> fromList = new ArrayList<Value>();
-							fromList.add(lOp);
-							ArrayList<Value> toList = new ArrayList<Value>();
-							toList.add(rOp);
-							Set<Abstraction<Var, Value, State, StmtID>> target = source.replaceValuesAndCopy(fromList, toList);
-							
-							Config<Var, State, StmtID> config = new Config<Var, State, StmtID>(target,
-									assign, context, null);
-							atNormalEdge(config);
-							return config.getAbstractions();
-						}
-					};
+								return Collections.singleton(source
+										.replaceValue(lOp, rOp));
+
+							}
+						};
+					} else {
+						ArrayList<Value> fromList = new ArrayList<Value>();
+						fromList.add(lOp);
+						ArrayList<Value> toList = new ArrayList<Value>();
+						toList.add(rOp);
+						FlowFunction<Abstraction<Var, Value, State, StmtID>> applyNormalRules = new ApplyNormalRules(
+								assign);
+						FlowFunction<Abstraction<Var, Value, State, StmtID>> mapFormalsToActuals = new ReplaceValues(
+								fromList, toList);
+						return Compose.compose(mapFormalsToActuals,applyNormalRules);
+					}
 				}
 				return Identity.v();
 			}
