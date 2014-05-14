@@ -27,7 +27,7 @@ import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.Done;
  * @param <StmtID> The set of variables used to index over bound statements. 
  */
 public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Var>,State extends Enum<State>,StmtID extends Enum<StmtID>> extends
-		AbstractIFDSAnalysisProblem<Abstraction<Var, Value, State, StmtID>> {
+		AbstractIFDSAnalysisProblem<Abstraction<Var,  State, StmtID>> {
 
 	final IIFDSAnalysisContext context;
 	protected final BiDiInterproceduralCFG<Unit,SootMethod> ICFG;
@@ -38,7 +38,7 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 		ICFG = graph;
 	}
 
-	protected Abstraction<Var,Value,State,StmtID> createZeroValue() {
+	protected Abstraction<Var,State,StmtID> createZeroValue() {
 		return Abstraction.zero();
 	}
 	
@@ -71,7 +71,7 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 	protected abstract Done<Var,State,StmtID> atNormalEdge(AtNormalEdge<Var,State,StmtID> atNormalEdge);
 
 	protected final class ApplyReturnRules implements
-			FlowFunction<Abstraction<Var, Value, State, StmtID>> {
+			FlowFunction<Abstraction<Var,  State, StmtID>> {
 		private final Unit callSite;
 		private final SootMethod callee;
 
@@ -80,7 +80,7 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 			this.callee = callee;
 		}
 
-		public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
+		public Set<Abstraction<Var,  State, StmtID>> computeTargets(Abstraction<Var,  State, StmtID> source) {
 			//first apply rules with abstractions at the callee
 			Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite, context, callee);
 			atReturn(config);
@@ -88,14 +88,14 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 		}
 	}
 	protected final class ApplyNormalRules implements
-		FlowFunction<Abstraction<Var, Value, State, StmtID>> {
+		FlowFunction<Abstraction<Var,  State, StmtID>> {
 		private final Unit callSite;
 		
 		ApplyNormalRules(Unit callSite) {
 			this.callSite = callSite;
 		}
 		
-		public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
+		public Set<Abstraction<Var,  State, StmtID>> computeTargets(Abstraction<Var,  State, StmtID> source) {
 			//first apply rules with abstractions at the callee
 			Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,(Stmt) callSite, context, null);
 			atNormalEdge(config);
@@ -103,16 +103,16 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 		}
 	}
 
-	protected class ReplaceValues implements FlowFunction<Abstraction<Var, Value, State, StmtID>> {
+	protected class ReplaceValues implements FlowFunction<Abstraction<Var, State, StmtID>> {
 		private final List<Value> fromValues;
 		private final List<Value> toValues;
 
-		 ReplaceValues(List<Value> fromValues, List<Value> toValues) {
+		public ReplaceValues(List<Value> fromValues, List<Value> toValues) {
 			this.fromValues = fromValues;
 			this.toValues = toValues;
 		}
 
-		public Set<Abstraction<Var,Value,State,StmtID>> computeTargets(Abstraction<Var,Value,State,StmtID> source) {
+		public Set<Abstraction<Var,State,StmtID>> computeTargets(Abstraction<Var,State,StmtID> source) {
 			return Collections.singleton(source.replaceValues(fromValues,toValues));
 		}
 	}

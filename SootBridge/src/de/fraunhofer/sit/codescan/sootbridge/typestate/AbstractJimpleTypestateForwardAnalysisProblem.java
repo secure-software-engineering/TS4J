@@ -40,14 +40,14 @@ AbstractJimpleTypestateAnalysisProblem<Var, State, StmtID> {
 		ICFG = context.getICFG();
 	}
 	@Override
-	protected FlowFunctions<Unit, Abstraction<Var,Value,State,StmtID>, SootMethod> createFlowFunctionsFactory() {
+	protected FlowFunctions<Unit, Abstraction<Var,State,StmtID>, SootMethod> createFlowFunctionsFactory() {
 		
-		return new FlowFunctions<Unit, Abstraction<Var,Value,State,StmtID>, SootMethod>() {
+		return new FlowFunctions<Unit, Abstraction<Var,State,StmtID>, SootMethod>() {
 
 			/**
 			 * On calls, replace arguments by formal parameters.
 			 */
-			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getCallFlowFunction(Unit src, final SootMethod dest) {
+			public FlowFunction<Abstraction<Var,State,StmtID>> getCallFlowFunction(Unit src, final SootMethod dest) {
 
 				Stmt stmt = (Stmt) src;
 				InvokeExpr ie = stmt.getInvokeExpr();
@@ -61,11 +61,11 @@ AbstractJimpleTypestateAnalysisProblem<Var, State, StmtID> {
 			/**
 			 * On call-to-return, apply the appropriate rules.
 			 */
-			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getCallToReturnFlowFunction(Unit curr, Unit succ) {
+			public FlowFunction<Abstraction<Var,State,StmtID>> getCallToReturnFlowFunction(Unit curr, Unit succ) {
 				final Stmt s = (Stmt) curr;
 
-				return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
-					public Set<Abstraction<Var, Value, State, StmtID>> computeTargets(Abstraction<Var, Value, State, StmtID> source) {
+				return new FlowFunction<Abstraction<Var,State,StmtID>>() {
+					public Set<Abstraction<Var,  State, StmtID>> computeTargets(Abstraction<Var,  State, StmtID> source) {
 						Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(source,s,context);
 						atCallToReturn(config);
 						return config.getAbstractions();
@@ -77,11 +77,11 @@ AbstractJimpleTypestateAnalysisProblem<Var, State, StmtID> {
 			 * On normal flows we simply track assignments.
 			 * TODO may need to configure rules for arithmetic operations.
 			 */
-			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getNormalFlowFunction(Unit curr,Unit succ) {
+			public FlowFunction<Abstraction<Var,State,StmtID>> getNormalFlowFunction(Unit curr,Unit succ) {
 				if(curr instanceof DefinitionStmt) {
 					final DefinitionStmt assign = (DefinitionStmt) curr;
-					return new FlowFunction<Abstraction<Var,Value,State,StmtID>>() {
-						public Set<Abstraction<Var,Value,State,StmtID>> computeTargets(final Abstraction<Var,Value,State,StmtID> source) {
+					return new FlowFunction<Abstraction<Var,State,StmtID>>() {
+						public Set<Abstraction<Var,State,StmtID>> computeTargets(final Abstraction<Var,State,StmtID> source) {
 							Config<Var, State, StmtID> config = new Config<Var,State,StmtID>(twoElementSet(source, source.replaceValue(assign.getRightOp(), assign.getLeftOp())),assign,context, null);
 							atNormalEdge(config);
 							return config.getAbstractions();
@@ -96,7 +96,7 @@ AbstractJimpleTypestateAnalysisProblem<Var, State, StmtID> {
 			 * LHS of the assignment of the call (if any).
 			 */
 			@SuppressWarnings("unchecked")
-			public FlowFunction<Abstraction<Var,Value,State,StmtID>> getReturnFlowFunction(final Unit callSite, final SootMethod callee, final Unit exitStmt, Unit retSite) {
+			public FlowFunction<Abstraction<Var,State,StmtID>> getReturnFlowFunction(final Unit callSite, final SootMethod callee, final Unit exitStmt, Unit retSite) {
 
 				if(callSite!=null) {
 					Stmt stmt = (Stmt) callSite;
@@ -114,8 +114,8 @@ AbstractJimpleTypestateAnalysisProblem<Var, State, StmtID> {
 						toValues = new ArrayList<Value>(toValues);
 						toValues.add(definitionStmt.getLeftOp());
 					}
-					FlowFunction<Abstraction<Var,Value,State,StmtID>> applyRules = new ApplyReturnRules(callSite, callee);
-					FlowFunction<Abstraction<Var,Value,State,StmtID>> mapFormalsToActuals = new ReplaceValues(fromValues, toValues);
+					FlowFunction<Abstraction<Var,State,StmtID>> applyRules = new ApplyReturnRules(callSite, callee);
+					FlowFunction<Abstraction<Var,State,StmtID>> mapFormalsToActuals = new ReplaceValues(fromValues, toValues);
 					return Compose.compose(applyRules,mapFormalsToActuals);
 				} else {
 					//we have an unbalanced problem and the callsite is null; hence there is no caller to map back to

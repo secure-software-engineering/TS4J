@@ -10,4 +10,6 @@
 <javax.servlet.ServletResponse: void addDateHeader(!java.lang.String,long)>
 <javax.servlet.ServletResponse: void addIntHeader(!java.lang.String,int)>
 
+<java.io.File void <init>(!java.lang.String)>
+
 @Sink(sensitiveArgs=[0])

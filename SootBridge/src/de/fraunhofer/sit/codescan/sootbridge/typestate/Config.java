@@ -52,9 +52,9 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	int currSlot = -1;
 	Var eqCheckVar;
 	Var asArray;
-	Set<Abstraction<Var, Value, State, StmtID>> originalAbstractions;
-	Set<Abstraction<Var, Value, State, StmtID>> abstractions;
-	Set<Abstraction<Var, Value, State, StmtID>> stillToProve;
+	Set<Abstraction<Var, State, StmtID>> originalAbstractions;
+	Set<Abstraction<Var, State, StmtID>> abstractions;
+	Set<Abstraction<Var, State, StmtID>> stillToProve;
 	boolean filteredOut = false;
 	boolean not = false;
 	Config<Var, State, StmtID> next;
@@ -64,30 +64,30 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	private ArrayList<Integer> currSlotArray = null;
 	private Var replaceInArray;
 
-	public Config(final Abstraction<Var, Value, State, StmtID> abstraction,
+	public Config(final Abstraction<Var, State, StmtID> abstraction,
 			Stmt invokeStmt, IIFDSAnalysisContext context) {
 		this(abstraction, invokeStmt, context, null);
 	}
 
 	@SuppressWarnings("serial")
-	public Config(final Abstraction<Var, Value, State, StmtID> abstraction,
+	public Config(final Abstraction<Var, State, StmtID> abstraction,
 			Stmt invokeStmt, IIFDSAnalysisContext context, SootMethod callee) {
-		this(new HashSet<Abstraction<Var, Value, State, StmtID>>() {
+		this(new HashSet<Abstraction<Var, State, StmtID>>() {
 			{
 				add(abstraction);
 			}
 		}, invokeStmt, context, callee);
 	}
 
-	public Config(Set<Abstraction<Var, Value, State, StmtID>> abstractions,
+	public Config(Set<Abstraction<Var, State, StmtID>> abstractions,
 			Stmt invokeStmt, IIFDSAnalysisContext context, SootMethod callee) {
 		this.context = context;
 		this.calleeAtReturnFlow = callee;
-		this.abstractions = new HashSet<Abstraction<Var, Value, State, StmtID>>(
+		this.abstractions = new HashSet<Abstraction<Var, State, StmtID>>(
 				abstractions);
 		this.originalAbstractions = Collections.unmodifiableSet(abstractions);
 		this.invokeStmt = invokeStmt;
-		this.stillToProve = new HashSet<Abstraction<Var, Value, State, StmtID>>();
+		this.stillToProve = new HashSet<Abstraction<Var, State, StmtID>>();
 	}
 
 	public IfCheckContext<Var, State, StmtID> atAnyCallToClass(String className) {
@@ -141,9 +141,9 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			return this;
 
 		if (calleeAtReturnFlow != null) {
-			for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
+			for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
 					.iterator(); i.hasNext();) {
-				Abstraction<Var, Value, State, StmtID> abs = i.next();
+				Abstraction<Var, State, StmtID> abs = i.next();
 				Unit stmt = abs.getStatement(sid);
 				if (stmt == null
 						|| !context.getICFG().getMethodOf(stmt)
@@ -186,7 +186,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	public CallContext<Var, State, StmtID> as(Var var) {
 		if (abstractions.isEmpty())
 			return this;
-		Set<Abstraction<Var, Value, State, StmtID>> newAbstractions = new HashSet<Abstraction<Var, Value, State, StmtID>>();
+		Set<Abstraction<Var, State, StmtID>> newAbstractions = new HashSet<Abstraction<Var, State, StmtID>>();
 		
 		if(currSlotArray != null){
 			for (int a : currSlotArray){
@@ -195,8 +195,8 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 				if(addedValue == null){
 					continue;
 				}
-				for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
-					newAbstractions.addAll(abs.bindValue(addedValue, var));
+				for (Abstraction<Var, State, StmtID> abs : abstractions) {
+					newAbstractions.addAll(abs.bindValue(addedValue,var));
 				}
 			}
 			currSlotArray= null;
@@ -205,8 +205,8 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			if (addedValue == null)
 				return this;
 	
-			for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
-				newAbstractions.addAll(abs.bindValue(addedValue, var));
+			for (Abstraction<Var, State, StmtID> abs : abstractions) {
+				newAbstractions.addAll(abs.bindValue(addedValue,var));
 			}
 		}
 		abstractions = newAbstractions;
@@ -249,8 +249,8 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (abstractions.isEmpty())
 			return this;
 
-		Set<Abstraction<Var, Value, State, StmtID>> newAbstractions = new HashSet<Abstraction<Var, Value, State, StmtID>>();
-		for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
+		Set<Abstraction<Var, State, StmtID>> newAbstractions = new HashSet<Abstraction<Var, State, StmtID>>();
+		for (Abstraction<Var, State, StmtID> abs : abstractions) {
 			newAbstractions.add(abs.withStateChangedTo(s));
 		}
 		abstractions = newAbstractions;
@@ -258,10 +258,10 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		return this;
 	}
 
-	public Set<Abstraction<Var, Value, State, StmtID>> getAbstractions() {
+	public Set<Abstraction<Var, State, StmtID>> getAbstractions() {
 		// TODO is it really ok to store a global filteredOut flag?
 		// or does this need to be done per abstraction?
-		Set<Abstraction<Var, Value, State, StmtID>> res = new HashSet<Abstraction<Var, Value, State, StmtID>>();
+		Set<Abstraction<Var, State, StmtID>> res = new HashSet<Abstraction<Var, State, StmtID>>();
 		if (fillAbstractions(res)) {
 			res.addAll(originalAbstractions);
 		}
@@ -270,7 +270,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	}
 
 	private boolean fillAbstractions(
-			Set<Abstraction<Var, Value, State, StmtID>> returnValue) {
+			Set<Abstraction<Var, State, StmtID>> returnValue) {
 		boolean nextFilteredOut = true;
 		if (next != null)
 			nextFilteredOut = next.fillAbstractions(returnValue);
@@ -327,9 +327,9 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			AssignStmt as = (AssignStmt) invokeStmt;
 			Value lOp = as.getLeftOp();
 			Value rOp = as.getRightOp();
-			for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
+			for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
 					.iterator(); i.hasNext();) {
-				Abstraction<Var, Value, State, StmtID> abs = i.next();
+				Abstraction<Var, State, StmtID> abs = i.next();
 					if(abs.lastReplacedValue != null && abs.lastReplacedValue.equals(lOp)){
 						if(instance.isInstance(rOp)){
 							boolean removed = abs.removeFromBoundArrrayValues(rOp,eqCheckVar);
@@ -363,9 +363,9 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (abstractions.isEmpty())
 			return this;
 	
-		for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
 				.iterator(); i.hasNext();) {
-			Abstraction<Var, Value, State, StmtID> abs = i.next();
+			Abstraction<Var, State, StmtID> abs = i.next();
 		
 			Value v = abs.getValue(eqCheckVar);
 			if(v == null){
@@ -391,9 +391,9 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (v == null)
 			return this;
 		// TODO should we do non-destructive updates here?
-		for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
 				.iterator(); i.hasNext();) {
-			Abstraction<Var, Value, State, StmtID> abs = i.next();
+			Abstraction<Var, State, StmtID> abs = i.next();
 
 			Value checkValue = abs.getValue(eqCheckVar);
 			boolean filter = (checkValue == null || !checkValue.equals(v));
@@ -420,9 +420,9 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (invokeStmt == null)
 			throw new IllegalArgumentException(
 					"Atempting to store call statement at return");
-		Set<Abstraction<Var, Value, State, StmtID>> res = new HashSet<Abstraction<Var, Value, State, StmtID>>(
+		Set<Abstraction<Var, State, StmtID>> res = new HashSet<Abstraction<Var, State, StmtID>>(
 				abstractions.size());
-		for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
+		for (Abstraction<Var, State, StmtID> abs : abstractions) {
 			res.add(abs.storeStmt(invokeStmt, sid));
 		}
 		this.abstractions = res;
@@ -456,9 +456,9 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (s == null)
 			throw new IllegalArgumentException("State must not be null");
 		// TODO should we do non-destructive updates here?
-		for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
 				.iterator(); i.hasNext();) {
-			Abstraction<Var, Value, State, StmtID> abs = i.next();
+			Abstraction<Var, State, StmtID> abs = i.next();
 			if (!abs.stateIs(s)) {
 				i.remove();
 			}
@@ -478,7 +478,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	public Done<Var, State, StmtID> atStmt(StmtID sid) {
 		if (abstractions.isEmpty())
 			return this;
-		for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
+		for (Abstraction<Var, State, StmtID> abs : abstractions) {
 			Unit stmt = abs.getStatement(sid);
 			// TODO what if stmt==null? do we allow this to happen?
 			if (stmt != null) {
@@ -518,9 +518,9 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			return this;
 		if(invokeStmt instanceof AssignStmt){
 			AssignStmt as = (AssignStmt) invokeStmt;
-			for (Iterator<Abstraction<Var, Value, State, StmtID>> i = abstractions
+			for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
 					.iterator(); i.hasNext();) {
-				Abstraction<Var, Value, State, StmtID> abs = i.next();
+				Abstraction<Var, State, StmtID> abs = i.next();
 				Value boundValue = abs.getBoundValue(var);
 
 				Value lOp = as.getLeftOp();
@@ -611,7 +611,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			return this;
 		as(var);
 		
-		for (Abstraction<Var, Value, State, StmtID> abs : abstractions) {
+		for (Abstraction<Var, State, StmtID> abs : abstractions) {
 			abs.initializeArrayValue(var);
 			
 		}
