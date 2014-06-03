@@ -606,7 +606,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	}
 
 	@Override
-	public Done<Var, State, StmtID> asArray(Var var) {
+	public CallContext<Var, State, StmtID> asArray(Var var) {
 		if (abstractions.isEmpty())
 			return this;
 		as(var);
