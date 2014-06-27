@@ -31,7 +31,7 @@ public class HardCodedKeyAnalysisProblem extends AbstractJimpleTypestateBackward
 	private static final String ERROR_MESSAGE_BYTE_ARRAY = "This byte array is the chosen private Key. A private key should never be stored in the source code";
 	private static final String ERROR_MESSAGE = "A private key should never be stored in the source code.";
 	
-	private static final String GET_BYTES = "<java.lang.String: byte[] getBytes()>";
+	private static final String GET_BYTES = "<java.lang.String: byte\\[\\] getBytes(.*)>";
 	private static final String SECRET_KEY_CONSTRUCTOR = "<javax.crypto.spec.SecretKeySpec: void <init>(byte[],java.lang.String)>";
 	private static final String SB_TO_STRING_SIG = "<java.lang.StringBuilder: java.lang.String toString()>";
 	private static final String SB_APPEND_SIG = "<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>";
@@ -49,7 +49,7 @@ public class HardCodedKeyAnalysisProblem extends AbstractJimpleTypestateBackward
 	@Override
 	protected Done<Var, State, StatementId> atCallToReturn(AtCallToReturn<Var, State, StatementId> d) {
 		return d.atCallTo(SECRET_KEY_CONSTRUCTOR).always().trackParameter(0).as(KEYBYTES).toState(INIT).storeStmtAs(SECRET_KEY_INVOKED).
-				orElse().atCallTo(GET_BYTES).ifValueBoundTo(KEYBYTES).equalsReturnValue().trackThis().as(KEYSTRING).and().ifInState(INIT).toState(BYTESINVOKED).
+				orElse().atCallToWithRegex(GET_BYTES).ifValueBoundTo(KEYBYTES).equalsReturnValue().trackThis().as(KEYSTRING).and().ifInState(INIT).toState(BYTESINVOKED).
 				orElse().atCallTo(SB_TO_STRING_SIG).ifValueBoundTo(KEYSTRING).equalsReturnValue().trackThis().as(TO_STRING_BASE).and().ifInState(BYTESINVOKED).toState(TO_STRING).
 				orElse().atCallTo(SB_APPEND_SIG).ifValueBoundTo(TO_STRING_BASE).equalsReturnValue().trackParameter(0).as(SB_APPENDSTRING_ARG2).
 				and().always().trackThis().as(SB_APPENDSTRING_BASE).and().ifInState(TO_STRING).toState(SB_APPENDED).

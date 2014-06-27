@@ -118,13 +118,20 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	}
 
 	public IfCheckContext<Var, State, StmtID> atCallTo(String signature) {
+		return atCallToHelper(signature, false);
+	}
+
+	public IfCheckContext<Var, State, StmtID> atCallToWithRegex(String regex) {
+		return atCallToHelper(regex, true);
+	}
+	private IfCheckContext<Var,State,StmtID> atCallToHelper(String signature, boolean regex){
 		if (abstractions.isEmpty())
 			return this;
 
 		if (invokeStmt != null) {
 			SootMethod calledMethod = invokeStmt.getInvokeExpr().getMethod();
 			// TODO should allow for fuzzy matching of declaring type
-			if (calledMethod.getSignature().equals(signature)) {
+			if ((!regex && calledMethod.getSignature().equals(signature)) || (regex && calledMethod.getSignature().matches(signature))) {
 				method = calledMethod;
 				return this;
 			}
@@ -134,7 +141,6 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		noMatch();
 		return this;
 	}
-
 	public IfCheckContext<Var, State, StmtID> atReturnFromMethodOfStmt(
 			StmtID sid) {
 		if (abstractions.isEmpty())

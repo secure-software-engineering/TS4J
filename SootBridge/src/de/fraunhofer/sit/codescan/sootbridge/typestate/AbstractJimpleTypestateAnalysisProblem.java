@@ -2,10 +2,12 @@ package de.fraunhofer.sit.codescan.sootbridge.typestate;
 
 import heros.FlowFunction;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import soot.Local;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
@@ -115,5 +117,21 @@ public abstract class AbstractJimpleTypestateAnalysisProblem<Var extends Enum<Va
 		public Set<Abstraction<Var,State,StmtID>> computeTargets(Abstraction<Var,State,StmtID> source) {
 			return Collections.singleton(source.replaceValues(fromValues,toValues));
 		}
+	}
+	protected class DestroyLocals implements FlowFunction<Abstraction<Var, State,StmtID>>{
+		private final Collection<Local> destroyLocals;
+
+		public DestroyLocals(Collection<Local> destroyLocals) {
+			this.destroyLocals = destroyLocals;
+		}
+		public Set<Abstraction<Var, State, StmtID>> computeTargets(
+				Abstraction<Var, State, StmtID> source) {
+			Abstraction<Var, State, StmtID> res = source.destroyLocals(destroyLocals);
+			if( res == null){
+				return Collections.emptySet();
+			}
+			return Collections.singleton(res);
+		}
+		
 	}
 }

@@ -4,10 +4,13 @@ import static heros.TwoElementSet.twoElementSet;
 import static java.util.Collections.singleton;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import soot.Local;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.InstanceFieldRef;
@@ -214,7 +217,8 @@ public class Abstraction<Var extends Enum<Var>,State extends Enum<State>,StmtID 
 			HashSet<Value> array = (HashSet<Value>) boundArrayValues[i];
 			if(array.remove(fromVal)){
 				lastReplacedValue = fromVal;
-				array.add(toVal);
+				if(toVal != null)
+					array.add(toVal);
 			}
 		}
 	}
@@ -394,5 +398,31 @@ public class Abstraction<Var extends Enum<Var>,State extends Enum<State>,StmtID 
 				+ ", stmtTrace=" + Arrays.toString(stmtTrace)
 				+ (!boundArrays.equals("") ? ", boundArrayValues=" + boundArrays :"")
 				+ ", state=" + state + "]";
+	}
+
+	public Abstraction<Var, State, StmtID> destroyLocals(
+			Collection<Local> destroyLocals) {
+
+		if (boundValues == null)
+			return null;
+		Iterator<Local> it = destroyLocals.iterator();
+		while(it.hasNext()){
+			Local destroyVal = it.next();
+
+			for (int i = 0; i < boundValues.length; i++) {
+				Value val = getBoundValue(i);
+				if (val != null && val.equivTo(destroyVal)) {
+					setBoundVal(null, i);					
+				}
+				replaceInBoundArrrayValues(destroyVal, null, i);
+			}
+		}
+		for (int i = 0; i < boundValues.length; i++) {
+			Value val = getBoundValue(i);
+			if (val != null) {
+				return this;					
+			}
+		}
+		return null;
 	}
 }

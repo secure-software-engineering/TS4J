@@ -6,10 +6,12 @@ import heros.flowfunc.Compose;
 import heros.flowfunc.Identity;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import soot.Local;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
@@ -190,9 +192,11 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 						to.add(vie.getBase());
 						from.add(callee.getActiveBody().getThisLocal());
 					}
+					Collection<Local> toDestroy = callee.getActiveBody().getLocals();
 					FlowFunction<Abstraction<Var,State, StmtID>> applyReturnRules = new ApplyReturnRules(callSite, callee);
-					FlowFunction<Abstraction<Var,  State, StmtID>> mapFormalsToActuals = new ReplaceValues(from, to);
-					return Compose.compose(applyReturnRules,mapFormalsToActuals);
+					FlowFunction<Abstraction<Var,  State, StmtID>> mapFormalsToActuals = new ReplaceValues(from, to, callSite);
+					FlowFunction<Abstraction<Var,  State, StmtID>> destroyLocals = new DestroyLocals(toDestroy);
+					return Compose.compose(applyReturnRules,mapFormalsToActuals, destroyLocals);
 				} else {
 					return Identity.v();
 				}
