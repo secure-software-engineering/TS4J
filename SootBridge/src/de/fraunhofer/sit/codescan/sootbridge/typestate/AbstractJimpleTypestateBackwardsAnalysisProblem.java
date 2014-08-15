@@ -194,7 +194,7 @@ public abstract class AbstractJimpleTypestateBackwardsAnalysisProblem<Var extend
 					}
 					Collection<Local> toDestroy = callee.getActiveBody().getLocals();
 					FlowFunction<Abstraction<Var,State, StmtID>> applyReturnRules = new ApplyReturnRules(callSite, callee);
-					FlowFunction<Abstraction<Var,  State, StmtID>> mapFormalsToActuals = new ReplaceValues(from, to, callSite);
+					FlowFunction<Abstraction<Var,  State, StmtID>> mapFormalsToActuals = new ReplaceValues(from, to);
 					FlowFunction<Abstraction<Var,  State, StmtID>> destroyLocals = new DestroyLocals(toDestroy);
 					return Compose.compose(applyReturnRules,mapFormalsToActuals, destroyLocals);
 				} else {
