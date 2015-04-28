@@ -4,7 +4,7 @@
    <extension
          point="de.fraunhofer.sit.codescan.framework.analysis">
       <analysisPack
-            active="false"
+            active="true"
             id="HardCodedKeyAnalysis">
          <ifdsAnalysis
                class="de.fraunhofer.sit.codescan.typestate.hardcodedkeyanalysis.HardCodedKeyAnalysisPlugin"
@@ -88,6 +88,23 @@
                 executionTime="beforeAnalysis"
                 packagename="wjtp.noptransformer">
           </Transformer>
+       </extension>
+       <extension
+             point="de.fraunhofer.sit.codescan.framework.analysis">
+          <analysisPack
+                active="true"
+                id="TypestateAnalysis.analysisPack1">
+             <ifdsAnalysis
+                   class="de.fraunhofer.sit.codescan.aesfinder.AesFinderPlugin"
+                   direction="backward"
+                   id="TypestateAnalysis.ifdsAnalysis1">
+                <filter>
+                   <bySuperType>
+                      <byMethodDecl></byMethodDecl>
+                   </bySuperType>
+                </filter>
+             </ifdsAnalysis>
+          </analysisPack>
        </extension>
    
 </plugin>

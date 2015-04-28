@@ -7,4 +7,5 @@ public interface EqualsContext<Var extends Enum<Var>,State extends Enum<State>,S
 	public CallContext<Var,State,StmtID> equalsParameter(int paramIndex);
 	public CallContext<Var,State,StmtID> equalsConstant(Class<?> type);
 	public CallContext<Var,State,StmtID> eachEqualsInstance(Class<?> type);
+	public CallContext<Var, State, StmtID> equalsString(String string);
 }

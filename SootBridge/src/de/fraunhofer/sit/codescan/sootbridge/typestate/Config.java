@@ -17,6 +17,7 @@ import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
 import soot.jimple.NewArrayExpr;
 import soot.jimple.Stmt;
+import soot.jimple.StringConstant;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.VisibilityAnnotationTag;
 import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
@@ -365,6 +366,27 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			noMatch();
 		return this;
 	}
+	
+
+	@Override
+	public CallContext<Var, State, StmtID> equalsString(String par) {
+       if(abstractions.isEmpty()) return this;
+       return computeEquals(StringConstant.v(par));
+	}
+   private CallContext<Var, State, StmtID> computeEquals(StringConstant par) {
+       for (Iterator<Abstraction<Var,State,StmtID>> i =	abstractions.iterator(); i.hasNext();) {
+           Abstraction<Var,State,StmtID> abs = i.next();
+           Value v = abs.getValue(eqCheckVar);
+           if (v == null) continue;
+           boolean f = (v instanceof StringConstant) && ((StringConstant) v).equals(par);
+           if(!f) {
+               i.remove();
+           }            
+       }
+       if(abstractions.isEmpty()) noMatch();
+
+       return this;
+   }
 	public CallContext<Var, State, StmtID> equalsConstant(Class<?> instance) {
 		if (abstractions.isEmpty())
 			return this;
