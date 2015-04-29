@@ -3,7 +3,9 @@ package de.fraunhofer.sit.codescan.sootbridge;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 
+import soot.BodyTransformer;
 import soot.SceneTransformer;
+import soot.Transformer;
 
 public class PluggableTransformer {
 	protected IConfigurationElement transformerConfigElement;
@@ -26,10 +28,14 @@ public class PluggableTransformer {
 		return transformerConfigElement.getAttribute("packagename");
 	}
 
-	public SceneTransformer getInstance() {
+	public Transformer getInstance() {
 		try {
-			return (SceneTransformer) transformerConfigElement
-					.createExecutableExtension("class");
+			if(isSceneTransformer())
+				return (SceneTransformer) transformerConfigElement
+						.createExecutableExtension("class");
+			else
+				return (BodyTransformer) transformerConfigElement
+						.createExecutableExtension("class");
 		} catch (CoreException e) {
 			throw new RuntimeException(e);
 		}
@@ -37,5 +43,10 @@ public class PluggableTransformer {
 	public boolean executeBeforeAnalysis(){
 		String executionTime = transformerConfigElement.getAttribute("executionTime");
 		return executionTime.equals("beforeAnalysis");
+	}
+	
+	private boolean isSceneTransformer(){
+		String executionTime = transformerConfigElement.getAttribute("transformerType");
+		return executionTime.equals("Scene");
 	}
 }

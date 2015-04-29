@@ -9,7 +9,8 @@
             executeBeforeAnalysis="false"
             executionTime="afterAnalysis"
             pack="wjtp"
-            packagename="wjtp.testingtransformer">
+            packagename="wjtp.testingtransformer"
+            transformerType="Scene">
       </Transformer>
    </extension>
 
