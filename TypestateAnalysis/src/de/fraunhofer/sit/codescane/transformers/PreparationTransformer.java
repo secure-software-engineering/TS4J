@@ -1,14 +1,15 @@
 package de.fraunhofer.sit.codescane.transformers;
 
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import soot.Body;
-import soot.BodyTransformer;
 import soot.Local;
-import soot.PatchingChain;
+import soot.Scene;
+import soot.SceneTransformer;
+import soot.SootClass;
+import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
 import soot.ValueBox;
@@ -24,12 +25,19 @@ import soot.jimple.internal.JAssignStmt;
 import soot.jimple.internal.JNopStmt;
 import soot.jimple.internal.JimpleLocal;
 
-public class PreparationTransformer extends BodyTransformer {
+public class PreparationTransformer extends SceneTransformer {
 	private int replaceCounter = 1;
-	private Body body;
+	@Override
+	protected void internalTransform(String phaseName,
+			Map<String, String> options) {
+		addNopStmtToMethods();
+		transformConstantInInvokes();
+	}
+
 	private void transformConstantInInvokes() {
-		Set<Unit> cwnc = getStmtsWithConstants();
-		for (Unit u : cwnc) {
+		Map<Unit, Body> cwnc = getStmtsWithConstants();
+		for (Unit u : cwnc.keySet()) {
+			Body body = cwnc.get(u);
 			if (u instanceof ReturnStmt && !(u instanceof ReturnVoidStmt)) {
 				ReturnStmt returnStmt = (ReturnStmt) u;
 				ValueBox opBox = returnStmt.getOpBox();
@@ -55,7 +63,7 @@ public class PreparationTransformer extends BodyTransformer {
 						AssignStmt newUnit = new JAssignStmt(paramVal,
 								vb.getValue());
 						body.getLocals().add(paramVal);
-						body.getUnits().insertBefore(newUnit, u);
+						cwnc.get(u).getUnits().insertBefore(newUnit, u);
 						vb.setValue(paramVal);
 					}
 				}
@@ -63,36 +71,38 @@ public class PreparationTransformer extends BodyTransformer {
 		}
 	}
 
-
-
-	@Override
-	protected void internalTransform(Body b, String arg1,
-			Map<String, String> arg2) {
-		this.body = b;
-		addNopStmt();
-		transformConstantInInvokes();
-	}	
-	
-	private void addNopStmt() {
-		PatchingChain<Unit> units = body.getUnits();
-		units.addFirst(new JNopStmt());
+	private void addNopStmtToMethods() {
+		for (SootClass c : Scene.v().getClasses()) {
+			for (SootMethod m : c.getMethods()) {
+				if (!m.hasActiveBody()) {
+					continue;
+				}
+				Body b = m.getActiveBody();
+				b.getUnits().addFirst(new JNopStmt());
+			}
+		}
 	}
 
-
-
-	private Set<Unit> getStmtsWithConstants() {
-		Set<Unit> retMap = new LinkedHashSet<Unit>();
-		for (Unit u : body.getUnits()) {
-			if (u instanceof ReturnStmt) {
-				if (((ReturnStmt) u).getOp() instanceof Constant) {
-					retMap.add(u);
-				}
-			} else if (((Stmt) u).containsInvokeExpr()) {
-				InvokeExpr ie = ((Stmt) u).getInvokeExpr();
-				for (Value arg : ie.getArgs()) {
-					if (arg instanceof StringConstant || arg instanceof NumericConstant) {
-						retMap.add(u);
-						break;
+	private Map<Unit, Body> getStmtsWithConstants() {
+		Map<Unit, Body> retMap = new LinkedHashMap<Unit, Body>();
+		for (SootClass sc : Scene.v().getClasses()) {
+			for (SootMethod sm : sc.getMethods()) {
+				if (!sm.hasActiveBody())
+					continue;
+				Body methodBody = sm.retrieveActiveBody();
+				for (Unit u : methodBody.getUnits()) {
+					if (u instanceof ReturnStmt) {
+						if (((ReturnStmt) u).getOp() instanceof Constant) {
+							retMap.put(u, methodBody);
+						}
+					} else if (((Stmt) u).containsInvokeExpr()) {
+						InvokeExpr ie = ((Stmt) u).getInvokeExpr();
+						for (Value arg : ie.getArgs()) {
+							if (arg instanceof StringConstant || arg instanceof NumericConstant) {
+								retMap.put(u, methodBody);
+								break;
+							}
+						}
 					}
 				}
 			}

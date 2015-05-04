@@ -34,8 +34,8 @@ public class PluggableTransformer {
 				return (SceneTransformer) transformerConfigElement
 						.createExecutableExtension("class");
 			else
-				return (BodyTransformer) transformerConfigElement
-						.createExecutableExtension("class");
+				//We cannot execute a BodyTransformer in the jb phase, why?
+				throw new RuntimeException("Adding a BodyTransformer is not yet supported!");
 		} catch (CoreException e) {
 			throw new RuntimeException(e);
 		}

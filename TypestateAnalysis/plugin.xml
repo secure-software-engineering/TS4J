@@ -104,8 +104,8 @@
           <Transformer
                 class="de.fraunhofer.sit.codescane.transformers.PreparationTransformer"
                 executionTime="beforeAnalysis"
-                packagename="jb.constanttransformer"
-                transformerType="Body">
+                packagename="wjtp.constanttransformer"
+                transformerType="Scene">
           </Transformer>
        </extension>
    
