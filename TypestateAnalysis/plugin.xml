@@ -108,5 +108,39 @@
                 transformerType="Scene">
           </Transformer>
        </extension>
+       <extension
+             point="de.fraunhofer.sit.codescan.framework.analysis">
+          <analysisPack
+                active="true"
+                id="TypestateAnalysis.analysisPack2">
+             <ifdsAnalysis
+                   class="de.fraunhofer.sit.codescan.aesiifinder.ECBFinderPlugin"
+                   direction="backward"
+                   id="TypestateAnalysis.ifdsAnalysis1">
+                <filter>
+                   <bySuperType>
+                      <byMethodDecl></byMethodDecl>
+                   </bySuperType>
+                </filter>
+             </ifdsAnalysis>
+          </analysisPack>
+       </extension>
+       <extension
+             point="de.fraunhofer.sit.codescan.framework.analysis">
+          <analysisPack
+                active="true"
+                id="TypestateAnalysis.analysisPack3">
+             <ifdsAnalysis
+                   class="de.fraunhofer.sit.codescan.tlschannel.TLSChannelClosePlugin"
+                   direction="forward"
+                   id="TypestateAnalysis.ifdsAnalysis3">
+                <filter>
+                   <bySuperType>
+                      <byMethodDecl></byMethodDecl>
+                   </bySuperType>
+                </filter>
+             </ifdsAnalysis>
+          </analysisPack>
+       </extension>
    
 </plugin>

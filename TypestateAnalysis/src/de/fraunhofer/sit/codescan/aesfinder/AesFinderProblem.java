@@ -1,11 +1,15 @@
 package de.fraunhofer.sit.codescan.aesfinder;
 
 
-import de.fraunhofer.sit.codescan.aesfinder.AesFinderProblem.Var;
+import static de.fraunhofer.sit.codescan.aesfinder.AesFinderProblem.StmtID.GET_INSTANCE;
+import static de.fraunhofer.sit.codescan.aesfinder.AesFinderProblem.Var.CIPHER;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import de.fraunhofer.sit.codescan.aesfinder.AesFinderProblem.State;
 import de.fraunhofer.sit.codescan.aesfinder.AesFinderProblem.StmtID;
-import static de.fraunhofer.sit.codescan.aesfinder.AesFinderProblem.Var.CIPHER;
-import static de.fraunhofer.sit.codescan.aesfinder.AesFinderProblem.StmtID.GET_INSTANCE;
+import de.fraunhofer.sit.codescan.aesfinder.AesFinderProblem.Var;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.AbstractJimpleTypestateBackwardsAnalysisProblem;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
@@ -28,7 +32,9 @@ public class AesFinderProblem extends
 	@Override
 	protected Done<Var, State, StmtID> atCallToReturn(
 			AtCallToReturn<Var, State, StmtID> d) {
-		return d.atCallTo(CIPHER_CALL).always().trackParameter(0).as(CIPHER).and().storeStmtAs(GET_INSTANCE);
+		return d.atCallTo(CIPHER_CALL).always().
+			trackParameter(0).as(CIPHER).
+			and().storeStmtAs(GET_INSTANCE).orElse().atAssignTo(CIPHER).ifValueBoundTo(CIPHER).startsWith("DES").reportError("DES is used").atStmt(GET_INSTANCE);
 	}
 	
 	@Override
@@ -40,6 +46,10 @@ public class AesFinderProblem extends
 	@Override
 	protected Done<Var, State, StmtID> atNormalEdge(
 			AtNormalEdge<Var, State, StmtID> d) {
-		return d.atAssignTo(CIPHER).ifValueBoundTo(CIPHER).equalsString("AES").reportError("AES is used").atStmt(GET_INSTANCE);
+		List<String> starters = new ArrayList<String>();
+		starters.add("AES");
+		starters.add("DES");
+		return d.atAssignTo(CIPHER).ifValueBoundTo(CIPHER).doesNotContain("/").
+			and().ifValueBoundTo(CIPHER).startsWiths(starters).reportError("ECB Mode is used").atStmt(GET_INSTANCE);
 	}
 }

@@ -4,22 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
-import soot.Scene;
-import soot.SootMethod;
-import soot.Unit;
-import soot.Value;
-import soot.jimple.ArrayRef;
-import soot.jimple.AssignStmt;
-import soot.jimple.DefinitionStmt;
-import soot.jimple.InstanceInvokeExpr;
-import soot.jimple.InvokeExpr;
-import soot.jimple.NewArrayExpr;
-import soot.jimple.Stmt;
-import soot.jimple.StringConstant;
-import soot.tagkit.AnnotationTag;
-import soot.tagkit.VisibilityAnnotationTag;
 import de.fraunhofer.sit.codescan.sootbridge.ErrorMarker;
 import de.fraunhofer.sit.codescan.sootbridge.IIFDSAnalysisContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.AtCallToReturn;
@@ -34,14 +21,27 @@ import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.ReportError;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.ValueContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.VarContext;
 import de.fraunhofer.sit.codescan.sootbridge.util.MethodWithAnnotatedParameters;
+import soot.Local;
+import soot.Scene;
+import soot.SootMethod;
+import soot.Unit;
+import soot.UnitBox;
+import soot.Value;
+import soot.jimple.ArrayRef;
+import soot.jimple.AssignStmt;
+import soot.jimple.DefinitionStmt;
+import soot.jimple.InstanceInvokeExpr;
+import soot.jimple.InvokeExpr;
+import soot.jimple.NewArrayExpr;
+import soot.jimple.Stmt;
+import soot.jimple.StringConstant;
+import soot.jimple.internal.JInvokeStmt;
+import soot.tagkit.AnnotationTag;
+import soot.tagkit.VisibilityAnnotationTag;
 
-public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID extends Enum<StmtID>>
-		implements AtCallToReturn<Var, State, StmtID>,AtCollection<Var, State, StmtID>,
-		CallContext<Var, State, StmtID>, ValueContext<Var, State, StmtID>,
-		VarContext<Var, State, StmtID>, Done<Var, State, StmtID>,
-		EqualsContext<Var, State, StmtID>, IfCheckContext<Var, State, StmtID>,
-		AtReturn<Var, State, StmtID>, ReportError<Var, State, StmtID>,
-		AtNormalEdge<Var, State, StmtID> {
+public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID extends Enum<StmtID>> implements AtCallToReturn<Var, State, StmtID>, AtCollection<Var, State, StmtID>,
+	CallContext<Var, State, StmtID>, ValueContext<Var, State, StmtID>, VarContext<Var, State, StmtID>, Done<Var, State, StmtID>, EqualsContext<Var, State, StmtID>,
+	IfCheckContext<Var, State, StmtID>, AtReturn<Var, State, StmtID>, ReportError<Var, State, StmtID>, AtNormalEdge<Var, State, StmtID> {
 
 	private static final String ANY_METHOD = "*";
 	private final static int THIS = -1;
@@ -65,27 +65,24 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	private ArrayList<Integer> currSlotArray = null;
 	private Var replaceInArray;
 
-	public Config(final Abstraction<Var, State, StmtID> abstraction,
-			Stmt invokeStmt, IIFDSAnalysisContext context) {
+	public Config(final Abstraction<Var, State, StmtID> abstraction, Stmt invokeStmt, IIFDSAnalysisContext context) {
 		this(abstraction, invokeStmt, context, null);
 	}
 
 	@SuppressWarnings("serial")
-	public Config(final Abstraction<Var, State, StmtID> abstraction,
-			Stmt invokeStmt, IIFDSAnalysisContext context, SootMethod callee) {
+	public Config(final Abstraction<Var, State, StmtID> abstraction, Stmt invokeStmt, IIFDSAnalysisContext context, SootMethod callee) {
 		this(new HashSet<Abstraction<Var, State, StmtID>>() {
+
 			{
 				add(abstraction);
 			}
 		}, invokeStmt, context, callee);
 	}
 
-	public Config(Set<Abstraction<Var, State, StmtID>> abstractions,
-			Stmt invokeStmt, IIFDSAnalysisContext context, SootMethod callee) {
+	public Config(Set<Abstraction<Var, State, StmtID>> abstractions, Stmt invokeStmt, IIFDSAnalysisContext context, SootMethod callee) {
 		this.context = context;
 		this.calleeAtReturnFlow = callee;
-		this.abstractions = new HashSet<Abstraction<Var, State, StmtID>>(
-				abstractions);
+		this.abstractions = new HashSet<Abstraction<Var, State, StmtID>>(abstractions);
 		this.originalAbstractions = Collections.unmodifiableSet(abstractions);
 		this.invokeStmt = invokeStmt;
 		this.stillToProve = new HashSet<Abstraction<Var, State, StmtID>>();
@@ -97,12 +94,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 
 		if (invokeStmt != null) {
 			SootMethod calledMethod = invokeStmt.getInvokeExpr().getMethod();
-			if (Scene
-					.v()
-					.getActiveHierarchy()
-					.isClassSubclassOfIncluding(
-							calledMethod.getDeclaringClass(),
-							Scene.v().getSootClass(className))) {
+			if (Scene.v().getActiveHierarchy().isClassSubclassOfIncluding(calledMethod.getDeclaringClass(), Scene.v().getSootClass(className))) {
 				method = calledMethod;
 				return this;
 			}
@@ -125,7 +117,8 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	public IfCheckContext<Var, State, StmtID> atCallToWithRegex(String regex) {
 		return atCallToHelper(regex, true);
 	}
-	private IfCheckContext<Var,State,StmtID> atCallToHelper(String signature, boolean regex){
+
+	private IfCheckContext<Var, State, StmtID> atCallToHelper(String signature, boolean regex) {
 		if (abstractions.isEmpty())
 			return this;
 
@@ -142,19 +135,16 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		noMatch();
 		return this;
 	}
-	public IfCheckContext<Var, State, StmtID> atReturnFromMethodOfStmt(
-			StmtID sid) {
+
+	public IfCheckContext<Var, State, StmtID> atReturnFromMethodOfStmt(StmtID sid) {
 		if (abstractions.isEmpty())
 			return this;
 
 		if (calleeAtReturnFlow != null) {
-			for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
-					.iterator(); i.hasNext();) {
+			for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
 				Abstraction<Var, State, StmtID> abs = i.next();
 				Unit stmt = abs.getStatement(sid);
-				if (stmt == null
-						|| !context.getICFG().getMethodOf(stmt)
-								.equals(calleeAtReturnFlow)) {
+				if (stmt == null || !context.getICFG().getMethodOf(stmt).equals(calleeAtReturnFlow)) {
 					i.remove();
 				}
 			}
@@ -194,30 +184,30 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (abstractions.isEmpty())
 			return this;
 		Set<Abstraction<Var, State, StmtID>> newAbstractions = new HashSet<Abstraction<Var, State, StmtID>>();
-		
-		if(currSlotArray != null){
-			for (int a : currSlotArray){
+
+		if (currSlotArray != null) {
+			for (int a : currSlotArray) {
 				InvokeExpr ie = invokeStmt.getInvokeExpr();
 				Value addedValue = ie.getArg(a);
-				if(addedValue == null){
+				if (addedValue == null) {
 					continue;
 				}
 				for (Abstraction<Var, State, StmtID> abs : abstractions) {
-					newAbstractions.addAll(abs.bindValue(addedValue,var));
+					newAbstractions.addAll(abs.bindValue(addedValue, var));
 				}
 			}
-			currSlotArray= null;
-		}else{
+			currSlotArray = null;
+		} else {
 			Value addedValue = extractValue();
 			if (addedValue == null)
 				return this;
-	
+
 			for (Abstraction<Var, State, StmtID> abs : abstractions) {
-				newAbstractions.addAll(abs.bindValue(addedValue,var));
+				newAbstractions.addAll(abs.bindValue(addedValue, var));
 			}
 		}
 		abstractions = newAbstractions;
-		
+
 		return this;
 	}
 
@@ -232,22 +222,25 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		Value val;
 		InvokeExpr ie = invokeStmt.getInvokeExpr();
 		switch (currSlot) {
-		case THIS:
-			val = ((InstanceInvokeExpr) ie).getBase();
-			break;
-		case RETURN:
-			if (invokeStmt instanceof DefinitionStmt) {
-				DefinitionStmt defnStmt = (DefinitionStmt) invokeStmt;
-				val = defnStmt.getLeftOp();
-			} else {
+			case THIS:
+				val = ((InstanceInvokeExpr) ie).getBase();
+				break;
+			case RETURN:
+
+				if (invokeStmt instanceof DefinitionStmt) {
+					DefinitionStmt defnStmt = (DefinitionStmt) invokeStmt;
+					val = defnStmt.getLeftOp();
+				} else if (invokeStmt instanceof JInvokeStmt) {
+					return invokeStmt.getUseAndDefBoxes().get(0).getValue();
+				} else {
+					return null;
+				}
+				break;
+			case CONSTANT:
 				return null;
-			}
-			break;
-		case CONSTANT:
-			return null;
-		default:
-			val = ie.getArg(currSlot);
-			break;
+			default:
+				val = ie.getArg(currSlot);
+				break;
 		}
 		return val;
 	}
@@ -276,8 +269,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		return res;
 	}
 
-	private boolean fillAbstractions(
-			Set<Abstraction<Var, State, StmtID>> returnValue) {
+	private boolean fillAbstractions(Set<Abstraction<Var, State, StmtID>> returnValue) {
 		boolean nextFilteredOut = true;
 		if (next != null)
 			nextFilteredOut = next.fillAbstractions(returnValue);
@@ -288,8 +280,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 
 	public AtCollection<Var, State, StmtID> orElse() {
 		assert (next == null);
-		next = new Config<Var, State, StmtID>(originalAbstractions, invokeStmt,
-				context, calleeAtReturnFlow);
+		next = new Config<Var, State, StmtID>(originalAbstractions, invokeStmt, context, calleeAtReturnFlow);
 		return next;
 	}
 
@@ -298,7 +289,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	}
 
 	public EqualsContext<Var, State, StmtID> ifValueBoundTo(Var var) {
-		
+
 		if (abstractions.isEmpty())
 			return this;
 		assert var != null;
@@ -326,39 +317,39 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		currSlot = paramIndex;
 		return computeEquals();
 	}
+
 	public CallContext<Var, State, StmtID> eachEqualsInstance(Class<?> instance) {
 		if (abstractions.isEmpty())
 			return this;
 
-		if(invokeStmt instanceof AssignStmt){
+		if (invokeStmt instanceof AssignStmt) {
 			AssignStmt as = (AssignStmt) invokeStmt;
 			Value lOp = as.getLeftOp();
 			Value rOp = as.getRightOp();
-			for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
-					.iterator(); i.hasNext();) {
+			for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
 				Abstraction<Var, State, StmtID> abs = i.next();
-					if(abs.lastReplacedValue != null && abs.lastReplacedValue.equals(lOp)){
-						if(instance.isInstance(rOp)){
-							boolean removed = abs.removeFromBoundArrrayValues(rOp,eqCheckVar);
-							@SuppressWarnings("unchecked")
-							HashSet<Value> arrayValues = (HashSet<Value>)abs.getArrayValues(eqCheckVar);
-							if(arrayValues != null && arrayValues.size() == 0 && removed){
-								return this;
-							}
+				if (abs.lastReplacedValue != null && abs.lastReplacedValue.equals(lOp)) {
+					if (instance.isInstance(rOp)) {
+						boolean removed = abs.removeFromBoundArrrayValues(rOp, eqCheckVar);
+						@SuppressWarnings("unchecked")
+						HashSet<Value> arrayValues = (HashSet<Value>) abs.getArrayValues(eqCheckVar);
+						if (arrayValues != null && arrayValues.size() == 0 && removed) {
+							return this;
 						}
 					}
-					if(!instance.isInstance(rOp)){
-						if(lOp instanceof ArrayRef){
-							abs.pushArrayValue(as.getRightOp(),((ArrayRef) lOp).getBase());
-						} 
-					} 
-					@SuppressWarnings("unchecked")
-					HashSet<Value> arrayValues = (HashSet<Value>)abs.getArrayValues(rOp);
-					if(arrayValues != null && arrayValues.size() > 0){
-						stillToProve.add(abs);
-					}else if(rOp instanceof NewArrayExpr){
-						return this;
+				}
+				if (!instance.isInstance(rOp)) {
+					if (lOp instanceof ArrayRef) {
+						abs.pushArrayValue(as.getRightOp(), ((ArrayRef) lOp).getBase());
 					}
+				}
+				@SuppressWarnings("unchecked")
+				HashSet<Value> arrayValues = (HashSet<Value>) abs.getArrayValues(rOp);
+				if (arrayValues != null && arrayValues.size() > 0) {
+					stillToProve.add(abs);
+				} else if (rOp instanceof NewArrayExpr) {
+					return this;
+				}
 				i.remove();
 			}
 		}
@@ -366,41 +357,88 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			noMatch();
 		return this;
 	}
+
+	@Override
+	public CallContext<Var, State, StmtID> doesNotContain(String par) {
+		if (abstractions.isEmpty())
+			return this;
+
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
+			Abstraction<Var, State, StmtID> abs = i.next();
+			Value v = abs.getValue(eqCheckVar);
+			if (v == null)
+				continue;
+			boolean f = !(v instanceof StringConstant) || !((StringConstant) v).value.contains(par);
+			if (!f) {
+				i.remove();
+			}
+		}
+		if (abstractions.isEmpty())
+			noMatch();
+
+		return this;
+	}
+	
+	
+	@Override
+	public CallContext<Var, State, StmtID> contains(String par) {
+		if (abstractions.isEmpty())
+			return this;
+
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
+			Abstraction<Var, State, StmtID> abs = i.next();
+			Value v = abs.getValue(eqCheckVar);
+			if (v == null)
+				continue;
+			boolean f = !(v instanceof StringConstant) || ((v instanceof StringConstant) && ((StringConstant) v).value.contains(par));
+			if (!f) {
+				i.remove();
+			}
+		}
+		if (abstractions.isEmpty())
+			noMatch();
+
+		return this;
+	}
 	
 
 	@Override
 	public CallContext<Var, State, StmtID> equalsString(String par) {
-       if(abstractions.isEmpty()) return this;
-       return computeEquals(StringConstant.v(par));
+		if (abstractions.isEmpty())
+			return this;
+		return computeEquals(StringConstant.v(par));
 	}
-   private CallContext<Var, State, StmtID> computeEquals(StringConstant par) {
-       for (Iterator<Abstraction<Var,State,StmtID>> i =	abstractions.iterator(); i.hasNext();) {
-           Abstraction<Var,State,StmtID> abs = i.next();
-           Value v = abs.getValue(eqCheckVar);
-           if (v == null) continue;
-           boolean f = (v instanceof StringConstant) && ((StringConstant) v).equals(par);
-           if(!f) {
-               i.remove();
-           }            
-       }
-       if(abstractions.isEmpty()) noMatch();
 
-       return this;
-   }
+	private CallContext<Var, State, StmtID> computeEquals(StringConstant par) {
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
+			Abstraction<Var, State, StmtID> abs = i.next();
+			Value v = abs.getValue(eqCheckVar);
+			if (v == null)
+				continue;
+			boolean f = (v instanceof StringConstant) && ((StringConstant) v).equals(par);
+			if (!f) {
+				i.remove();
+			}
+		}
+		if (abstractions.isEmpty())
+			noMatch();
+
+		return this;
+	}
+
 	public CallContext<Var, State, StmtID> equalsConstant(Class<?> instance) {
 		if (abstractions.isEmpty())
 			return this;
-	
-		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
-				.iterator(); i.hasNext();) {
+
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
 			Abstraction<Var, State, StmtID> abs = i.next();
-		
+
 			Value v = abs.getValue(eqCheckVar);
-			if(v == null){
+			if (v == null) {
 				i.remove();
-			} else{
+			} else {
 				boolean filter = !instance.isInstance(v);
-				if(not){
+				if (not) {
 					filter = !filter;
 				}
 				if (filter) {
@@ -409,23 +447,28 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			}
 		}
 		not = false;
-		
+
 		if (abstractions.isEmpty())
 			noMatch();
 		return this;
 	}
+
 	private CallContext<Var, State, StmtID> computeEquals() {
 		Value v = extractValue();
 		if (v == null)
 			return this;
 		// TODO should we do non-destructive updates here?
-		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
-				.iterator(); i.hasNext();) {
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
 			Abstraction<Var, State, StmtID> abs = i.next();
 
 			Value checkValue = abs.getValue(eqCheckVar);
-			boolean filter = (checkValue == null || !checkValue.equals(v));
-			if(not){
+			boolean filter;
+			if (checkValue == null) {
+				filter = true;
+			} else {
+				filter = !checkValue.equals(v) && !context.mustAlias(invokeStmt, (Local) checkValue, invokeStmt, (Local) v);
+			}
+			if (not) {
 				filter = !filter;
 			}
 			if (filter) {
@@ -446,10 +489,8 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (abstractions.isEmpty())
 			return this;
 		if (invokeStmt == null)
-			throw new IllegalArgumentException(
-					"Atempting to store call statement at return");
-		Set<Abstraction<Var, State, StmtID>> res = new HashSet<Abstraction<Var, State, StmtID>>(
-				abstractions.size());
+			throw new IllegalArgumentException("Atempting to store call statement at return");
+		Set<Abstraction<Var, State, StmtID>> res = new HashSet<Abstraction<Var, State, StmtID>>(abstractions.size());
 		for (Abstraction<Var, State, StmtID> abs : abstractions) {
 			res.add(abs.storeStmt(invokeStmt, sid));
 		}
@@ -484,13 +525,17 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (s == null)
 			throw new IllegalArgumentException("State must not be null");
 		// TODO should we do non-destructive updates here?
-		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
-				.iterator(); i.hasNext();) {
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
 			Abstraction<Var, State, StmtID> abs = i.next();
 			if (!abs.stateIs(s)) {
 				i.remove();
 			}
 		}
+//		for (Unit u : context.getSootMethod().getActiveBody().getUnits()) {
+//			if (u.toString().contains("closeConnection")) {
+//				abstractions.clear();
+//			}
+//		}
 		if (abstractions.isEmpty())
 			noMatch();
 		return this;
@@ -499,6 +544,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	public ReportError<Var, State, StmtID> reportError(String errorMessage) {
 		if (abstractions.isEmpty())
 			return this;
+
 		this.errorMessage = errorMessage;
 		return this;
 	}
@@ -511,10 +557,8 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 			// TODO what if stmt==null? do we allow this to happen?
 			if (stmt != null) {
 				String methodSignature = context.getICFG().getMethodOf(stmt).getSignature();
-				String className = context.getICFG().getMethodOf(stmt)
-						.getDeclaringClass().getName();
-				context.reportError(new ErrorMarker(errorMessage, className, methodSignature, 
-						stmt.getJavaSourceStartLineNumber()));
+				String className = context.getICFG().getMethodOf(stmt).getDeclaringClass().getName();
+				context.reportError(new ErrorMarker(errorMessage, className, methodSignature, stmt.getJavaSourceStartLineNumber()));
 			}
 		}
 		return this;
@@ -527,10 +571,8 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		Unit stmt = invokeStmt;
 
 		String methodSignature = context.getICFG().getMethodOf(stmt).getSignature();
-		String className = context.getICFG().getMethodOf(stmt)
-				.getDeclaringClass().getName();
-		context.reportError(new ErrorMarker(errorMessage, className, methodSignature, stmt
-				.getJavaSourceStartLineNumber()));
+		String className = context.getICFG().getMethodOf(stmt).getDeclaringClass().getName();
+		context.reportError(new ErrorMarker(errorMessage, className, methodSignature, stmt.getJavaSourceStartLineNumber()));
 		return this;
 	}
 
@@ -544,26 +586,25 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 
 		if (abstractions.isEmpty())
 			return this;
-		if(invokeStmt instanceof AssignStmt){
+		if (invokeStmt instanceof AssignStmt) {
 			AssignStmt as = (AssignStmt) invokeStmt;
-			for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions
-					.iterator(); i.hasNext();) {
+			for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
 				Abstraction<Var, State, StmtID> abs = i.next();
 				Value boundValue = abs.getBoundValue(var);
 
 				Value lOp = as.getLeftOp();
 				Value rOp = as.getRightOp();
-				if(lOp instanceof ArrayRef){
-					rOp =((ArrayRef)lOp).getBase();
+				if (lOp instanceof ArrayRef) {
+					rOp = ((ArrayRef) lOp).getBase();
 				}
-				if(abs.lastReplacedValue != null && abs.lastReplacedValue.equals(lOp)){
+				if (abs.lastReplacedValue != null && abs.lastReplacedValue.equals(lOp)) {
 					continue;
 				}
 				if ((boundValue == null || !boundValue.equals(rOp))) {
 					i.remove();
 				}
 			}
-			
+
 		}
 
 		if (abstractions.isEmpty())
@@ -571,23 +612,21 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 
 		return this;
 	}
-	
+
 	@Override
 	public EqualsContext<Var, State, StmtID> not() {
 		not = true;
 		return this;
 	}
+
 	@Override
-	public IfCheckContext<Var, State, StmtID> atCallToMethodWithAnnotation(
-			String annotation) {	
+	public IfCheckContext<Var, State, StmtID> atCallToMethodWithAnnotation(String annotation) {
 
-
-		if(calleeAtReturnFlow != null){
+		if (calleeAtReturnFlow != null) {
 			if (calleeAtReturnFlow.hasTag("VisibilityAnnotationTag")) {
-				VisibilityAnnotationTag tag = (VisibilityAnnotationTag) calleeAtReturnFlow
-						.getTag("VisibilityAnnotationTag");
+				VisibilityAnnotationTag tag = (VisibilityAnnotationTag) calleeAtReturnFlow.getTag("VisibilityAnnotationTag");
 				for (AnnotationTag annTag : tag.getAnnotations()) {
-					if(annTag.getType().equals(annotation)){
+					if (annTag.getType().equals(annotation)) {
 						method = calleeAtReturnFlow;
 						return this;
 					}
@@ -600,12 +639,12 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	}
 
 	@Override
-	public IfCheckContext<Var, State, StmtID> atMethodFromList(Set<String> methodSet) { 
-		if(calleeAtReturnFlow != null){
+	public IfCheckContext<Var, State, StmtID> atMethodFromList(Set<String> methodSet) {
+		if (calleeAtReturnFlow != null) {
 			if (methodSet.contains(calleeAtReturnFlow.getSignature())) {
 				method = calleeAtReturnFlow;
-				
-				return this;	
+
+				return this;
 			}
 		}
 		noMatch();
@@ -613,19 +652,19 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	}
 
 	@Override
-	public ValueContext<Var, State, StmtID> atMethodFromListWithParameter(Set<MethodWithAnnotatedParameters> sources){
-		if(calleeAtReturnFlow != null){
-			for(MethodWithAnnotatedParameters m : sources) {
+	public ValueContext<Var, State, StmtID> atMethodFromListWithParameter(Set<MethodWithAnnotatedParameters> sources) {
+		if (calleeAtReturnFlow != null) {
+			for (MethodWithAnnotatedParameters m : sources) {
 				ArrayList<Integer> sinkIndices = m.getAnnotatedParameterIndices();
-				if(sinkIndices.size() > 0){
-					if(m.getMethodSignature().equals(calleeAtReturnFlow.getSignature())){
+				if (sinkIndices.size() > 0) {
+					if (m.getMethodSignature().equals(calleeAtReturnFlow.getSignature())) {
 						method = calleeAtReturnFlow;
-						if(sinkIndices.size() == 1){
-							return trackParameter(sinkIndices.get(0));	
+						if (sinkIndices.size() == 1) {
+							return trackParameter(sinkIndices.get(0));
 						}
 						currSlotArray = sinkIndices;
 						return this;
-					}	
+					}
 				}
 			}
 		}
@@ -638,12 +677,58 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 		if (abstractions.isEmpty())
 			return this;
 		as(var);
-		
+
 		for (Abstraction<Var, State, StmtID> abs : abstractions) {
 			abs.initializeArrayValue(var);
-			
+
 		}
 		asArray = var;
+		return this;
+	}
+
+	@Override
+	public CallContext<Var, State, StmtID> startsWith(String par) {
+		if (abstractions.isEmpty())
+			return this;
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
+			Abstraction<Var, State, StmtID> abs = i.next();
+			Value v = abs.getValue(eqCheckVar);
+			if (v == null)
+				continue;
+			boolean f = (v instanceof StringConstant) && ((StringConstant) v).value.startsWith(par);
+			if (!f) {
+				i.remove();
+			}
+		}
+		if (abstractions.isEmpty())
+			noMatch();
+
+		return this;
+	}
+
+	@Override
+	public CallContext<Var, State, StmtID> startsWiths(List<String> par) {
+		if (abstractions.isEmpty())
+			return this;
+
+		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
+			Abstraction<Var, State, StmtID> abs = i.next();
+			Value v = abs.getValue(eqCheckVar);
+			if (v == null)
+				continue;
+			boolean f = false;
+			if (v instanceof StringConstant) {
+				for (String startsWithPar : par) {
+					f |= ((StringConstant) v).value.startsWith(startsWithPar);
+				}
+			}
+			if (!f) {
+				i.remove();
+			}
+		}
+		if (abstractions.isEmpty())
+			noMatch();
+
 		return this;
 	}
 
@@ -651,6 +736,7 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 
 enum ValueId {
 	BASE(0), RETURN(-1), PARAM1(1), PARAM2(2), PARAM3(3), PARAM4(4), PARAM5(5);
+
 	protected final int paramNum;
 
 	ValueId(int i) {
