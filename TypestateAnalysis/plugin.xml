@@ -128,7 +128,7 @@
        <extension
              point="de.fraunhofer.sit.codescan.framework.analysis">
           <analysisPack
-                active="true"
+                active="false"
                 id="TypestateAnalysis.analysisPack3">
              <ifdsAnalysis
                    class="de.fraunhofer.sit.codescan.tlschannel.TLSChannelClosePlugin"
@@ -142,5 +142,72 @@
              </ifdsAnalysis>
           </analysisPack>
        </extension>
-   
+    <extension
+             point="de.fraunhofer.sit.codescan.framework.analysis">
+          <analysisPack
+                active="true"
+                id="TypestateAnalysis.analysisPack4">
+             <ifdsAnalysis
+                   class="de.fraunhofer.sit.codescan.insecurecipherfinder.InsecureCipherFinderPlugin"
+                   direction="backward"
+                   id="TypestateAnalysis.ifdsAnalysis4">
+                <filter>
+                   <bySuperType>
+                      <byMethodDecl></byMethodDecl>
+                   </bySuperType>
+                </filter>
+             </ifdsAnalysis>
+          </analysisPack>
+       </extension>
+        <extension
+             point="de.fraunhofer.sit.codescan.framework.analysis">
+          <analysisPack
+                active="true"
+                id="TypestateAnalysis.analysisPack5">
+             <ifdsAnalysis
+                   class="de.fraunhofer.sit.codescan.insecuremessagedigestfinder.InsecureMessageDigestFinderPlugin"
+                   direction="backward"
+                   id="TypestateAnalysis.ifdsAnalysis5">
+                <filter>
+                   <bySuperType>
+                      <byMethodDecl></byMethodDecl>
+                   </bySuperType>
+                </filter>
+             </ifdsAnalysis>
+          </analysisPack>
+       </extension>
+       <extension
+             point="de.fraunhofer.sit.codescan.framework.analysis">
+          <analysisPack
+                active="true"
+                id="TypestateAnalysis.analysisPack6">
+             <ifdsAnalysis
+                   class="de.fraunhofer.sit.codescan.insecuremacfinder.InsecureMacFinderPlugin"
+                   direction="backward"
+                   id="TypestateAnalysis.ifdsAnalysis6">
+                <filter>
+                   <bySuperType>
+                      <byMethodDecl></byMethodDecl>
+                   </bySuperType>
+                </filter>
+             </ifdsAnalysis>
+          </analysisPack>
+       </extension>
+       <extension
+             point="de.fraunhofer.sit.codescan.framework.analysis">
+          <analysisPack
+                active="true"
+                id="TypestateAnalysis.analysisPack7">
+             <ifdsAnalysis
+                   class="de.fraunhofer.sit.codescan.insecureciphersuitefinder.InsecureCipherSuiteFinderPlugin"
+                   direction="backward"
+                   id="TypestateAnalysis.ifdsAnalysis7">
+                <filter>
+                   <bySuperType>
+                      <byMethodDecl></byMethodDecl>
+                   </bySuperType>
+                </filter>
+             </ifdsAnalysis>
+          </analysisPack>
+       </extension>
 </plugin>
