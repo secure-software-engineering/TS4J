@@ -21,6 +21,7 @@ import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.ReportError;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.ValueContext;
 import de.fraunhofer.sit.codescan.sootbridge.typestate.interfaces.VarContext;
 import de.fraunhofer.sit.codescan.sootbridge.util.MethodWithAnnotatedParameters;
+import soot.ArrayType;
 import soot.Local;
 import soot.Scene;
 import soot.SootMethod;
@@ -384,13 +385,14 @@ public class Config<Var extends Enum<Var>, State extends Enum<State>, StmtID ext
 	public CallContext<Var, State, StmtID> contains(String par) {
 		if (abstractions.isEmpty())
 			return this;
-
+		
 		for (Iterator<Abstraction<Var, State, StmtID>> i = abstractions.iterator(); i.hasNext();) {
 			Abstraction<Var, State, StmtID> abs = i.next();
 			Value v = abs.getValue(eqCheckVar);
 			if (v == null)
 				continue;
-			boolean f = !(v instanceof StringConstant) || ((v instanceof StringConstant) && ((StringConstant) v).value.contains(par));
+			boolean f = false;
+			f = ((v instanceof StringConstant) && ((StringConstant) v).value.contains(par));
 			if (!f) {
 				i.remove();
 			}
