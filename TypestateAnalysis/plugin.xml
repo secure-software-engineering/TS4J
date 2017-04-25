@@ -132,7 +132,7 @@
                 id="TLSChannelClose">
              <ifdsAnalysis
                    class="de.fraunhofer.sit.codescan.typestate.tlschannelcloseanalysis.TLSChannelCloseAnalysisPlugin"
-                   direction="forward"
+                   direction="backward"
                    id="TLSChannelClosePlugin">
                 <filter>
                    <bySuperType>
@@ -180,7 +180,7 @@
              point="de.fraunhofer.sit.codescan.framework.analysis">
           <analysisPack
                 active="true"
-                id="TInsecureMacFinder">
+                id="InsecureMacFinder">
              <ifdsAnalysis
                    class="de.fraunhofer.sit.codescan.insecuremacfinder.InsecureMacFinderPlugin"
                    direction="backward"
@@ -197,11 +197,10 @@
              point="de.fraunhofer.sit.codescan.framework.analysis">
           <analysisPack
                 active="true"
-                id="InsecureCipherSuiteFinder">
+                id="EnabledCipherSuiteAnalysis">
              <ifdsAnalysis
-                   class="de.fraunhofer.sit.codescan.insecureciphersuitefinder.InsecureCipherSuiteFinderPlugin"
-                   direction="backward"
-                   id="InsecureCipherSuiteFinderPlugin">
+                   class="de.fraunhofer.sit.codescan.typestate.enabledciphersuiteanalysis.EnabledCipherSuiteAnalysisPlugin"
+                   id="EnabledCipherSuiteAnalysisPlugin">
                 <filter>
                    <bySuperType>
                       <byMethodDecl></byMethodDecl>
@@ -210,15 +209,15 @@
              </ifdsAnalysis>
           </analysisPack>
        </extension>
-              <extension
+        <extension
              point="de.fraunhofer.sit.codescan.framework.analysis">
           <analysisPack
                 active="true"
-                id="EnabledCipherSuiteAnalysis">
+                id="EnabledProtocolAnalysis">
              <ifdsAnalysis
-                   class="de.fraunhofer.sit.codescan.typestate.enabledciphersuiteanalysis.EnabledCipherSuiteAnalysisPlugin"
+                   class="de.fraunhofer.sit.codescan.typestate.enabledprotocolanalysis.EnabledProtocolAnalysisPlugin"
                    direction="forward"
-                   id="EnabledCipherSuiteAnalysisPlugin">
+                   id="EnabledProtocolAnalysisPlugin">
                 <filter>
                    <bySuperType>
                       <byMethodDecl></byMethodDecl>
