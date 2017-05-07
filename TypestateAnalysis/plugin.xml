@@ -128,11 +128,11 @@
        <extension
              point="de.fraunhofer.sit.codescan.framework.analysis">
           <analysisPack
-                active="false"
+                active="true"
                 id="TLSChannelClose">
              <ifdsAnalysis
                    class="de.fraunhofer.sit.codescan.typestate.tlschannelcloseanalysis.TLSChannelCloseAnalysisPlugin"
-                   direction="backward"
+                   direction="forward"
                    id="TLSChannelClosePlugin">
                 <filter>
                    <bySuperType>
